@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+# Runs for every committer, human or agent. Enable once per clone: git config core.hooksPath .githooks
+fail() { echo "pre-commit: $1" >&2; exit 1; }
+
+# 1. No build output, local databases or env files.
+bad=$(git diff --cached --name-only | grep -E '(^|/)(bin|obj|tmp)/|\.db$|(^|/)\.env$')
+[ -n "$bad" ] && fail "refusing to commit build output or local files:
+$bad
+Unstage with: git restore --staged <path>"
+
+# 2. Company identity.
+case "$(git config user.email)" in
+  *@osmosys.co) ;;
+  *) fail "author email '$(git config user.email)' is not a company address. Run: git config user.email you@osmosys.co" ;;
+esac
+
+# 3. Secrets: a pattern check for config-style secrets, which gitleaks misses on low-entropy values
+#    such as "SuperSecretAuthenticationKey…" (measured 2026-09-30), then gitleaks for known key formats.
+# ai-session/ holds raw transcripts, which quote config on purpose; gitleaks still scans them below.
+hits=$(git diff --cached -U0 -- . ':(exclude)ai-session' | grep -E '^\+' | grep -nEi '(key|secret|password|pwd|token)["'\'' ]*[:=] *["'\''][^"'\'' ]{8,}')
+[ -n "$hits" ] && fail "possible secret in staged changes (move it to .env, document it in .env.example):
+$hits"
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --redact --no-banner || fail "gitleaks found a secret (see above)."
+else
+  echo "pre-commit: gitleaks not installed; only the pattern check ran" >&2
+fi
+
+# 4. Formatting.
+dotnet format --verify-no-changes >/dev/null 2>&1 || fail "formatting drift. Run: dotnet format"
+
+exit 0

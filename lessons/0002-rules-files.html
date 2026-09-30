@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rules Files: AGENTS.md</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body data-lesson="0002">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Lesson 2 of 11 · 18 min read + 30 min exercise</p>
+<h1>Rules files: AGENTS.md as the single source of truth</h1>
+<p class="lede">Put the rules in one short, tool-neutral index file, link the detail from it, and commit it before any feature code, because a rules file written after the work steers nothing.</p>
+
+<div class="recall">
+  <span class="label">Recall</span>
+  <div class="quiz">
+    <p class="q">Lesson 1: which of these is still in force after you run /clear?</p>
+    <div class="opts">
+      <button class="opt">A rule you typed into chat.</button>
+      <button class="opt" data-correct>A rule stored in project files.</button>
+      <button class="opt">A rule the agent once summarised.</button>
+      <button class="opt">A rule approved by clicking yes.</button>
+    </div>
+    <p class="why">Only files are loaded again in a fresh session. Chat text and its summaries go with the conversation, and a clicked approval is a personal setting, not a rule the agent reads.</p>
+  </div>
+  <div class="quiz">
+    <p class="q">Lesson 1: what does plan mode let the agent do before you approve a plan?</p>
+    <div class="opts">
+      <button class="opt">Edit source files and run tests.</button>
+      <button class="opt">Commit changes and push them out.</button>
+      <button class="opt" data-correct>Read files and explore the code.</button>
+      <button class="opt">Install any packages and start servers.</button>
+    </div>
+    <p class="why">Plan mode explores and does not edit your source files until you approve a plan. When auto mode is available, a classifier may approve shell commands while you plan. Lesson 4 builds a workflow on that gap.</p>
+  </div>
+</div>
+
+<div class="note">
+  <span class="label">The win</span>
+  <p>By the end, the practice repo has an <code>AGENTS.md</code> of about 40 lines plus three linked docs, committed as <code>chore(harness): add agent rules</code> before any feature code. A brand-new agent session will answer "what are this repo's invariants?" by naming the files it read.</p>
+</div>
+
+<h2>What happened</h2>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What happened</h4>
+    <p>Trainee A's <code>CLAUDE.md</code> had the right content: "rules that must hold", commands, process. But it arrived in commit <code>c19c72a</code>, 31 minutes after the last feature commit <code>6c9922b</code>. The evaluator had credited it as "the trainee wrote CLAUDE.md with the rules that must hold", as deliberate orchestration. The repo shows the agent wrote it at wrap-up. It never steered the work; their rules only ever lived in a 17,000-character prompt inside a 356-turn session.</p>
+    <p class="who">Trainee A · Claude Code · Gated chat, the best of the six</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>The rules file is commit one, before the first feature. Anyone can then check the order with git, and the tool loads the file at the start of every session, so the rules are in context while the work happens, not after it.</p>
+    <pre>git log --diff-filter=A --format='%h %ad %s' --date=iso -- AGENTS.md</pre>
+    <p>That is how the assessment checks it, too. (The assessment is the graded agentic .NET exercise this course prepares you for.)</p>
+  </div>
+</div>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What happened</h4>
+    <p>Trainee D's <code>PLAN.md</code> was first committed in <code>1009656</code> (09-18 15:24, "Scaffold Fulfillment Service API…"): 67 files, 11,608 insertions, models, migration, endpoints, the background service, all in one commit, 31 minutes after the initial commit <code>1c3c915</code>. Every box in the plan was already ticked. The evaluator wrote that the plan was "written before implementation"; git cannot show that it was.</p>
+    <p class="who">Trainee D · Claude Code · Sonnet</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>Anything that claims to steer the work is committed <em>alone and first</em>: rules now, the plan in lesson 4. A file that shares a commit with the code it governs proves nothing about order.</p>
+  </div>
+</div>
+
+<p>A third pattern from the same review. Trainee C built a prompt library before they started: nine templates plus <code>AI_CONTEXT/</code> docs. That is the right instinct, but the templates were pasted into the chat by hand and still said <code>ExamDomain</code> and <code>Angular</code>, from a different exercise. A rules file is the same idea made automatic: the tool loads it, so nobody has to remember to paste it, and it lives in the repo, so it is fixed in one place.</p>
+
+<h2>One file, every tool</h2>
+
+<p><dfn>AGENTS.md</dfn> is "a simple, open format for guiding coding agents", described as a README for agents and stewarded by the Agentic AI Foundation under the Linux Foundation. The closest file to the one you are editing takes precedence. Suggested contents are the project overview, build and test commands, code style, testing instructions, security considerations and commit guidelines (<a href="https://agents.md/">agents.md</a>). Codex and Antigravity read it; Claude Code does too, as of a recent version.</p>
+
+<h3>Claude Code reads it natively</h3>
+
+<p>Claude Code reads <code>AGENTS.md</code> as your project instructions when the repo has no <code>CLAUDE.md</code> (<a href="https://code.claude.com/docs/en/memory#agents-md">Memory: AGENTS.md</a>). <span class="ver">v2.1.277+ · verified 2026-09-30</span> Before v2.1.281, some sessions, such as those on Amazon Bedrock or with telemetry disabled, read <code>CLAUDE.md</code> only. Interactive sessions confirm it with a line such as <code>no CLAUDE.md found; AGENTS.md loaded: /home/you/repo/AGENTS.md</code>. Look for that line; it is your proof the file loaded.</p>
+
+<p>Which files load, and when:</p>
+<div class="table-wrap"><table>
+  <tr><th>File</th><th>Loads</th></tr>
+  <tr><td>Every <code>AGENTS.md</code> in the working directory and its parents</td><td>At session start</td></tr>
+  <tr><td>A subdirectory's <code>AGENTS.md</code> (for us: <code>tests/AGENTS.md</code>)</td><td>When Claude <em>reads a file</em> in that directory <span class="ver">v2.1.277+ · verified 2026-09-30</span></td></tr>
+  <tr><td><code>AGENTS.local.md</code>, <code>AGENTS.override.md</code>, anything under <code>.agents/</code></td><td>Never, for Claude Code</td></tr>
+</table></div>
+
+<details class="deeper">
+<summary>Going deeper: the CLAUDE.md fallback for older versions</summary>
+<h3>The fallback: a CLAUDE.md that imports it</h3>
+
+<p>Use a <code>CLAUDE.md</code> with a one-line <dfn>import</dfn> (<code>@path</code> pulls another file's text into the context) in three cases: your Claude Code is older than v2.1.277, your session cannot load <code>AGENTS.md</code>, or you want Claude-only extras. The docs' own example:</p>
+
+<figure class="code">
+<figcaption>CLAUDE.md (docs example; only needed as a fallback)</figcaption>
+<pre>@AGENTS.md
+
+## Claude Code
+
+Use plan mode for changes under `src/billing/`.</pre>
+</figure>
+
+<p>"Keeping the import never makes Claude read AGENTS.md twice", so it is safe to keep. Nothing is duplicated: <code>AGENTS.md</code> stays the one source, and <code>CLAUDE.md</code> holds only what is Claude-specific (<a href="https://code.claude.com/docs/en/memory#share-one-file-with-other-coding-tools">Memory: sharing one file</a>).</p>
+</details>
+
+<h3>The CLAUDE.local.md gotcha</h3>
+
+<p>A <code>CLAUDE.md</code>, <code>.claude/CLAUDE.md</code> or <code>CLAUDE.local.md</code> in your working directory or any directory above it makes Claude Code read <em>those</em> and skip <code>AGENTS.md</code>. <span class="ver">v2.1.277+ · verified 2026-09-30</span> Your own <code>~/.claude/CLAUDE.md</code> and <code>.claude/rules/</code> files do not count. So a trainee who adds a <code>CLAUDE.local.md</code> for private notes silently switches off the team's rules, on their machine only. No error, no warning; you just stop seeing the "AGENTS.md loaded" line. Two ways out: delete the file, or set <strong>Project instructions</strong> to <code>claude-md-and-agents-md</code> in <code>/config</code> to read both. You will trigger this deliberately in the exercise.</p>
+
+<h2>Keep it an index</h2>
+
+<p>The root file is loaded into every session, so every line in it costs context on every task. The docs: "target under 200 lines per CLAUDE.md file. Longer files consume more context and reduce adherence." And the test for each line: "Would removing this cause Claude to make mistakes?" If not, cut it (<a href="https://code.claude.com/docs/en/memory">Memory</a>, <a href="https://code.claude.com/docs/en/best-practices">Best practices</a>). The course's reference file is 39 lines. It holds four things: the commands, a definition of done, the invariants in one line each, and links to files with the detail.</p>
+
+<figure class="code">
+<figcaption>reference-solution/AGENTS.md</figcaption>
+<pre># StockApi: agent instructions
+
+A small inventory API: products with a unique SKU and a stock count; orders reserve stock.
+.NET 8, ASP.NET Core controllers, EF Core + SQLite, xUnit. Brief: `BRIEF.md`.
+
+## Commands
+- Build: `dotnet build -warnaserror`
+- Test: `dotnet test`
+- Format check: `dotnet format --verify-no-changes`
+- Run: `dotnet run --project src/StockApi` (API on the port printed at startup)
+
+## Definition of done (every slice)
+1. The quality gate passes: format check, then build, then test (skill `quality-gate`).
+2. A reviewer agent has read the diff: `test-reviewer` always; `stock-invariant-reviewer` when stock or orders change.
+3. The human has approved the commit message drafted by the `commit` skill. Never commit or push otherwise.
+
+## Invariants (never break; details in docs/ai/invariants.md)
+- Stock never goes below zero, including under concurrent orders.
+- Every stock change is ONE guarded UPDATE (`ExecuteUpdateAsync` with `Stock &gt;= n` in the WHERE); never read-then-write.
+- Target framework is `net8.0`. Do not change it.
+- Out of scope: auth, UI, payments. Decline and say so if asked to add them.
+- No secrets in git: config values come from environment variables; `.env` is git-ignored.
+
+## When you are stuck: 1-3-1
+If a tool, SDK, test provider or environment blocks you, or a fix would change an invariant,
+a requirement or the machine: STOP. Do not work around it. Reply with exactly
+- **1 problem**: what is blocked and why it matters,
+- **3 options**, with the trade-off of each,
+- **1 recommendation**,
+then wait for the human's decision. Never install, launch, downgrade or delete to get unstuck.
+
+## Workflow
+Plan first, then one slice at a time: docs/ai/workflow.md
+
+## More context (read when relevant)
+- Invariants and why: docs/ai/invariants.md
+- Code layout and naming: docs/ai/conventions.md
+- How to test (no EF InMemory): docs/ai/testing.md
+- Deliberate decisions: docs/decisions/</pre>
+</figure>
+
+<p><strong>Your file will differ from this one, on purpose.</strong> Leave out the 1-3-1 section (lesson 3). Skills and reviewers do not exist yet, so your "done" says: format check, build and test pass, and the human approves the commit. Link only the docs you create in this exercise (<code>docs/ai/invariants.md</code>, <code>testing.md</code>, <code>workflow.md</code>). The reference also links <code>docs/ai/conventions.md</code> and <code>docs/decisions/</code>, which this course adds later; a link to a file that does not exist sends the agent hunting.</p>
+
+<div class="table-wrap"><table>
+  <tr><th>Block</th><th>Why it is there</th><th>Incident it answers</th></tr>
+  <tr><td>Commands</td><td>The agent stops guessing how to build and test; <code>-warnaserror</code> and the format check are part of "green"</td><td>Trainee F's "test everything yourself" was a request, not a gate (lesson 5)</td></tr>
+  <tr><td>Definition of done</td><td>Names the gate, the reviewers and the human approval as steps, pointing at skills you build in lessons 5 and 6</td><td>Trainee A's unasked commit <code>b456df0</code></td></tr>
+  <tr><td>Invariants</td><td>One line each; the reasoning lives in a linked file. "Out of scope" is a forbidden pattern, stated as one</td><td>Trainee C's JWT login, added though the brief did not ask for it</td></tr>
+  <tr><td>1-3-1</td><td>What to do when stuck (next lesson)</td><td>Trainee E's <code>net7.0</code>, Trainee D's rewrite</td></tr>
+  <tr><td>Workflow and More context</td><td>Pointers, not content. The agent reads a linked file only when the task needs it</td><td>Keeps the root file small</td></tr>
+</table></div>
+
+<p>Two limits on this design. First, <strong>imports do not shrink the context</strong>: "Imports help you organize a long file but don't reduce its context cost, because imported files also load at launch" (<a href="https://code.claude.com/docs/en/memory">Memory</a>). That is why <code>AGENTS.md</code> <em>links</em> to <code>docs/ai/*.md</code> in plain text, without an <code>@</code>, so they are read on demand. Second, the file is advice, not a lock. An agent can still ignore a line; the guards in lesson 7 are what block. The rules file makes the right behaviour the default.</p>
+
+<h3>A nested file, and path-scoped rules</h3>
+
+<p>Some rules only matter in one place. A <strong>nested</strong> <code>AGENTS.md</code> carries them, and loads only when Claude reads a file in that directory. The reference repo has one for the test project:</p>
+
+<figure class="code">
+<figcaption>reference-solution/tests/AGENTS.md</figcaption>
+<pre># Tests: agent instructions
+
+Loaded in addition to the root AGENTS.md when working in `tests/`.
+
+- Real SQLite only (shared in-memory connection via `StockApiFactory`). EF InMemory is forbidden.
+- Do not weaken a test to make it pass. If production code and a test disagree, 1-3-1.
+- Every stock-changing endpoint has a concurrency test: N parallel requests, assert successes ≤ stock.
+- Full rules: ../docs/ai/testing.md</pre>
+</figure>
+
+<p>Claude Code has a second, Claude-only way to do the same: files in <code>.claude/rules/</code> with a <code>paths:</code> list of <dfn>globs</dfn> (filename patterns: <code>*</code> matches any name, <code>**</code> any folders, so <code>src/**/Data/*.cs</code> means every .cs file in any Data folder) in their frontmatter (the <dfn>frontmatter</dfn> is the YAML block between <code>---</code> lines at the top). "Path-scoped rules trigger when Claude reads files matching the pattern"; a rule with no <code>paths</code> loads always. Note the <code>.claude/rules/</code> folder does not suppress <code>AGENTS.md</code> (<a href="https://code.claude.com/docs/en/memory#path-specific-rules">Memory: path-specific rules</a>).</p>
+
+<figure class="code">
+<figcaption>reference-solution/.claude/rules/efcore.md</figcaption>
+<pre>---
+paths:
+  - "src/**/Data/**/*.cs"
+  - "src/**/Services/**/*.cs"
+---
+
+# EF Core rules (Claude Code only; loaded when you read files under Data/ or Services/)
+
+- Stock changes: one guarded `ExecuteUpdateAsync` in a transaction (docs/decisions/0001).
+- `DateTimeOffset` columns need `DateTimeOffsetToBinaryConverter` on SQLite before any ORDER BY or comparison.
+- Before using an EF Core API you are unsure of, query context7 for EF Core 8 docs.</pre>
+</figure>
+
+<p>Both load <em>late</em>, when the agent first touches a matching file. So anything that must hold for every task belongs in the root file, and anything a task in another folder can ignore belongs in a nested one. After a <code>/compact</code> they reload only as Claude reads matching files again (<a href="https://code.claude.com/docs/en/context-window#what-survives-compaction">What survives compaction</a>).</p>
+
+<h2>Commit it first</h2>
+
+<p>Three things make the order matter. <strong>Steering:</strong> a rule that exists when the first prompt is typed shapes the first slice; a rule written at the end documents it. <strong>Proof:</strong> an evaluator, a reviewer or you next month can check <code>git log --diff-filter=A</code> and see that the rules came before the work; that is the test the review applied to Trainee A and Trainee D. <strong>Blame:</strong> when the agent breaks an invariant, you need to know whether the rule was in context. A rules file that arrives with the code cannot answer that.</p>
+
+<h2>What goes where</h2>
+
+<p>"Put it in the rules file" is the default answer, and often the wrong one. Here are the five places a rule can live, and what each can and cannot do:</p>
+
+<div class="table-wrap"><table>
+  <tr><th>Mechanism</th><th>What it is</th><th>Enforced?</th><th>Use it for</th></tr>
+  <tr><td>Rules file</td><td>Text loaded into every session (<code>AGENTS.md</code>)</td><td>No, a request</td><td>Commands, invariants, definition of done</td></tr>
+  <tr><td>Output style</td><td>Changes how Claude Code talks <em>to you</em>; per user, saved in <code>.claude/settings.local.json</code></td><td>No: "It doesn't guarantee that something always happens"</td><td>Your own teaching mode, such as Learning (lesson 1)</td></tr>
+  <tr><td>Skill</td><td>A named procedure the agent loads when you call it or its description matches</td><td>No, but repeatable</td><td>Commit, quality gate, scaffolds (lesson 5)</td></tr>
+  <tr><td>Hook</td><td>A script the tool runs on an event, such as before a tool call; it can block</td><td><strong>Yes</strong></td><td>Destructive-command guard (lesson 7)</td></tr>
+  <tr><td>Subagent</td><td>A separate agent with its own context window and tool allowlist</td><td>No, but independent</td><td>Reviewing a diff the author cannot grade (lesson 6)</td></tr>
+</table></div>
+
+<p>Sources: <a href="https://code.claude.com/docs/en/output-styles">Output styles</a>, <a href="https://code.claude.com/docs/en/skills">Skills</a>, <a href="https://code.claude.com/docs/en/hooks">Hooks</a>, <a href="https://code.claude.com/docs/en/sub-agents">Subagents</a>. The rule of thumb: if it must <em>always</em> hold, it will eventually need a hook or a permission rule behind it. If it is a procedure, make it a skill. If it is a fact the agent needs, it is a rules-file line, or a linked doc.</p>
+
+<h3>Same idea, other tools</h3>
+<div class="table-wrap"><table class="tools">
+  <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+  <tr><td>Root rules</td><td><code>AGENTS.md</code> natively when no <code>CLAUDE.md</code> exists <span class="ver">v2.1.277+ · verified 2026-09-30</span></td><td><code>AGENTS.md</code>: read from <code>~/.codex</code>, then every directory from the git root down to the working directory, concatenated root-first, nearer files later</td><td><code>AGENTS.md</code> or <code>GEMINI.md</code>, treated as <code>always_on</code></td></tr>
+  <tr><td>Nested rules</td><td>Subdirectory <code>AGENTS.md</code>, loaded when a file there is read</td><td>Directory files are part of the root-to-cwd chain</td><td>Files in <code>.agents/rules/*.md</code> with <code>trigger</code> frontmatter</td></tr>
+  <tr><td>Conditional rules</td><td><code>.claude/rules/*.md</code> with <code>paths:</code></td><td>No equivalent in our sources</td><td><code>trigger</code>: <code>always_on</code>, <code>model_decision</code>, <code>glob</code> (with <code>globs:</code>) or <code>manual</code></td></tr>
+  <tr><td>Size limit</td><td>Under 200 lines advised</td><td><code>project_doc_max_bytes</code>, 32 KiB by default</td><td>Not in our sources</td></tr>
+</table></div>
+<p class="small">Sources: <a href="https://learn.chatgpt.com/docs/agent-configuration/agents-md">Codex AGENTS.md</a> · <a href="https://antigravity.google/docs/rules">Antigravity rules</a>. Antigravity reads <code>.agents/</code>; the legacy <code>.agent/</code> is still read. Every Antigravity rule file needs a <code>trigger</code> in its frontmatter. Codex: the concatenated text is capped at <code>project_doc_max_bytes</code>, one more reason to keep the root file short.</p>
+
+<h2>Check yourself</h2>
+<p class="score"></p>
+
+<div class="quiz">
+  <p class="q">A teammate adds CLAUDE.local.md with personal notes to a repo that relies on AGENTS.md. On Claude Code v2.1.284, what happens by default?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Only CLAUDE files load; AGENTS.md is skipped.</button>
+    <button class="opt">Both files load and are merged together.</button>
+    <button class="opt">AGENTS.md loads; the local file is ignored.</button>
+    <button class="opt">Claude Code refuses to start until removed.</button>
+  </div>
+  <p class="why">A CLAUDE.local.md in the working directory or above counts as a CLAUDE.md, so AGENTS.md is not read. Nothing warns you; the "AGENTS.md loaded" line just disappears. Delete the file or set Project instructions to read both.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Your AGENTS.md has grown to 300 lines. Which change actually reduces what loads into every session?</p>
+  <div class="opts">
+    <button class="opt">Split it into several import files.</button>
+    <button class="opt">Put all the text behind imports.</button>
+    <button class="opt" data-correct>Move niche rules into scoped rules.</button>
+    <button class="opt">Lower the file's priority in settings.</button>
+  </div>
+  <p class="why">Imported files load at launch too, so imports only reorganise. Path-scoped rules and nested files load when the agent reads a matching file, which is what removes the cost from unrelated tasks.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">An evaluator wants proof that your rules steered the work. What evidence settles it?</p>
+  <div class="opts">
+    <button class="opt">The file has a detailed checklist.</button>
+    <button class="opt" data-correct>Git shows it added before features.</button>
+    <button class="opt">The agent's summary praises the file.</button>
+    <button class="opt">The README mentions the file twice.</button>
+  </div>
+  <p class="why">Agent-written text and summaries are claims. Commit order is evidence, and it is what sank Trainee A's c19c72a (31 minutes after the last feature) and Trainee D's 1009656 (plan and code together).</p>
+</div>
+
+<h2>Exercise: write the index and commit it first</h2>
+<div class="exercise">
+  <span class="label">Exercise · ~30 min · adds: AGENTS.md, docs/ai/ (3 files), tests/AGENTS.md</span>
+  <p>Work in your practice repo from lesson 1 (<code>~/projects/stockapi</code>). The reference solution is an answer key; write your own first and compare afterwards. <strong>Windows:</strong> run these in WSL2 or Git Bash (see Before you start on the <a href="../index.html">index</a>).</p>
+  <ol>
+    <li>Check your version: <code>claude --version</code>. On v2.1.277 or later you normally need no <code>CLAUDE.md</code>; before v2.1.281, some sessions (such as Amazon Bedrock or telemetry disabled) read <code>CLAUDE.md</code> only, and a one-line <code>@AGENTS.md</code> <code>CLAUDE.md</code> is the fallback (see "Going deeper" above). The version prints as a number such as <code>2.1.284</code>; compare it with 2.1.277.</li>
+    <li>Write <code>AGENTS.md</code> in the repo root <strong>by hand</strong>, about 40 lines, using the annotated example as a shape: what this is, Commands, Definition of done, Invariants (one line each), Workflow pointer, More context. For now, "done" is: format check, build and test pass, and the human approves the commit. Lessons 5 and 6 swap in the skills and reviewers. Leave out the 1-3-1 section; lesson 3 adds it. "The human approves the commit" means you read the message and say yes yourself; nothing enforces it yet.</li>
+    <li>Create the <code>docs/ai</code> folder (<code>mkdir -p docs/ai</code>) and the linked files. Easiest start: copy <code>reference-solution/docs/ai/invariants.md</code> and <code>testing.md</code> from the course folder into your <code>docs/ai/</code> and trim them to your repo. Or ask the agent to draft them from <code>BRIEF.md</code> (plan mode is fine), then edit every line yourself. Each file needs:
+      <ul>
+        <li><code>docs/ai/invariants.md</code>: stock never below zero even under concurrency; one guarded UPDATE, never read-then-write; <code>net8.0</code>; out of scope (auth, UI, payments), with the sentence "Endpoints are exactly those in <code>BRIEF.md</code> plus the ones a human-approved plan adds."; no secrets in git.</li>
+        <li><code>docs/ai/testing.md</code>: real SQLite, never the EF InMemory provider, and why.</li>
+        <li><code>docs/ai/workflow.md</code>: a stub, "Plan first, then one slice at a time." Lesson 4 fills it in.</li>
+      </ul></li>
+    <li>Write <code>tests/AGENTS.md</code>, three or four lines of rules that apply only to tests.</li>
+    <li>Ignore scratch files and secrets: open <code>.gitignore</code> in your editor and add two lines at the bottom, <code>tmp/</code> and <code>.env</code>. Save it.</li>
+    <li>Commit, naming the paths so nothing else sneaks in (Conventional Commits, from lesson 1): <pre>git add AGENTS.md docs tests/AGENTS.md .gitignore
+git commit -m "chore(harness): add agent rules"
+git log --stat -1</pre> The stat shows only those files. No feature code exists yet; that is the point.</li>
+    <li><strong>Verify in a new session.</strong> Start a fresh agent session and ask: <em>"What are this repo's invariants, and where did you read them?"</em> In Claude Code, look for <code>no CLAUDE.md found; AGENTS.md loaded: …</code>, printed near your first message. Then run <code>/context</code> and find the memory files line. No such line? See the gotcha in step 9.</li>
+    <li><strong>Nested file.</strong> Ask: <em>"Open tests/StockApi.Tests/ApiTests.cs and list the rules that apply to tests, and which files they came from."</em> The answer should mention <code>tests/AGENTS.md</code>.</li>
+    <li><strong>The gotcha.</strong> Run <code>echo "Prefer tabs." &gt; CLAUDE.local.md</code>, quit the agent (<code>/exit</code>), start it again in the same folder, and ask step 7's question again. The "AGENTS.md loaded" line is gone and the invariants are not known. Now <code>rm CLAUDE.local.md</code>, start another session, and confirm it is back. Do not commit that file.</li>
+  </ol>
+  <p><strong>Codex:</strong> start <code>codex</code> in the repo; it concatenates <code>AGENTS.md</code> files from the git root down, so <code>tests/AGENTS.md</code> joins when you work in <code>tests/</code>. There is no <code>CLAUDE.local.md</code> trap. <strong>Antigravity:</strong> open the folder; <code>AGENTS.md</code> is an <code>always_on</code> rule. To test a scoped rule, add <code>.agents/rules/tests.md</code> with <code>trigger: glob</code> and <code>globs:</code> for the tests folder.</p>
+</div>
+
+<div class="done">
+  <span class="label">Done when</span>
+  <ul class="check" data-key="0002">
+    <li><input type="checkbox"> <span><code>git log --diff-filter=A --format='%h %ad %s' --date=iso -- AGENTS.md</code> shows <code>chore(harness): add agent rules</code>, directly after the starter commit</span></li>
+    <li><input type="checkbox"> <span><code>wc -l AGENTS.md</code> is well under 200 and the file links to <code>docs/ai/*.md</code> without <code>@</code> imports</span></li>
+    <li><input type="checkbox"> <span>A fresh session names <code>docs/ai/invariants.md</code> (or <code>AGENTS.md</code>) as where it read the invariants</span></li>
+    <li><input type="checkbox"> <span>You watched <code>CLAUDE.local.md</code> switch AGENTS.md off, then deleted it and saw it load again</span></li>
+  </ul>
+</div>
+
+<div class="source">
+  <span class="label">Primary source</span>
+  <p><a href="https://code.claude.com/docs/en/memory#agents-md">Memory: AGENTS.md</a> (Anthropic). Read the table of which files Claude reads, the "When AGENTS.md support is unavailable" list, and "Share one file with other coding tools". Then skim <a href="https://agents.md/">agents.md</a> for the open format.</p>
+</div>
+
+<div class="ask">
+  <span class="label">Ask your agent</span>
+  <p>Stuck, or curious? Ask the agent you're learning with, for example: "Which instruction files did you load this session, from which paths, and which line in my AGENTS.md costs the most context?"</p>
+</div>
+
+<nav class="lesson-nav">
+  <a href="0001-how-an-agent-works.html">← Lesson 1: How an agent works</a>
+  <a href="../reference/agents-md.html">AGENTS.md reference</a>
+  <a href="0003-one-three-one.html">Lesson 3: 1-3-1 →</a>
+</nav>
+
+</main>
+</body>
+</html>

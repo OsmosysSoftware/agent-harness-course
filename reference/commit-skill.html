@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The commit skill</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body class="ref">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Reference sheet</p>
+<h1>The commit skill</h1>
+<p class="lede">Eight steps the agent runs before every commit, each tied to the incident it prevents. Print it and tick it while you test your own skill.</p>
+
+
+<div class="cols">
+<div>
+<h2>The 8 steps</h2>
+<p>Run in order; any failure means stop and report, not work around. Tick them while you test the skill on a real slice.</p>
+<ul class="check" data-key="ref-commit">
+<li><input type="checkbox"> <span><strong>1. See what is staged</strong><br><code>git status --short</code> then <code>git diff --cached --stat</code>. Nothing staged: list changed files, propose the slice, ask before <code>git add</code>. Never <code>git add -A</code> or <code>git add .</code><br><span class="small">Prevents: Trainee E <code>367d6e1</code> (1,089 files in one "Initial commit") and Trainee F <code>908d6fa</code> (the whole project, 60 files, in one commit)</span></span></li>
+<li><input type="checkbox"> <span><strong>2. Refuse build output and local files</strong><br><code>git diff --cached --name-only | grep -E '(^|/)(bin|obj|tmp)/|\.db$|(^|/)\.env$'</code>. Any match: stop, list, propose <code>git restore --staged</code> and a <code>.gitignore</code> entry<br><span class="small">Prevents: Trainee E <code>367d6e1</code>: 1,081 junk files (<code>tmp/pdfs/vendor/</code>, <code>obj/</code>) tracked despite <code>.gitignore</code></span><br><span class="small">Backed by: <code>.githooks/pre-commit</code> step 1</span></span></li>
+<li><input type="checkbox"> <span><strong>3. Refuse secrets</strong><br>Run <strong>both</strong>: the pattern check <code>git diff --cached | grep -nEi '(key|secret|password|pwd|token)["' ]*[:=] *["'][^"' ]{8,}'</code> and <code>gitleaks git --pre-commit --staged --redact</code> (if installed). gitleaks misses readable config secrets; the pattern catches them. On a finding: stop, show file and line redacted, point to an env var and <code>.env.example</code><br><span class="small">Prevents: Trainee C: <code>"Jwt":{"Key":"SuperSecretAuthenticationKeyForFulfillmentService2026!"}</code> in <code>appsettings.json</code>. gitleaks 8.23.3 and 8.30.1 both did not flag this low-entropy value (measured 2026-09-30); the pattern check does</span><br><span class="small">Backed by: <code>.githooks/pre-commit</code> step 3</span></span></li>
+<li><input type="checkbox"> <span><strong>4. Check identity</strong><br><code>git config user.email</code> must end in <code>@osmosys.co</code>. If not, ask the human to fix it; never set it yourself<br><span class="small">Prevents: Personal author emails: Trainee C 58/92, Trainee E 4/4</span><br><span class="small">Backed by: <code>.githooks/pre-commit</code> step 2; deny <code>git config user.email *@*</code></span></span></li>
+<li><input type="checkbox"> <span><strong>5. Draft the message from the diff, not from memory</strong><br><code>git diff --cached</code> then <code>type(scope): summary</code>, imperative, 72 characters or fewer. <strong>No</strong> AI co-author or "Generated with" line. More than one slice in the diff: propose splitting<br><span class="small">Prevents: "Update the changes"; "First commit"; Trainee F <code>908d6fa</code> "Add integration and service tests" (the message described 5% of the commit); AI trailers on 11/13, 12/13 and 6/7 commits (Trainee A, Trainee B, Trainee D)</span><br><span class="small">Backed by: <code>.githooks/commit-msg</code>; <code>attribution</code> setting</span></span></li>
+<li><input type="checkbox"> <span><strong>6. Show and wait</strong><br>Print the staged file list and the full message, ask "Commit with this message?" and wait for an explicit yes. If the human edits it, use their version verbatim<br><span class="small">Prevents: Trainee A <code>b456df0</code>: the agent committed unasked; their reaction was "i did not want u to commit anything until I say so"</span><br><span class="small">Backed by: <code>ask</code> on <code>Bash(git commit *)</code></span></span></li>
+<li><input type="checkbox"> <span><strong>7. Commit</strong><br><code>git commit -m "&lt;subject&gt;" -m "&lt;body&gt;"</code> then report the short hash. One slice, one commit, made when the slice is green<br><span class="small">Prevents: Trainee C: 56 commits with one timestamp (history replayed); Trainee B: 4 commits in one second (history rewritten)</span></span></li>
+<li><input type="checkbox"> <span><strong>8. Never push</strong><br>Never push, never amend a pushed commit, never rebase. Pushing is the human's job<br><span class="small">Prevents: Trainee A: the agent attempted to force-push to "undo"; only GitLab branch protection refused. Trainee B: a committed allow-list holding <code>git rebase *</code></span><br><span class="small">Backed by: deny <code>git push --force*</code>; the destructive guard</span></span></li>
+</ul>
+<p class="note"><span class="label">Skill and guard, together</span>The skill is the agent's <em>checklist</em>; <code>.githooks/pre-commit</code> and <code>commit-msg</code> run the same checks when anyone commits. The skill keeps the agent from trying; the hooks stop it if it tries.</p>
+</div>
+<div>
+<h2>Conventional Commit types</h2>
+<div class="table-wrap"><table><tr><th>Type</th><th>Use for</th></tr>
+<tr><td><code>feat</code></td><td>A new capability (an endpoint, a rule)</td></tr>
+<tr><td><code>fix</code></td><td>A bug fix</td></tr>
+<tr><td><code>docs</code></td><td>Docs only, including <code>docs(plan): ...</code></td></tr>
+<tr><td><code>test</code></td><td>Tests only</td></tr>
+<tr><td><code>refactor</code></td><td>Restructure, no behaviour change</td></tr>
+<tr><td><code>perf</code></td><td>Faster, same behaviour</td></tr>
+<tr><td><code>build</code></td><td>Build system, packages, <code>Directory.Build.props</code></td></tr>
+<tr><td><code>ci</code></td><td>CI configuration</td></tr>
+<tr><td><code>chore</code></td><td>Housekeeping, harness files: <code>chore(harness): ...</code></td></tr>
+<tr><td><code>style</code></td><td>Formatting only</td></tr>
+<tr><td><code>revert</code></td><td>Undo an earlier commit, as a new commit</td></tr>
+</table></div>
+<p class="small">Subject: <code>type(scope): summary</code>, imperative, at most 72 characters after the colon. Scope is the area: products, orders, harness, plan. Body (optional): why, in 1-3 lines, and any 1-3-1 decision the human made. The commit-msg hook enforces this with a shell regex; <code>Merge</code> and <code>Revert</code> subjects pass.</p>
+<h2>Where it lives</h2>
+<ul>
+<li><code>.agents/skills/commit/SKILL.md</code>: the tool-neutral home (Codex and Antigravity read it).</li>
+<li><code>.claude/skills/commit</code>: a per-skill symlink to it, for Claude Code.</li>
+<li>Invoke with <code>/commit</code> (Claude Code, Antigravity) or <code>$commit</code> (Codex), or let the description trigger it.</li>
+</ul>
+</div>
+</div>
+
+<h2>Good and bad messages</h2>
+<div class="table-wrap"><table><tr><th>Bad (from the review)</th><th>Why</th><th>Good</th></tr>
+<tr><td><code>Initial commit</code> (1,089 files)</td><td>Says nothing; carries junk</td><td><code>chore: scaffold solution with .gitignore for bin/, obj/ and tmp/</code></td></tr>
+<tr><td><code>First commit</code> (the entire API)</td><td>Nobody can review, bisect or revert a slice</td><td><code>feat(products): CRUD endpoints with SKU uniqueness</code></td></tr>
+<tr><td><code>Update the changes</code></td><td>Which changes?</td><td><code>feat(orders): atomic placement with stock check</code></td></tr>
+<tr><td><code>Add ppt and pdf</code></td><td>Not a change to the product</td><td><code>docs: README, AI process log</code></td></tr>
+<tr><td><code>Add integration and service tests for fulfillment service</code> (60 files, the whole project)</td><td>Describes 5% of the diff; misleading</td><td>One commit per slice; at minimum <code>feat: fulfillment service API, sentinel, tests and docs</code></td></tr>
+<tr><td>One commit holding the plan <em>and</em> the code</td><td>Git cannot show the plan came first</td><td><code>docs(plan): low-stock endpoint</code>, alone, first</td></tr>
+</table></div>
+
+<details class="deeper">
+<summary>Appendix: the SKILL.md, verbatim</summary>
+<figure class="code"><figcaption>reference-solution/.agents/skills/commit/SKILL.md</figcaption><pre><code>---
+name: commit
+description: Commit the current slice. Use whenever a slice has passed the quality gate and review and the work should be committed, or when the user says "commit". Drafts a Conventional Commit message from the staged diff, refuses secrets and build output, checks the company identity, and waits for human approval. Never pushes.
+---
+
+# Commit
+
+Follow every step in order. If any check fails, stop and report; do not work around it.
+
+1. **See what is staged.**
+   `git status --short` and `git diff --cached --stat`.
+   If nothing is staged, list the changed files, propose which belong to this slice, and ask the human
+   before running `git add`. Never use `git add -A` or `git add .`.
+
+2. **Refuse build output and local files.**
+   `git diff --cached --name-only | grep -E '(^|/)(bin|obj|tmp)/|\.db$|(^|/)\.env$'`
+   If anything matches: stop, list the paths, and propose `git restore --staged &lt;path&gt;` plus a `.gitignore` entry.
+
+3. **Refuse secrets.**
+   Run BOTH checks. gitleaks finds known key formats but misses readable config secrets (a JWT signing key
+   spelled as a plain English phrase, for example), and the pattern catches those:
+   - `git diff --cached -- . ':(exclude)ai-session' | grep -nEi '(key|secret|password|pwd|token)["'\'' ]*[:=] *["'\''][^"'\'' ]{8,}'`
+   - `gitleaks git --pre-commit --staged --redact` (if installed; it also scans `ai-session/` transcripts)
+   On any finding: stop, show the file and line (redacted), and explain where the value should live
+   (environment variable, documented in `.env.example`). Continue only if the human confirms it is not a secret.
+
+4. **Check identity.**
+   `git config user.email` must be the company address (`@osmosys.co`).
+   If not, stop and ask the human to run `git config user.email &lt;their company email&gt;`. Do not set it yourself.
+
+5. **Draft the message from the diff, not from memory.**
+   Read `git diff --cached`. Write:
+   - Subject: `type(scope): summary`, imperative, 72 characters or fewer.
+     Types: feat, fix, docs, test, refactor, perf, build, ci, chore, style, revert.
+     Scope: the area (products, orders, harness, plan …).
+   - Body (optional): why, in 1–3 lines; mention any 1-3-1 decision the human made.
+   - **No** `Co-Authored-By`, "Generated with" or any other AI attribution line.
+   If the diff holds more than one slice, say so and propose splitting it instead of writing one message.
+
+6. **Show and wait.** Print the staged file list and the full message. Ask: "Commit with this message?"
+   Wait for an explicit yes. If the human edits the message, use their version verbatim.
+
+7. **Commit.** `git commit -m "&lt;subject&gt;" -m "&lt;body&gt;"`. Report the short hash.
+
+8. **Never push**, never amend a pushed commit, never rebase. Pushing is the human's job.</code></pre></figure>
+</details>
+<p class="small">Sources: <a href="https://code.claude.com/docs/en/skills">Claude Code skills</a> · <a href="https://learn.chatgpt.com/docs/build-skills">Codex skills</a> · <a href="https://antigravity.google/docs/skills">Antigravity skills</a> · <a href="https://www.conventionalcommits.org/en/v1.0.0/">Conventional Commits 1.0.0</a> · <a href="https://github.com/gitleaks/gitleaks">gitleaks</a> (v8.30.1, <code>git --pre-commit --staged</code>). Last verified 2026-09-30.</p>
+
+
+<hr>
+<p class="small"><strong>Taught in:</strong> <a href="../lessons/0005-skills.html">Lesson 5: Skills</a> · <a href="../lessons/0007-guards.html">Lesson 7: Guards</a><br><strong>Other sheets:</strong> <a href="agents-md.html">AGENTS.md structure</a> · <a href="four-guards.html">The four guards</a> · <a href="one-three-one.html">1-3-1</a> · <a href="glossary.html">Glossary</a> · <a href="tool-equivalents.html">Tool equivalents</a></p>
+
+</main>
+</body>
+</html>

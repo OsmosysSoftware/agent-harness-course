@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The 1-3-1 hand-over</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body class="ref">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Reference sheet</p>
+<h1>The 1-3-1 hand-over</h1>
+<p class="lede">When stuck: one problem, three options, one recommendation, then wait. The format, the triggers, four real cases and what the human does next.</p>
+
+
+<div class="cols">
+<div>
+<h2>The format</h2>
+<p>When stuck, the agent does not guess and does not keep trying. It sends exactly this, then <strong>waits</strong>:</p>
+<figure class="code"><figcaption>the hand-over</figcaption><pre><code>PROBLEM    &lt;What is blocked, and why it matters. One or two sentences.&gt;
+OPTIONS    1. &lt;Option&gt; (&lt;trade-off&gt;)
+           2. &lt;Option&gt; (&lt;trade-off&gt;)
+           3. &lt;Option&gt; (&lt;trade-off&gt;)
+RECOMMEND  &lt;Number&gt;: &lt;the reason, in one line&gt;.
+Waiting for your call.</code></pre></figure>
+<ul>
+<li><strong>1</strong> clearly defined problem, <strong>3</strong> options with trade-offs, <strong>1</strong> recommendation.</li>
+<li>It targets the expensive failure in the transcripts: the agent rarely loops forever; it quietly decides something that was the human's call.</li>
+</ul>
+</div>
+<div>
+<h2>When it triggers</h2>
+<div class="table-wrap"><table><tr><th>Stop and hand over when...</th><th>Example</th></tr>
+<tr><td>A <strong>tool, SDK, test provider or environment</strong> blocks you</td><td>Only .NET 6/7 installed; Docker daemon down; EF InMemory cannot run <code>ExecuteUpdateAsync</code></td></tr>
+<tr><td>The fix would change an <strong>invariant</strong>, a <strong>requirement</strong> or <strong>the machine</strong></td><td>Lower <code>TargetFramework</code>; rewrite the atomic UPDATE; install an SDK; start an application; drop a database</td></tr>
+<tr><td>A retry has failed: the <strong>original attempt plus one retry</strong></td><td><code>docs/ai/workflow.md</code>: "after one failed retry, hand over". No third blind try, no polling loop</td></tr>
+</table></div>
+<h2>The exact section to paste into AGENTS.md</h2>
+<figure class="code"><figcaption>AGENTS.md (from the reference solution)</figcaption><pre><code>## When you are stuck: 1-3-1
+If a tool, SDK, test provider or environment blocks you, or a fix would change an invariant,
+a requirement or the machine: STOP. Do not work around it. Reply with exactly
+- **1 problem**: what is blocked and why it matters,
+- **3 options**, with the trade-off of each,
+- **1 recommendation**,
+then wait for the human's decision. Never install, launch, downgrade or delete to get unstuck.</code></pre></figure>
+<p class="small">Add it to the index in lesson 3's commit; <a href="agents-md.html">where it sits in the skeleton</a>.</p>
+</div>
+</div>
+
+<h2>Four real cases, as hand-overs</h2>
+<div class="incident">
+  <div class="happened"><h4>What the agent did</h4><p>Record 187: "the machine has .NET 6/7 installed but not .NET 8. I'm going to build the service against net7.0 so it runs here". The brief says .NET 8 or later; nobody challenged it.</p><p class="who">Trainee E · Codex, gpt-5.5</p></div>
+  <div class="harness"><h4>The 1-3-1 instead</h4><pre>PROBLEM    Only .NET 6/7 SDKs are installed; the brief requires 8+.
+OPTIONS    1. Install the .NET 8 SDK (about 5 min), then build
+           2. Build inside the .NET 8 SDK Docker image
+           3. Target net7.0 and note the deviation
+RECOMMEND  1: option 3 breaks a stated requirement.
+Waiting for your call.</pre><p>Invariant in AGENTS.md: "Target framework is <code>net8.0</code>. Do not change it." The guard hook also denies <code>net7.0</code>.</p></div>
+</div><div class="incident">
+  <div class="happened"><h4>What the agent did</h4><p><code>ExecuteUpdateAsync</code> "could not be translated (InMemory provider)", so the service was rewritten to load tracked entities, decrement in memory and save. The README then claimed row locking made it safe. The evaluator's 12 concurrent orders for 3 units oversold.</p><p class="who">Trainee D · Claude Code, Sonnet</p></div>
+  <div class="harness"><h4>The 1-3-1 instead</h4><pre>PROBLEM    InMemory cannot translate ExecuteUpdateAsync, so 3 order tests fail. The atomic UPDATE ... WHERE qty &gt;= n is what prevents overselling.
+OPTIONS    1. Test orders against a real database (Testcontainers, or real SQLite)
+           2. Keep the atomic update; unit-test other logic on InMemory
+           3. Rewrite to read-then-write (loses atomicity unless we add locking or a rowversion check)
+RECOMMEND  1: keep the correctness; fix the tests, not the service.
+Waiting for your call.</pre><p>The human picks real SQLite and discards the InMemory work (<code>docs/ai/testing.md</code>: "never use the EF Core InMemory provider").</p></div>
+</div><div class="incident">
+  <div class="happened"><h4>What the agent did</h4><p>16:37 <code>docker info</code> failed. The agent ran <code>Start-Process "Docker Desktop.exe"</code> unasked, polled <code>docker info</code> 12 then 10 times, read logs, and asked the user at 17:13: 35 minutes after the first failure.</p><p class="who">Trainee A · Claude Code, Opus 5</p></div>
+  <div class="harness"><h4>The 1-3-1 instead</h4><pre>PROBLEM    The Docker daemon is not running; Docker verification is P0.
+OPTIONS    1. You start Docker Desktop; I continue with docs meanwhile
+           2. I launch Docker Desktop myself and poll
+           3. Defer Docker to the end and ship without verifying
+RECOMMEND  1.
+Waiting for your call.</pre><p>Rule: "Never install, launch, downgrade or delete to get unstuck." Hook: starting software is denied. The hand-over arrives at the first failure, not after polling.</p></div>
+</div><div class="incident">
+  <div class="happened"><h4>What the agent did</h4><p>SQLite cannot <code>ORDER BY</code> a <code>DateTimeOffset</code>. The agent diagnosed it in under 3 minutes, then removed and regenerated the migrations as one <code>InitialCreate</code>, silently. Right here, because nothing had shipped.</p><p class="who">Trainee A · Claude Code, Opus 5</p></div>
+  <div class="harness"><h4>The 1-3-1 instead</h4><pre>PROBLEM    The converter makes EF emit a lossy TEXT to INTEGER AlterColumn.
+OPTIONS    1. Nothing has shipped: drop and regenerate InitialCreate
+           2. Hand-write a data-preserving migration
+           3. Store timestamps as DateTime (UTC) instead
+RECOMMEND  1, because no database exists yet.
+Waiting for your call.</pre><p>The diagnosis needs no hand-over. The decision to delete migrations does: on a real project it has data consequences and is the human's call.</p></div>
+</div>
+
+<div class="cols">
+<div>
+<h2>The human's side</h2>
+<ol>
+<li><strong>Is the problem real?</strong> Re-read PROBLEM. Is it the thing that is actually blocked, or a symptom?</li>
+<li><strong>Does any option touch an invariant or the brief?</strong> Those need your judgement. Rule out options that do unless there is a stated reason.</li>
+<li><strong>Is it reversible?</strong> Prefer the option you can undo (a new commit, a branch) over one you cannot (deleting data or history).</li>
+<li><strong>Decide, then say why in one line.</strong> Reply with the number and the reason; the agent does the rest.</li>
+<li><strong>Record it</strong> in <code>ai-session/PLAN.md</code>, then reference it in the commit body.</li>
+</ol>
+<p class="small">Choosing well is graded too: the swap test reads whether the agent stopped, and your <code>PLAN.md</code> shows you decided.</p>
+</div>
+<div>
+<h2>Record the decision</h2>
+<figure class="code"><figcaption>ai-session/PLAN.md: "Decisions made by the human"</figcaption><pre><code>## Decisions made by the human
+- 2026-09-30: only .NET 6/7 SDK installed; brief requires 8+ -&gt; chose option 1 (install .NET 8 SDK myself) because option 3 breaks the brief (1-3-1)
+- 2026-09-30: InMemory can't run ExecuteUpdateAsync -&gt; chose option 1 (real SQLite in tests) because atomicity is the invariant (1-3-1)</code></pre></figure>
+<p class="small">Format from the reference plan: <code>&lt;date&gt;: &lt;problem&gt; &rarr; chose &lt;option&gt; because &lt;reason&gt; (1-3-1)</code>. Mention it in the commit body too: the commit skill allows "any 1-3-1 decision the human made".</p>
+</div>
+</div>
+
+<h2>Anti-patterns</h2>
+<div class="table-wrap"><table><tr><th>Anti-pattern</th><th>What it looks like</th><th>Instead</th></tr>
+<tr><td><strong>Polling</strong></td><td><code>docker info</code> x12, "timed out, moved to background", x10, read the logs (Trainee A, 35 min)</td><td>One check, one retry, then hand over</td></tr>
+<tr><td><strong>Silently downgrading</strong></td><td>"I'll build against net7.0 so it runs here" (Trainee E); rewrite to read-then-write so InMemory passes (Trainee D)</td><td>Name the blocked requirement as the problem; put the downgrade in the options, never as the action</td></tr>
+<tr><td><strong>"I'll just..."</strong></td><td>"I'll just install the SDK / start Docker / delete the migration and regenerate"</td><td>Install, launch, downgrade and delete are the human's verbs</td></tr>
+<tr><td><strong>Options that are one option</strong></td><td>3 options where 2 are strawmen, or all 3 are the same fix with different flags</td><td>Real trade-offs; include the option you would not pick and say why</td></tr>
+<tr><td><strong>Asking for approval and continuing</strong></td><td>Presenting the 1-3-1, then starting the recommendation</td><td>Stop. Wait for the reply. Nothing runs until the human chooses</td></tr>
+<tr><td><strong>Burying it</strong></td><td>The choice appears as one sentence inside a long status update</td><td>Its own message, with the three labels</td></tr>
+</table></div>
+
+
+<hr>
+<p class="small"><strong>Taught in:</strong> <a href="../lessons/0003-one-three-one.html">Lesson 3: 1-3-1</a> · <a href="../lessons/0004-plan-gated-workflow.html">Lesson 4: Plan-gated workflow</a><br><strong>Other sheets:</strong> <a href="agents-md.html">AGENTS.md structure</a> · <a href="four-guards.html">The four guards</a> · <a href="commit-skill.html">Commit skill</a> · <a href="glossary.html">Glossary</a> · <a href="tool-equivalents.html">Tool equivalents</a></p>
+
+</main>
+</body>
+</html>

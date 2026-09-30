@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plan-Gated Workflow</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body data-lesson="0004">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Lesson 4 of 11 · 17 min read + 45 min exercise</p>
+<h1>The plan-gated workflow</h1>
+<p class="lede">Explore, plan, let the human edit the plan and commit it alone, then build one small slice at a time, so you find the wrong idea in a page of text instead of in sixty files.</p>
+
+<div class="recall">
+  <span class="label">Recall</span>
+  <div class="quiz">
+    <p class="q">Lesson 2: when does a Claude Code path-scoped rule load?</p>
+    <div class="opts">
+      <button class="opt">At the start of every session</button>
+      <button class="opt" data-correct>When a matching file is read</button>
+      <button class="opt">Whenever you type a slash command</button>
+      <button class="opt">Only right after you run compact</button>
+    </div>
+    <p class="why">A rule with paths: frontmatter triggers when Claude reads a file matching the glob. A rule without paths loads always. That is why invariants that must hold everywhere live in the root file.</p>
+  </div>
+  <div class="quiz">
+    <p class="q">Lesson 3: after presenting its 1-3-1, what should the agent do next?</p>
+    <div class="opts">
+      <button class="opt">Start on its recommended option</button>
+      <button class="opt">Try all three options quickly</button>
+      <button class="opt" data-correct>Wait for the human's decision</button>
+      <button class="opt">Ask the same question again</button>
+    </div>
+    <p class="why">The format ends with "then wait for the human's decision". Acting on the recommendation early is just the silent decision again, with better manners.</p>
+  </div>
+</div>
+
+<div class="note">
+  <span class="label">The win</span>
+  <p>By the end, <code>ai-session/PLAN.md</code> is committed on its own <em>before</em> any code. The low-stock endpoint has been built as one slice. A requirement that arrives halfway has gone through a plan change first, in its own commit, before it became code.</p>
+</div>
+
+<h2>What happened</h2>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What happened</h4>
+    <p>Trainee E's instruction was: "Please build the whole project for me". There was no plan to read, so nothing to edit. The result arrived as one commit, <code>34baa0e</code> "First commit" (09-19 12:30): 32 files, 1,422 insertions, the entire API. The later commits were "Add ppt and pdf" and "Update the changes". Nobody could review, bisect (hunt for the commit that broke something) or revert a slice of it.</p>
+    <p class="who">Trainee E · OpenAI Codex · "Delegated" stage</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>"Ask for a plan, edit it, then build one resource at a time." The first output you ask the agent for is a page you can read in two minutes, not a repository.</p>
+  </div>
+</div>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What happened</h4>
+    <p>Trainee F's repo has one commit, <code>908d6fa</code> (09-19 18:44): "Add integration and service tests for fulfillment service". It is 60 files and 5,289 insertions: the API, the data layer, the background service, Docker and the docs. The message describes about 5% of it. The design was good and concurrency-safe; the process left no room to see it being made. Trainee D's <code>PLAN.md</code> had a different flaw: it arrived inside the 67-file commit <code>1009656</code>, so it could not show that it came first (lesson 2).</p>
+    <p class="who">Trainee F · Claude Code · Opus 5 · "Delegated" stage</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>One slice per commit, and the plan committed <em>alone</em> first. The expected history starts <code>docs: task plan</code>, then one <code>feat(…)</code> per slice. A slice small enough to commit is small enough to read in a diff.</p>
+  </div>
+</div>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What worked</h4>
+    <p>Trainee A ran a real plan gate: implementation was blocked until they had reviewed <code>TASK_PLAN.md</code>. They rejected two agent proposals, persisting Rejected orders and an alerts filter, as scope creep. They had the best process of the six, and was still "below the bar", because their plan gate was a prompt they typed, not something in the repo.</p>
+    <p class="who">Trainee A · Claude Code · Opus 5 · "Gated chat"</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>The gate is written into <code>docs/ai/workflow.md</code> and loaded every session, so the next person (or the next you) gets it without retyping it. Their two rejections become what the assessment grades: "Evaluated on what they changed, not on the plan's length."</p>
+  </div>
+</div>
+
+<h2>The loop</h2>
+
+<p>The workflow is a file, so every agent reads the same one. The reference version, from <code>docs/ai/workflow.md</code>:</p>
+
+<figure class="code">
+<figcaption>reference-solution/docs/ai/workflow.md</figcaption>
+<pre># Workflow
+
+## The loop
+1. **Explore**: read the relevant code and docs. Do not edit yet (plan mode, if your tool has one).
+2. **Plan**: write or update `ai-session/PLAN.md`: slices, each with its test and the files it touches.
+   The human edits and approves it. The plan is committed on its own (`docs(plan): …`) before any code.
+3. **One slice**: implement only the next unchecked slice in the plan.
+4. **Quality gate**: run the `quality-gate` skill. Fix failures; if a fix would touch an invariant, use 1-3-1.
+5. **Review**: dispatch `test-reviewer` on the diff, plus `stock-invariant-reviewer` if stock or orders changed.
+   Report its findings to the human. The author never grades its own work.
+6. **Commit**: run the `commit` skill. It drafts the message and waits for approval. Never push.
+7. Tick the slice in `PLAN.md` and go back to step 3.
+
+## When requirements change mid-task
+Stop the current slice. Update `PLAN.md` (add, change or remove slices, with the reason), get the human's
+approval, and commit the plan change on its own. Then continue. Never absorb a new requirement into
+a slice silently.
+
+## Git rules
+- One slice per commit, Conventional Commits, company email, no AI co-author trailers.
+- Never rewrite history (`rebase`, `reset --hard`, `commit --amend` on pushed work, force-push).
+- Never stage `bin/`, `obj/`, `tmp/`, `*.db` or `.env`.
+
+## When stuck
+Use 1-3-1 (see AGENTS.md). Do not poll or retry blindly: after one failed retry, hand over.</pre>
+</figure>
+
+<p>Three steps are gates, which means they stop the work until a human acts: <strong>plan approval</strong> (step 2), <strong>review</strong> (step 5) and <strong>commit approval</strong> (step 6). Steps 4 to 6 use things you build in the next two lessons: the <code>quality-gate</code> and <code>commit</code> skills (lesson 5) and the reviewer subagents (lesson 6). <strong>In your own <code>workflow.md</code>, write steps 4 to 6 as manual for now:</strong> "4. Run <code>dotnet test</code>. 5. The human reviews the diff. 6. The human approves the commit message, then commit." Lessons 5 and 6 swap in the skill and reviewer names. Never point your file at a skill that does not exist yet.</p>
+
+<p>Why a plan file and not just "plan mode"? Plan mode is a <em>tool state</em>; <code>PLAN.md</code> is a <em>contract</em>. The first is gone when the session ends. The second is in git, diffable, editable by you in your editor, readable by a different agent tomorrow, and it has a timestamp that predates the code.</p>
+
+<h2>Plan mode, in three tools</h2>
+
+<p><dfn>Plan mode</dfn> is a permission mode where the agent explores but cannot change your source. In Claude Code, press <kbd>Shift</kbd>+<kbd>Tab</kbd> until the line under the input box shows <code>⏸ plan mode on</code>, or start with <code>claude --permission-mode plan</code>. "Claude reads files and answers questions without making changes", and you leave plan mode by approving the plan or pressing <kbd>Shift</kbd>+<kbd>Tab</kbd> (<a href="https://code.claude.com/docs/en/best-practices#explore-first-then-plan-then-code">Best practices: explore first, then plan, then code</a>). Press <kbd>Ctrl</kbd>+<kbd>G</kbd> to open the proposed plan in your editor (if that does nothing, skip it and edit the file in step 4) and change it before Claude proceeds (<a href="https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode">Permission modes</a>). The plan Claude wrote in plan mode is re-injected from disk after compaction (<a href="https://code.claude.com/docs/en/context-window#what-survives-compaction">Context window</a>). A <code>/plan</code> prefix on a single prompt also works.</p>
+
+<h3>Same idea, other tools</h3>
+<div class="table-wrap"><table class="tools">
+  <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+  <tr><td>Plan first</td><td>Plan mode, or a <code>/plan</code> prefix</td><td>Ask for a plan; run in the <code>read-only</code> sandbox</td><td><code>/plan</code> produces an Implementation Plan artifact</td></tr>
+  <tr><td>Edit the plan</td><td><kbd>Ctrl</kbd>+<kbd>G</kbd> in the approval dialog</td><td>Edit <code>ai-session/PLAN.md</code> in your editor</td><td>Copy it into <code>ai-session/PLAN.md</code> and edit there</td></tr>
+  <tr><td>Durable plan</td><td colspan="3"><code>ai-session/PLAN.md</code>, committed alone, is the same in every tool</td></tr>
+</table></div>
+<p class="small">Sources: <a href="https://learn.chatgpt.com/docs/agent-approvals-security">Codex approvals and security</a> (<code>sandbox_mode = "read-only"</code>) · <a href="https://antigravity.google/docs/plan">Antigravity plan</a>. Codex has no plan mode in our sources; a read-only sandbox plus an explicit "plan only, no edits" prompt does the job. <span class="ver">verified 2026-09-30</span></p>
+
+<h2>The plan file</h2>
+
+<p>The plan file is deliberately small. The reference template, as it stood after two slices:</p>
+
+<figure class="code">
+<figcaption>reference-solution/ai-session/PLAN.md</figcaption>
+<pre># Plan
+
+Approved by: &lt;your name&gt;, &lt;date&gt;. Committed on its own, before any code.
+
+## Goal
+&lt;one sentence from the brief&gt;
+
+## Slices (one commit each; tick when committed)
+- [x] products: low-stock endpoint `GET /api/products/low-stock?threshold=` (tests: default 5, 400 on out-of-range, ordered by stock then SKU)
+- [x] orders: history `GET /api/orders` newest first (tests: order, productId filter). Note: SQLite DateTimeOffset converter (docs/ai/conventions.md)
+- [ ] &lt;next slice&gt;
+
+## Decisions made by the human
+- &lt;date&gt;: &lt;problem&gt; → chose &lt;option&gt; because &lt;reason&gt; (1-3-1)
+
+## Changes to this plan
+- &lt;date&gt;: &lt;what changed and why&gt; (committed as `docs(plan): …`)</pre>
+</figure>
+
+<div class="table-wrap"><table>
+  <tr><th>Section</th><th>What it is for</th></tr>
+  <tr><td>Approved by</td><td>Your name and the date. It is the human act that the gate is about; an unsigned plan is just the agent's draft.</td></tr>
+  <tr><td>Slices</td><td>One checkbox per commit. Each names the <em>test</em> that proves it and the behaviour it must have. The agent implements "the next unchecked slice" and nothing else.</td></tr>
+  <tr><td>Decisions made by the human</td><td>The 1-3-1 answers from lesson 3, with reasons. This is the record of what you decided, as opposed to what the agent did.</td></tr>
+  <tr><td>Changes to this plan</td><td>The audit trail for mid-task changes (next section). Each entry matches a <code>docs(plan): …</code> commit.</td></tr>
+</table></div>
+
+<h3>What to change in the agent's plan</h3>
+
+<p>The agent's first draft will look reasonable, and it is usually the first draft you should distrust. Read it against this checklist and change something. A plan you approved without editing is a plan you didn't read:</p>
+
+<ul>
+  <li><strong>Slices too big.</strong> "Implement orders and alerts" is three commits. Split until each slice is one behaviour with one test, small enough to read in a diff.</li>
+  <li><strong>No test per slice.</strong> Every slice needs the test that would fail if the feature broke, named in the plan. A slice with "add tests later" is not a slice.</li>
+  <li><strong>Scope creep.</strong> Anything not in <code>BRIEF.md</code>: extra filters, persisted rejected orders, an auth layer. Delete it, as Trainee A did. The scope rule is in <code>docs/ai/invariants.md</code>: "Endpoints are exactly those in <code>BRIEF.md</code> plus the ones a human-approved plan adds."</li>
+  <li><strong>An invariant is not mentioned.</strong> A slice that touches stock must say it keeps the guarded UPDATE and the concurrency test green. If the plan does not mention the invariant, add it; the reviewer agent will check it later.</li>
+  <li><strong>Files it will touch are missing.</strong> If the plan does not list them, it has not looked at the code.</li>
+</ul>
+
+<h2>When requirements change</h2>
+
+<p>Real projects change halfway through. The workflow's rule: "Stop the current slice. Update <code>PLAN.md</code> (add, change or remove slices, with the reason), get the human's approval, and commit the plan change on its own. Then continue. Never absorb a new requirement into a slice silently." The assessment plants exactly this: at the 1:30 mark, a message arrives saying "alerts must also be resolvable manually". The expected behaviour is "Plan updated and re-approved before code; the change lands as its own slice."</p>
+
+<p>Why a separate commit for the plan change? Same reason as the first plan: the history then shows the change was <em>decided</em> before it was built, and whose decision it was. Squashing the change into the slice hides that, and makes the slice's diff impossible to review against the plan you approved.</p>
+
+<h3>Scope bait</h3>
+
+<p>The same set of planted traps includes a brief that says auth is "out of scope for now". The right behaviour is that scope written into the rules file makes the agent decline the suggestion. Trainee C added JWT login and AI triage although the brief did not ask, and a doc claimed JWT was "rejected" one minute before it was committed. In this course the defence is two lines: <code>Out of scope: auth, UI, payments. Decline and say so if asked to add them.</code> in <code>AGENTS.md</code>, and the scope section of <code>docs/ai/invariants.md</code>. You will test it with a deliberate bait prompt in the exercise.</p>
+
+<h2>Check yourself</h2>
+<p class="score"></p>
+
+<div class="quiz">
+  <p class="q">Where and when should the approved plan file be committed?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Alone, and before any code</button>
+    <button class="opt">Inside the first slice commit</button>
+    <button class="opt">After the final slice lands</button>
+    <button class="opt">Squashed into the last commit</button>
+  </div>
+  <p class="why">A plan that shares a commit with the code cannot prove it came first; that was Trainee D's 1009656. Committed alone, git timestamps show the plan was approved before the work.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Halfway through, a partner asks for a new filter. What does the workflow do first?</p>
+  <div class="opts">
+    <button class="opt">Quietly fold it into slices</button>
+    <button class="opt" data-correct>Revise the plan, get approval</button>
+    <button class="opt">Finish all, then mention it</button>
+    <button class="opt">Decline it as scope creep</button>
+  </div>
+  <p class="why">A new requirement is a plan change: add or change slices with the reason, get approval, commit the plan change alone, then build it as its own slice. Declining applies to things the brief excludes, like auth, not to a partner's brief change.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">A draft plan has one slice: "implement low-stock endpoint and alerts". What should you change?</p>
+  <div class="opts">
+    <button class="opt">Leave it; the agent splits later</button>
+    <button class="opt" data-correct>Split it into small tested slices</button>
+    <button class="opt">Add more files to that slice</button>
+    <button class="opt">Drop the tests to save time</button>
+  </div>
+  <p class="why">Slices that are too big are the first item on the checklist. One behaviour and one named test per slice keeps each commit reviewable and gives the gate something small to check.</p>
+</div>
+
+<h2>Exercise: plan, gate, build one slice, then absorb a change</h2>
+<div class="exercise">
+  <span class="label">Exercise · ~45 min · adds: ai-session/PLAN.md and the low-stock endpoint</span>
+  <p>The feature: <code>GET /api/products/low-stock?threshold=</code>, which returns products whose stock is at or below the threshold. You decide the details in the plan; that is the exercise.</p>
+  <ol>
+    <li><strong>Fill in the workflow doc.</strong> <strong>Windows:</strong> run the commands in WSL2 or Git Bash (see Before you start on the <a href="../index.html">index</a>). Lesson 2 left <code>docs/ai/workflow.md</code> as a stub. Ask the agent to fill it in, adapting the reference version quoted above, with steps 4 to 6 manual as described there. Keep the "When stuck" and "Git rules" sections. Read every line and change what your repo doesn't match. Commit it alone, before the plan:
+<pre>git add docs/ai/workflow.md
+git commit -m "docs(ai): workflow"</pre></li>
+    <li><strong>Plan mode.</strong> Start a fresh session, switch to plan mode, and check the "AGENTS.md loaded" line (missing? look for a stray <code>CLAUDE.local.md</code>, lesson 2). Prompt:
+<pre>Explore ProductsController and the tests first. Then plan a GET /api/products/low-stock?threshold= endpoint: products with Stock &lt;= threshold, ordered by stock then SKU, default threshold 5, 400 for an out-of-range threshold. Propose the valid range. Plan in slices: each with its test and the files it touches. Write no code.</pre></li>
+    <li><strong>Write it to the file.</strong> When the agent shows its plan, Claude Code asks what to do next. Choose the option that <strong>keeps manual approval</strong> of edits, or <strong>keep planning</strong>; do not choose an option that auto-accepts edits or starts building. (Press <kbd>Ctrl</kbd>+<kbd>G</kbd> first to edit the plan, if your editor opens.) Plan mode cannot write your <code>ai-session/PLAN.md</code>, so press <kbd>Shift</kbd>+<kbd>Tab</kbd> until you have left plan mode, then prompt. If the agent starts editing code instead, press <kbd>Esc</kbd>, say "stop, revert that, I only want the plan file", and run <code>git status</code> to check:
+<pre>Write that plan into ai-session/PLAN.md using this structure: Approved by, Goal, Slices (checkboxes, one commit each, with tests), Decisions made by the human (keep what is there), Changes to this plan. Do not write any code.</pre></li>
+    <li><strong>Edit it like a reviewer.</strong> Open the file in your editor. Apply the five-point checklist and make <strong>at least one real change</strong>: split a slice, add a missing test, pick the threshold range yourself, or delete something the agent added. For example: set the valid range to 0 to 1000 and add a test for 1001 returning 400. Jot down what you changed and why; you will use it in lesson 10. Fill in <code>Approved by</code>.</li>
+    <li><strong>Commit the plan alone.</strong>
+<pre>git add ai-session/PLAN.md
+git commit -m "docs(plan): low-stock endpoint"
+git show --stat HEAD</pre> The stat lists one file.</li>
+    <li><strong>Scope bait.</strong> In the same session: <em>"While you're at it, add an API-key check so only staff can call this endpoint."</em> Expect a polite refusal that cites the out-of-scope rule. If it complies, tell it to revert, and note that your rules file needs a stronger line.</li>
+    <li><strong>One slice.</strong> <pre>Implement only the first unchecked slice in ai-session/PLAN.md, with its test. Stop when it is done.</pre> Run <code>dotnet test</code> yourself. Tick the box in <code>ai-session/PLAN.md</code> and commit with a hand-written message, staging exactly the files the slice touched <strong>plus <code>ai-session/PLAN.md</code> (the tick)</strong>: <code>git add &lt;the files the slice touched&gt; ai-session/PLAN.md &amp;&amp; git commit -m "feat(products): low-stock endpoint"</code>. Only the plan-<em>change</em> commits are plan-only. <code>git commit -a</code> skips new files, so a new test file would be left out. Lessons 5 and 7 replace this with a skill and a guard.</li>
+    <li><strong>The mid-task change.</strong> Working alone is fine: paste this into the session yourself, as if a partner had just sent it (or have a friend send it): <em>"Low-stock must also accept an optional skuPrefix filter."</em> Give it to the agent as-is. The right response is to <strong>stop and update the plan</strong>, not to start editing. Then: add a slice to <code>PLAN.md</code> with its test, add a line under "Changes to this plan" with the reason, and approve it. Commit it alone:
+<pre>git add ai-session/PLAN.md
+git commit -m "docs(plan): add skuPrefix filter"</pre></li>
+    <li><strong>The second slice.</strong> Implement <em>only</em> the new slice, run <code>dotnet test</code>, tick the box, stage the files the slice touched plus <code>ai-session/PLAN.md</code>, and commit <code>feat(products): skuPrefix filter for low-stock</code> (<code>git add &lt;files&gt; &amp;&amp; git commit -m "…"</code>, not <code>-a</code>).</li>
+    <li>Look at your history: <code>git log --oneline</code>. The plan commits should sit directly before the code they govern.</li>
+  </ol>
+  <p><strong>Codex:</strong> run with the read-only sandbox for steps 2 and 3 (or say "plan only, no edits"), then switch to the normal mode for the slices. <strong>Antigravity:</strong> use <code>/plan</code> for step 2 and copy the approved plan into <code>ai-session/PLAN.md</code>. Steps 4 to 9 are identical.</p>
+</div>
+
+<div class="done">
+  <span class="label">Done when</span>
+  <ul class="check" data-key="0004">
+    <li><input type="checkbox"> <span><code>docs(ai): workflow</code> is committed before the plan, and <code>docs/ai/workflow.md</code> is no longer a stub</span></li>
+    <li><input type="checkbox"> <span><code>git log --oneline</code> shows <code>docs(plan): low-stock endpoint</code> before <code>feat(products): low-stock endpoint</code>, and <code>git show --stat</code> on the plan commit lists only <code>ai-session/PLAN.md</code></span></li>
+    <li><input type="checkbox"> <span><code>PLAN.md</code> has <code>Approved by</code> filled in and you can name one thing you changed from the agent's draft</span></li>
+    <li><input type="checkbox"> <span>The agent declined the auth bait citing the scope rule, or you recorded that it didn't</span></li>
+    <li><input type="checkbox"> <span><code>docs(plan): add skuPrefix filter</code> precedes the skuPrefix feature commit, and <code>dotnet test</code> is green</span></li>
+  </ul>
+</div>
+
+<div class="source">
+  <span class="label">Primary source</span>
+  <p><a href="https://code.claude.com/docs/en/best-practices#explore-first-then-plan-then-code">Best practices for Claude Code: explore first, then plan, then code</a> (Anthropic). Then read <a href="https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode">Permission modes: plan mode</a> for the approval flow and editing the plan.</p>
+</div>
+
+<div class="ask">
+  <span class="label">Ask your agent</span>
+  <p>Stuck, or curious? Ask the agent you're learning with, for example: "Read my PLAN.md as a sceptical reviewer. Which slices are too big, which have no test, and which invariant does the plan never mention?"</p>
+</div>
+
+<nav class="lesson-nav">
+  <a href="0003-one-three-one.html">← Lesson 3: 1-3-1</a>
+  <a href="../reference/agents-md.html">AGENTS.md reference</a>
+  <a href="0005-skills.html">Lesson 5: Skills →</a>
+</nav>
+
+</main>
+</body>
+</html>

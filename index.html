@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Harness Course</title>
+<link rel="stylesheet" href="assets/course.css">
+<script src="assets/course.js"></script>
+</head>
+<body>
+<main>
+
+<p class="kicker">Osmosys · .NET trainee programme · verified against tool docs on 2026-09-30</p>
+<h1>The Agent Harness</h1>
+<p class="lede">Configuring AI coding agents on real projects: the <a href="reference/glossary.html">harness</a>, not just the prompt. A harness is the set of files committed in your repo (rules, skills, reviewers and guards) that steer <em>any</em> agent working in it. You'll go from typing into a chat to building one.</p>
+
+<div class="note">
+  <span class="label">Why this course exists</span>
+  <p>In the last agentic assessment, none of the six reviewed repos had a harness. No rules file steered the work, no custom skill, independent reviewer, hook or permission rule ran, and agents made the human's decisions: they downgraded the framework, rewrote an atomic stock update so a test tool could run it, and committed without being asked. The next assessment grades the harness <strong>in the first 30 minutes</strong>, then runs a <a href="reference/glossary.html">swap test</a> on it. Every lesson starts from one of those real incidents.</p>
+</div>
+
+<h2>How it works</h2>
+<ul>
+  <li><strong>One practice repo.</strong> <a href="https://github.com/OsmosysSoftware/agent-harness-practice">agent-harness-practice</a> (StockApi: products, orders, one concurrency invariant). Lesson 1 shows how to get it. Each lesson's exercise adds one piece of harness to it. <a href="reference-solution/AGENTS.md">reference-solution/</a> in <a href="https://github.com/OsmosysSoftware/agent-harness-course">this course's repo</a> is the end state; peek only after trying.</li>
+  <li><strong>Tool-neutral first.</strong> <code>AGENTS.md</code> and <code>.agents/skills/</code> work in Claude Code, Codex and Antigravity. Claude Code specifics come second, and each lesson shows the Codex and Antigravity equivalent.</li>
+  <li><strong>Short lessons, real exercises.</strong> About 20 minutes of reading and 30–45 minutes of hands-on work each. Quizzes check what you remember from earlier lessons as well as the current one. Your quiz results show up in the list below, stored only in this browser.</li>
+  <li><strong>Your agent is your tutor.</strong> Run it in this folder and ask it anything: "explain this lesson's exercise against my repo", "quiz me on lessons 1–4". It can read every page and both repos.</li>
+</ul>
+<h2 id="before-you-start">Before you start</h2>
+<div class="note">
+  <span class="label">Start here</span>
+  <p>Do the lessons <strong>in order, 1 to 11</strong>. Each one builds on the repo from the last. Plan about <strong>12–15 hours</strong> over one or two weeks: roughly 20 minutes of reading and 45–90 minutes of hands-on work per lesson, plus the capstone. You finish with your own practice repo carrying a full harness, and a second repo where you built one against the clock.</p>
+</div>
+
+<h3>Check your setup</h3>
+<p>Run each command; the right-hand column is what you need to see.</p>
+<div class="table-wrap"><table>
+  <tr><th>Tool</th><th>Check</th><th>Need</th></tr>
+  <tr><td>.NET SDK</td><td><code>dotnet --list-sdks</code></td><td>an <code>8.x</code> line</td></tr>
+  <tr><td>git</td><td><code>git --version</code></td><td>2.28 or later</td></tr>
+  <tr><td>Your agent</td><td><code>claude --version</code> (or Codex / Antigravity)</td><td>Claude Code 2.1.277 or later</td></tr>
+  <tr><td>Node.js</td><td><code>node -v</code></td><td>18 or later, for the MCP server in lesson 8 (<a href="https://nodejs.org/">nodejs.org</a>)</td></tr>
+  <tr><td>gitleaks</td><td><code>gitleaks version</code></td><td>any 8.x, for lesson 7 (<a href="https://github.com/gitleaks/gitleaks#installing">install</a>)</td></tr>
+  <tr><td>sqlite3</td><td><code>sqlite3 -version</code></td><td>any 3.x, for lesson 8 (<a href="https://sqlite.org/download.html">download</a>)</td></tr>
+</table></div>
+
+<div class="note">
+  <span class="label">On Windows</span>
+  <p>The commands, hooks and scripts in this course are bash. <strong>Do the course inside WSL2</strong> (Ubuntu), where everything works exactly as written: <code>wsl --install</code> in an admin PowerShell, then install the tools above inside Ubuntu (<a href="https://learn.microsoft.com/en-us/windows/wsl/install">Microsoft's guide</a>).</p>
+  <p><strong>Git Bash</strong> also works, with three differences:</p>
+  <ul>
+    <li>Symlinks become copies unless Developer Mode is on. Copy the skill folders instead, and re-copy them after edits.</li>
+    <li>Windows has no exec bit. Run <code>git update-index --chmod=+x .githooks/* .claude/hooks/*.sh</code> after adding hooks.</li>
+    <li>Your agent's session files live under <code>%USERPROFILE%\.claude\projects</code>.</li>
+  </ul>
+  <p>PowerShell on its own is not supported.</p>
+</div>
+<p class="small">Anything marked <span class="ver">verified 2026-09-30</span> is version-specific; re-check it against the linked docs if your tool is newer. <span class="ver unverified">unverified</span> means test it yourself before relying on it.</p>
+
+<h2>Lessons</h2>
+<ol class="toc">
+  <li data-lesson="0001"><span class="n">01</span><span class="t"><a href="lessons/0001-how-an-agent-works.html">How a coding agent actually works</a><small>The loop, the context window, why chat rules drift, permission and plan modes</small></span><span class="st"></span></li>
+  <li data-lesson="0002"><span class="n">02</span><span class="t"><a href="lessons/0002-rules-files.html">Rules files: AGENTS.md as the source of truth</a><small>An index of about 40 lines, nested and path-scoped rules, committed first</small></span><span class="st"></span></li>
+  <li data-lesson="0003"><span class="n">03</span><span class="t"><a href="lessons/0003-one-three-one.html">When the agent is stuck: 1-3-1</a><small>One problem, three options, one recommendation, then wait. The net7 and InMemory traps</small></span><span class="st"></span></li>
+  <li data-lesson="0004"><span class="n">04</span><span class="t"><a href="lessons/0004-plan-gated-workflow.html">Plan-gated workflow</a><small>Explore, plan, slice, gate, review, commit, and changing the plan mid-task</small></span><span class="st"></span></li>
+  <li data-lesson="0005"><span class="n">05</span><span class="t"><a href="lessons/0005-skills.html">Skills: procedures the agent runs by name</a><small>A commit skill and a quality-gate skill</small></span><span class="st"></span></li>
+  <li data-lesson="0006"><span class="n">06</span><span class="t"><a href="lessons/0006-reviewer-subagents.html">Reviewer subagents</a><small>Fresh-context reviewers; the author never grades itself</small></span><span class="st"></span></li>
+  <li data-lesson="0007"><span class="n">07</span><span class="t"><a href="lessons/0007-guards.html">Guards: rules that block</a><small>Permission rules, hooks, git hooks, guard tests, attribution</small></span><span class="st"></span></li>
+  <li data-lesson="0008"><span class="n">08</span><span class="t"><a href="lessons/0008-mcp.html">MCP: live docs and real data</a><small>context7 for current library docs, and read-only database access</small></span><span class="st"></span></li>
+  <li data-lesson="0009"><span class="n">09</span><span class="t"><a href="lessons/0009-writing-for-the-agent.html">Writing code and docs for the agent</a><small>ADRs, one reference shape, docs audited against code</small></span><span class="st"></span></li>
+  <li data-lesson="0010"><span class="n">10</span><span class="t"><a href="lessons/0010-evidence-and-honesty.html">Evidence and honesty</a><small>Raw transcripts, a reflection on what you rejected, never rewriting history</small></span><span class="st"></span></li>
+  <li data-lesson="0011"><span class="n">11</span><span class="t"><a href="lessons/0011-capstone.html">Capstone: harness in 30 minutes, then the swap test</a><small>Checkpoint 1 of the next assessment, on a repo you haven't seen</small></span><span class="st"></span></li>
+</ol>
+
+<h2>Reference sheets</h2>
+<p>Print these. They are the compressed version of the lessons, and you'll use them in the assessment.</p>
+<div class="table-wrap"><table>
+  <tr><th>Sheet</th><th>Use it when</th></tr>
+  <tr><td><a href="reference/agents-md.html">AGENTS.md structure</a></td><td>Writing or reviewing a rules file</td></tr>
+  <tr><td><a href="reference/one-three-one.html">The 1-3-1 format</a></td><td>The agent is stuck, or you are</td></tr>
+  <tr><td><a href="reference/commit-skill.html">Commit skill checklist</a></td><td>Building or checking a commit skill</td></tr>
+  <tr><td><a href="reference/four-guards.html">The four guard types</a></td><td>Deciding what should block, not just ask</td></tr>
+  <tr><td><a href="reference/tool-equivalents.html">Tool equivalents</a></td><td>Claude Code ↔ Codex ↔ Antigravity</td></tr>
+  <tr><td><a href="reference/glossary.html">Glossary</a></td><td>A term is unclear, or you want the exact name for something</td></tr>
+</table></div>
+
+<h2>What "done" looks like</h2>
+<p>The stage scale from the assessment review. The bar is <strong>Harness</strong>. Everything below it is prompt-only use of an agent.</p>
+<div class="table-wrap"><table>
+  <tr><th>Stage</th><th>What the repo and transcript show</th></tr>
+  <tr><td>1 · Delegated</td><td>The build is handed over in one or two prompts; the human doesn't steer</td></tr>
+  <tr><td>2 · Chat</td><td>One long chat with some scope steering; the agent reviews itself</td></tr>
+  <tr><td>3 · Gated chat</td><td>The human reviews a plan before code, commits are sliced, and AI output is really challenged, but it's still prompt-only</td></tr>
+  <tr><td><strong>4 · Harness</strong></td><td>A rules file committed before the work, plus at least one custom mechanism that demonstrably ran</td></tr>
+  <tr><td>5 · Full harness</td><td>Rules, skills, independent reviewers, hooks and guards, MCP, all visible in the transcript (<a href="reference-solution/AGENTS.md">the reference solution</a>)</td></tr>
+</table></div>
+
+<h2>Where to get wisdom</h2>
+<p>A harness proves itself on someone else's agent. After the capstone, swap repos with another trainee and run each other's swap test. For tool questions, the <a href="https://github.com/anthropics/claude-code">Claude Code repo</a>, the <a href="https://community.openai.com/">OpenAI developer community</a> and the <a href="https://discuss.ai.google.dev/">Google AI developers forum</a> are the maintained places to ask. Sources for every claim are listed in <a href="RESOURCES.md">RESOURCES.md</a>.</p>
+
+</main>
+</body>
+</html>

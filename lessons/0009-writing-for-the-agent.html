@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Writing for the Agent</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body data-lesson="0009">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Lesson 9 of 11 · 18 min read + 40 min exercise</p>
+<h1>Code and docs written for the agent as reader</h1>
+<p class="lede">The most frequent reader of your code and docs is now the agent. It doesn't skim and it forgets, and it "fixes" anything that looks odd. Write for that reader: constraints not narratives, decisions recorded with their reason, rules enforced by tests, and docs audited against the code.</p>
+
+<div class="recall">
+  <span class="label">Recall</span>
+
+  <div class="quiz">
+    <p class="q">Why does a reviewer subagent start without your conversation?</p>
+    <div class="opts">
+      <button class="opt" data-correct>It has not seen the author's reasoning.</button>
+      <button class="opt">Subagents are not allowed to read files.</button>
+      <button class="opt">The harness deletes older chat for speed.</button>
+      <button class="opt">Claude Code limits subagents to short prompts.</button>
+    </div>
+    <p class="why">Lesson 6: a subagent "runs in its own context window", so it judges the diff without the author's justifications. The author never grades its own work.</p>
+  </div>
+
+  <div class="quiz">
+    <p class="q">A partner adds a requirement halfway through. What comes first?</p>
+    <div class="opts">
+      <button class="opt" data-correct>Update PLAN.md, get approval, commit it alone.</button>
+      <button class="opt">Absorb it quietly into the current slice.</button>
+      <button class="opt">Explain it to the agent, then continue.</button>
+      <button class="opt">Start a fresh repository for the change.</button>
+    </div>
+    <p class="why">Lesson 4: a change in requirements goes through the plan gate again, as its own <code>docs(plan): …</code> commit, and is implemented as its own slice. A chat message is gone after <code>/clear</code>.</p>
+  </div>
+</div>
+
+<div class="note">
+  <span class="label">The win</span>
+  <p>By the end your practice repo has an ADR the agent cites and obeys, a <code>conventions.md</code> with a reference shape to copy, two more skills (<code>new-endpoint</code> and <code>update-docs</code>), and comments that point at the ADR. You'll have watched <code>/update-docs</code> catch a false claim, and a fresh session decline to "simplify" your stock update.</p>
+</div>
+
+<h2>What happened</h2>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What happened</h4>
+    <p>Trainee C's <code>AI_MISTAKES_CAUGHT.md</code>, line 91, lists JWT as "rejected — not requested" (commit <code>c3ede46</code>, 22:10:52). One minute later JWT was committed, in 11 commits. The evaluator didn't flag it. The document was a narrative written for the grader, not a constraint the agent read while working.</p>
+    <p>Trainee D's agent replaced an atomic <code>ExecuteUpdateAsync</code> with read-then-write to satisfy InMemory tests. The session log called it "still correct against concurrent writes, because SQL Server's row locking … serializes two orders", and the README then claimed "row locking makes concurrent orders safe". The evaluator's live test of 12 concurrent orders for 3 units oversold.</p>
+    <p class="who">Trainee C · Antigravity · Trainee D · Claude Code (Sonnet) · "docs written from memory"</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>The docs are instructions for the next agent: short, one topic per file, loaded when relevant. The odd-looking decision (one guarded <code>UPDATE</code>) has an ADR that says it's intentional and why. The claim "safe under concurrency" is a test that places 12 orders for 3 units and fails otherwise, not a sentence in a README.</p>
+    <p>A skill, <code>update-docs</code>, compares every claim with the code. It would have caught Trainee C's line; the review says so.</p>
+  </div>
+</div>
+
+<h2>The reader changed</h2>
+
+<p>Lesson 1: the agent knows only what's in its window. Lesson 2: a rules file is loaded every session. This lesson asks what should <em>be</em> in the repo for that reader. The review's last section lists eleven practices; here each is tied to the failure it prevents and to where it lives in StockApi:</p>
+
+<div class="table-wrap"><table>
+  <tr><th>Practice</th><th>Failure it prevents</th><th>In StockApi</th></tr>
+  <tr><td>One tool-neutral source of truth</td><td>Three rules files that disagree</td><td><code>AGENTS.md</code> only, with no <code>CLAUDE.md</code> (see the note below the table)</td></tr>
+  <tr><td>An index, not the manual</td><td>A long file the agent skims</td><td>About 40 lines, plain links to <code>docs/ai/</code></td></tr>
+  <tr><td>One topic per file</td><td>Edits to one rule that leave a copy behind</td><td><code>invariants.md</code>, <code>conventions.md</code>, <code>testing.md</code>, <code>workflow.md</code></td></tr>
+  <tr><td>Separate human and agent docs</td><td>A README that tries to be both</td><td><code>README.md</code> (run it, call it) vs <code>docs/ai/</code> (what must hold)</td></tr>
+  <tr><td>ADRs for deliberate decisions</td><td>The agent "corrects" the odd-looking choice</td><td><code>docs/decisions/0001-atomic-guarded-update.md</code></td></tr>
+  <tr><td>Tests, not prose</td><td>A rule forgotten by turn 300</td><td><code>ConcurrencyTests</code>: 12 orders, 3 units</td></tr>
+  <tr><td>One reference shape to copy</td><td>Five endpoints in five styles</td><td><code>ProductsController</code> + its tests, via <code>new-endpoint</code></td></tr>
+  <tr><td>Code the agent can navigate</td><td>Searching a flat folder of 40 files</td><td><code>Controllers/ Services/ Domain/ Data/</code></td></tr>
+  <tr><td>Short comments, the why in docs</td><td>Essays above a class that go stale</td><td><code>// see docs/decisions/0001</code></td></tr>
+  <tr><td>Pinned versions, live docs</td><td>Code written against last year's API</td><td><code>net8.0</code> in conventions, context7 (lesson 8)</td></tr>
+  <tr><td>Docs audited against the code</td><td>Claims nobody re-checked</td><td>Skill <code>update-docs</code></td></tr>
+</table></div>
+<details class="deeper">
+  <summary>Going deeper: when you do need a CLAUDE.md</summary>
+  <p>Claude Code reads <code>AGENTS.md</code> natively from v2.1.277, but only when no <code>CLAUDE.md</code> exists. Before v2.1.281, some sessions (for example Amazon Bedrock, or telemetry disabled) read <code>CLAUDE.md</code> only. If you meet one of those, add a one-line <code>CLAUDE.md</code> containing <code>@AGENTS.md</code>. It is the fallback, never a second copy of the rules.</p>
+</details>
+<p>The size target comes from Anthropic: "target under 200 lines per CLAUDE.md file", and imports "don't reduce its context cost, because imported files also load at launch" (<a href="https://code.claude.com/docs/en/memory">Memory</a>). Lesson 2's test for each line still applies: <em>would removing this cause the agent to make a mistake?</em></p>
+
+<h2>Record the decision: the ADR</h2>
+
+<p>An <dfn>ADR</dfn> (architecture decision record) is a short file that records one decision: context, what was decided, consequences. Humans write them so the next person doesn't undo the decision without knowing why. An agent has the same problem, worse: to a model, anything unusual is a candidate for "cleanup". The ADR is what makes the oddity <em>intentional</em> on the page. It is the reference solution's file, verbatim:</p>
+
+<figure class="code">
+<figcaption>docs/decisions/0001-atomic-guarded-update.md</figcaption>
+<pre># 0001: Stock changes use one guarded UPDATE, not read-then-write
+
+- Status: accepted
+- Date: 2026-09-30
+
+## Context
+Orders reserve stock. Under concurrency, a read-then-write (load `Product`, check `Stock &gt;= qty`, assign,
+`SaveChanges`) lets two requests read the same value and both succeed. This is how a previous assessment
+submission oversold: 12 concurrent orders for 3 units succeeded more than 3 times. It was introduced to
+make EF Core InMemory tests pass, because InMemory can't translate `ExecuteUpdateAsync` (and it rejects
+transactions by default, so the rewrite loses those too).
+
+On SQLite, read-then-write inside `BeginTransaction()` happens to be serialised: Microsoft.Data.Sqlite starts a
+non-deferred transaction, which takes the write lock up front
+([docs](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/transactions)). That is an accident of one
+provider, not a design. We measured it: read-then-write *inside* the transaction passes the concurrency test,
+and read-then-write *without* it sells 12 of 3.
+
+## Decision
+- Decrement with one statement:
+  `UPDATE Products SET Stock = Stock - @q WHERE Id = @id AND Stock &gt;= @q` (`ExecuteUpdateAsync`).
+  SQLite runs one writer at a time, so the check and the write can't interleave.
+- 0 affected rows means 404 (no product) or 409 (not enough stock).
+- The decrement and the order insert share one transaction.
+- Tests run on real SQLite. `ConcurrencyTests` is the guard: 12 parallel orders for 3 units give exactly 3 successes.
+
+## Consequences
+- EF InMemory can't be used for order tests. That is accepted; see docs/ai/testing.md.
+- Anyone "simplifying" this to tracked entities breaks the invariant, and `stock-invariant-reviewer` blocks it,
+  even when the concurrency test is still green. The test can't see portability; the reviewer can.
+- If the database changes (for example to SQL Server), the same statement stays correct. Revisit only the busy-timeout setting.</pre>
+</figure>
+
+<p>Read the middle paragraph of Context twice, because it's the lesson inside the lesson. We measured it: on SQLite, read-then-write <em>inside</em> a transaction passes the concurrency test, because Microsoft.Data.Sqlite (the EF Core <em>provider</em>, the plug-in that talks to one particular database) takes the write lock up front. So <strong>a green guard test can be green for the wrong reason</strong>: the provider's locking, not your design, was holding the invariant. Trainee D's code oversold on SQL Server (READ COMMITTED); it would also oversell here the moment the transaction went away, which is what an InMemory-driven rewrite does. That's why the ADR's Consequences section assigns the last word to a reviewer that reads the code, not only to a test that runs it. Tests and reviewers cover different failures; you need both.</p>
+
+<p>The ADR is referenced from three places so an agent finds it whichever path it takes: <code>docs/ai/invariants.md</code> ("Why: docs/decisions/0001-…"), <code>.claude/rules/efcore.md</code>, and a one-line comment at the code. Right now <code>OrderService.cs</code> line 17 has a dangling pointer, <em>"// Atomic guarded UPDATE: no read-then-write. See docs/decisions (added in lesson 9)."</em>; the exercise replaces that whole comment with <code>// Atomic guarded UPDATE, never read-then-write: see docs/decisions/0001.</code> It also adds the other two pointers.</p>
+
+<h2>Enforce with tests; explain with docs</h2>
+<p>Prose is a request; a failing test is a fact. The guard test is short enough to read whole:</p>
+<figure class="code">
+<figcaption>reference-solution/tests/StockApi.Tests/ConcurrencyTests.cs (extract)</figcaption>
+<pre>var product = await _client.CreateProductAsync("CONC-1", 3);
+
+// Hold every request at a gate and release them together so they really overlap.
+var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+var inFlight = Enumerable.Range(0, 12).Select(_ =&gt; Task.Run(async () =&gt;
+{
+    await gate.Task;
+    return await _client.PostAsJsonAsync("/api/orders", new { productId = product.Id, quantity = 1 });
+})).ToList();
+gate.SetResult();
+var responses = await Task.WhenAll(inFlight);
+
+Assert.Equal(3, responses.Count(r =&gt; r.StatusCode == HttpStatusCode.Created));
+Assert.Equal(9, responses.Count(r =&gt; r.StatusCode == HttpStatusCode.Conflict));</pre>
+</figure>
+<p>The gate matters: without it the 12 requests may run one after another and any implementation passes. Docs still have a job, which is the <em>why</em> and the <em>what to do instead</em>. The pair is: test says "this is wrong", document says "here's the right shape and the reason".</p>
+
+<h2>One reference shape, and the conventions file</h2>
+<p>Agents imitate well. "Copy the shape of X" beats a page of description, so <code>docs/ai/conventions.md</code> names the shape and the rules around it. Verbatim:</p>
+<figure class="code">
+<figcaption>docs/ai/conventions.md</figcaption>
+<pre># Conventions
+
+- Layout: `Controllers/` (HTTP only), `Services/` (rules and transactions), `Domain/` (entities), `Data/` (DbContext).
+- The reference shape for a resource is `ProductsController` + its tests. Copy it (skill `new-endpoint`).
+- Errors are `ProblemDetails`: 400 validation, 404 missing, 409 conflict (duplicate SKU, insufficient stock).
+- Everything is async, with a `CancellationToken` passed through.
+- Nullable is enabled, and warnings are errors (`Directory.Build.props`).
+- Versions: `net8.0`, EF Core 8.0.x. For any library API you are not sure of, look it up (context7 MCP)
+  instead of relying on memory.
+- SQLite can't ORDER BY or compare `DateTimeOffset` in SQL; store it with `DateTimeOffsetToBinaryConverter`.
+  See the [EF Core SQLite limitations](https://learn.microsoft.com/en-us/ef/core/providers/sqlite/limitations).
+- Comments: one or two lines, and the "why" points to docs, e.g. `// see docs/decisions/0001`.</pre>
+</figure>
+<p>Two habits visible there. Every line is checkable against the code (layout, error codes, versions), which is what lets a skill audit it. And the line about <code>DateTimeOffset</code> is lesson 8's incident turned into a rule: once a lookup finds a limit, record the answer so the next session doesn't need the lookup.</p>
+
+<p>The skill that uses the shape is <code>new-endpoint</code>. Verbatim:</p>
+<figure class="code">
+<figcaption>.agents/skills/new-endpoint/SKILL.md</figcaption>
+<pre>---
+name: new-endpoint
+description: Add a new endpoint or resource by copying the reference shape (ProductsController and its tests). Use when a plan slice adds or changes an HTTP endpoint.
+---
+
+# New endpoint
+
+The reference shape is `src/StockApi/Controllers/ProductsController.cs` plus
+`tests/StockApi.Tests/ProductsTests.cs`. Read both first, then copy their shape. Do not invent a new one.
+
+1. **Controller**: HTTP only. Validate the input, call a service, and map the result to 200/201/404/409 `ProblemDetails`.
+   No `DbContext` in controllers except for simple reads that match `ProductsController`.
+2. **Service**: rules and transactions. Any stock change follows docs/ai/invariants.md (one guarded UPDATE).
+3. **DTOs**: `record` request and response types next to the controller; never return entities.
+4. **Tests first**: add the failing integration tests in `tests/StockApi.Tests/&lt;Resource&gt;Tests.cs` using
+   `StockApiFactory`: the happy path, 404, 409 and 400. If the endpoint changes stock, also add a case to
+   `ConcurrencyTests`.
+5. Run the `quality-gate` skill. Then ask for a review by `test-reviewer`, plus `stock-invariant-reviewer`
+   if stock changed.</pre>
+</figure>
+<p>Notice the skill doesn't restate the conventions. It points at them and at the reference files, so there is one place to update. Its <code>description</code> says <em>when</em> to use it, so the model can pick it without being told.</p>
+
+<h2>Audit the docs against the code</h2>
+<p>Docs written from memory drift. The fix is a procedure that compares each claim with evidence. This is the second skill, verbatim:</p>
+<figure class="code">
+<figcaption>.agents/skills/update-docs/SKILL.md</figcaption>
+<pre>---
+name: update-docs
+description: Audit docs/ai/*.md, AGENTS.md and README.md against the actual code and propose corrections. Use after a feature lands, before a submission, or when the user asks whether the docs are still true.
+---
+
+# Update docs
+
+Docs written from memory drift. This skill compares every claim with the code.
+
+1. List each factual claim in `AGENTS.md`, `docs/ai/*.md`, `docs/decisions/*.md` and `README.md`:
+   commands, endpoints, invariants, file paths, versions, "we decided X".
+2. For each claim, find the evidence: the file:line, a `git log` entry or a test. Classify it:
+   **TRUE** (with evidence), **STALE** (with what the code does now) or **UNVERIFIABLE**.
+3. Print a table: claim · verdict · evidence.
+4. Propose edits for STALE claims only, as a diff. Do not apply them until the human approves.
+5. Never add narrative ("we carefully considered…"). Docs here are instructions for the next agent.</pre>
+</figure>
+<p>A run prints something like this (your rows will differ):</p>
+<figure class="code"><figcaption>sample /update-docs output (illustrative)</figcaption>
+<pre>| claim                                          | verdict | evidence                                   |
+|------------------------------------------------|---------|--------------------------------------------|
+| Build: `dotnet build -warnaserror`             | TRUE    | .agents/skills/quality-gate/gate.sh:12     |
+| Target framework is net8.0                     | TRUE    | src/StockApi/StockApi.csproj:4             |
+| README: GET /api/products/{id}                 | STALE   | README.md lists 4 endpoints; code has 6    |
+| "we carefully considered SQL Server"           | UNVERIFIABLE | no commit, test or file mentions it   |</pre>
+</figure>
+<p>Three design choices worth copying. Each claim needs <em>evidence</em> (a file:line, a commit, a test), so the skill can't rubber-stamp. Step 4 <em>proposes</em> edits and waits, which is lesson 1's rule for anything that changes shared state. And step 5 forbids the very thing the six repos produced: narrative. Note <strong>UNVERIFIABLE</strong> is a legitimate verdict; it is the honest answer to "we carefully considered X". Lesson 10 applies the same discipline to your own REFLECTION.md.</p>
+
+<h3>Same idea, other tools</h3>
+<div class="table-wrap"><table class="tools">
+  <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+  <tr><td>Rules index</td><td><code>AGENTS.md</code> <span class="ver">v2.1.277+ · verified 2026-09-30</span></td><td><code>AGENTS.md</code>, root to cwd, closest last</td><td><code>AGENTS.md</code> / <code>GEMINI.md</code></td></tr>
+  <tr><td>Nested rules</td><td>Subdirectory <code>AGENTS.md</code> loads when a file there is read</td><td>Concatenated root-down; <code>project_doc_max_bytes</code> 32 KiB</td><td><code>.agents/rules/*.md</code> with a <code>trigger</code></td></tr>
+  <tr><td>Skills</td><td><code>.claude/skills/&lt;name&gt;</code> (symlink to <code>.agents/skills</code>)</td><td><code>.agents/skills/&lt;name&gt;/</code>, <code>$name</code></td><td><code>.agents/skills/&lt;name&gt;/</code>, <code>/name</code></td></tr>
+  <tr><td>ADRs</td><td colspan="3">Plain markdown in <code>docs/decisions/</code>. No tool loads them automatically, so <code>AGENTS.md</code>, <code>invariants.md</code> and a code comment link to them.</td></tr>
+</table></div>
+<p class="small">Sources: <a href="https://code.claude.com/docs/en/memory#agents-md">Claude Code memory</a> · <a href="https://learn.chatgpt.com/docs/agent-configuration/agents-md">Codex AGENTS.md</a> · <a href="https://antigravity.google/docs/rules">Antigravity rules</a> · <a href="https://agents.md/">agents.md</a>: "the closest one takes precedence".</p>
+
+<h2>Check yourself</h2>
+<p class="score"></p>
+
+<div class="quiz">
+  <p class="q">An agent rewrites the stock update to tracked entities, but <code>ConcurrencyTests</code> stays green on SQLite. Why must the change still be blocked?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Green can come from locking, not design.</button>
+    <button class="opt">Passing tests are always ignored by reviewers.</button>
+    <button class="opt">SQLite cannot run concurrent tests at all.</button>
+    <button class="opt">The ADR forbids changes to existing tests.</button>
+  </div>
+  <p class="why">Microsoft.Data.Sqlite takes the write lock when the transaction starts, so read-then-write inside one passes. Remove the transaction, or move to SQL Server, and it oversells. The ADR says the test can't see that; the reviewer can.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Trainee C's doc said "JWT rejected"; JWT was committed a minute later. Which practice catches this?</p>
+  <div class="opts">
+    <button class="opt">A longer AGENTS.md with extra rules</button>
+    <button class="opt">A README written for the evaluator</button>
+    <button class="opt" data-correct>A skill auditing claims against code</button>
+    <button class="opt">A comment above the JWT class</button>
+  </div>
+  <p class="why"><code>update-docs</code> requires evidence for every claim (file:line, commit or test) and labels the rest STALE or UNVERIFIABLE. "Rejected" would have had no matching event.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">From the agent's side, what is an ADR mainly for?</p>
+  <div class="opts">
+    <button class="opt">Listing endpoints it must build next</button>
+    <button class="opt">Writing each slice's commit message draft</button>
+    <button class="opt">Deciding which old tests to delete</button>
+    <button class="opt" data-correct>Marking an odd choice as deliberate</button>
+  </div>
+  <p class="why">An agent "corrects" anything that looks unusual. The ADR states the choice, the reason and what breaks if it's undone, so the model leaves it alone or hands over a 1-3-1.</p>
+</div>
+
+<h2>Exercise: make the repo readable, then test the ADR</h2>
+<div class="exercise">
+  <span class="label">Exercise · ~40 min · adds: ADR, conventions.md, two skills, pointer comments</span>
+  <ol>
+    <li><strong>Write the ADR and conventions.</strong> Create <code>docs/decisions/0001-atomic-guarded-update.md</code> and <code>docs/ai/conventions.md</code> from the listings above. Ask the agent to draft them if you like, but read every line, and change anything your repo doesn't match (for example your low-stock endpoint). Link both from <code>AGENTS.md</code> under "More context".
+      One line in <code>conventions.md</code> needs a file your practice repo doesn't have yet: <em>"warnings are errors (<code>Directory.Build.props</code>)"</em>. <strong>Recommended:</strong> make it true. Copy <code>Directory.Build.props</code> from <code>reference-solution/</code> to your repo root (it is six lines: nullable, implicit usings and <code>TreatWarningsAsErrors</code>), run <code>dotnet build -warnaserror</code> to confirm it is still clean, and commit it with the docs. The capstone relies on it. The alternative is to delete that bullet, but then your docs and your build disagree with the reference.</li>
+    <li><strong>Add the two skills</strong> in the tool-neutral place, then link each for Claude Code. <em>Windows: run these in WSL2 or Git Bash (see Before you start on the <a href="../index.html">index</a>).</em>
+<pre>mkdir -p .agents/skills/new-endpoint .agents/skills/update-docs
+# write both SKILL.md files, then:
+ln -s ../../.agents/skills/new-endpoint .claude/skills/new-endpoint
+ln -s ../../.agents/skills/update-docs  .claude/skills/update-docs
+ls -l .claude/skills</pre>
+      <code>ls -l</code> should show <code>new-endpoint -&gt; ../../.agents/skills/new-endpoint</code>. The link's target is relative to the link's own folder (<code>.claude/skills/</code>), not to where your shell is, which is why it starts with <code>../..</code>. If the arrow points at a path that doesn't exist, delete the link with <code>rm .claude/skills/new-endpoint</code> and redo it.
+    </li>
+    <li><strong>Adapt the skill to your repo.</strong> <code>new-endpoint</code> names <code>tests/StockApi.Tests/ProductsTests.cs</code> as the reference shape, but your practice repo has only <code>tests/StockApi.Tests/ApiTests.cs</code>. <strong>Easiest:</strong> edit the two reference-shape paths in <code>new-endpoint/SKILL.md</code> to point at <code>ApiTests.cs</code>. (Splitting the product tests into <code>ProductsTests.cs</code> also works, but is extra work for no gain today.) Otherwise the skill sends the agent to a file that doesn't exist.</li>
+    <li><strong>Point the code at the ADR.</strong> In <code>OrderService.cs</code>, replace the dangling comment on line 17, <code>// Atomic guarded UPDATE: no read-then-write. See docs/decisions (added in lesson 9).</code>, with <code>// Atomic guarded UPDATE, never read-then-write: see docs/decisions/0001.</code> One line, no essay.</li>
+    <li><strong>Add the other two pointers.</strong> In <code>docs/ai/invariants.md</code>, under invariant 1, add the line <code>- Why: docs/decisions/0001-atomic-guarded-update.md</code>. In <code>.claude/rules/efcore.md</code>, make sure the stock-changes line ends with <code>(docs/decisions/0001)</code>. Then open your <code>stock-invariant-reviewer</code> agent file: lesson 6 told you its ADR reference would resolve only after this lesson, so confirm it now says <em>"Read docs/ai/invariants.md and docs/decisions/0001-atomic-guarded-update.md first"</em> (use your own reviewer's name if it differs). Add that sentence if you left it out. Without these, the ADR test in step 7 can pass or fail for the wrong reason.</li>
+    <li><strong>Run the audit.</strong> <code>/update-docs</code>. Expect at least one STALE row: <code>README.md</code> lists the endpoints as they were before lessons 4 and 8. (If the skill isn't found, start a new session so it loads; the sample table above shows the shape of a good answer.) Now plant two false claims yourself, in the style of Trainee D: in <code>AGENTS.md</code> write <em>"Stock writes use row locking (SELECT … FOR UPDATE)"</em>, and in <code>README.md</code> change the run command to <code>dotnet run --project src/Api</code>. Run <code>/update-docs</code> again. Both must come back STALE with evidence. Approve the proposed diff, confirm the false claims are gone, and do <em>not</em> keep any you planted.</li>
+    <li><strong>The ADR test.</strong> Start a <em>new</em> session. Ask: <em>"Simplify OrderService.PlaceAsync: load the product, check Stock, decrement and SaveChanges. It is shorter."</em> Pass: it cites <code>docs/decisions/0001</code> (or <code>invariants.md</code>), declines or hands over a 1-3-1, and doesn't edit. Fail: it edits. If it edits, run <code>stock-invariant-reviewer</code> on the diff and expect BLOCK, then improve the ADR or the invariant line and re-run in another new session.</li>
+    <li><strong>Optional, to see the test turn red.</strong> On a scratch branch: make the rewrite yourself (load, check, decrement, <code>SaveChanges</code>) <em>and remove the transaction</em>. <code>ConcurrencyTests</code> fails (measured on the reference solution: "Expected: 3 / Actual: 12"). Put the transaction back and it passes again, which is the "green for the wrong reason" case from the ADR. Discard the branch.</li>
+    <li><strong>Commit</strong> through <code>/commit</code>: <code>docs: add ADR 0001 and conventions</code> (include <code>Directory.Build.props</code> and the two pointer lines), then <code>chore(harness): add new-endpoint and update-docs skills</code>.</li>
+  </ol>
+  <p><strong>Codex:</strong> skills are already in <code>.agents/skills/</code>; invoke with <code>$update-docs</code>. Nested rules load root-down, so the <code>tests/AGENTS.md</code> from lesson 2 applies when you work there. <strong>Antigravity:</strong> same folder, invoke with <code>/update-docs</code>. For the ADR test start a new conversation.</p>
+</div>
+
+<div class="done">
+  <span class="label">Done when</span>
+  <ul class="check" data-key="0009">
+    <li><input type="checkbox"> <span><code>docs/decisions/0001-…md</code> and <code>docs/ai/conventions.md</code> are committed and linked from <code>AGENTS.md</code></span></li>
+    <li><input type="checkbox"> <span><code>ls -l .claude/skills</code> shows symlinks for <code>new-endpoint</code> and <code>update-docs</code></span></li>
+    <li><input type="checkbox"> <span><code>/update-docs</code> flagged your planted false claims as STALE</span></li>
+    <li><input type="checkbox"> <span><code>invariants.md</code> and <code>efcore.md</code> both point at the ADR, and <code>dotnet build -warnaserror</code> is clean with <code>Directory.Build.props</code> in place</span></li>
+    <li><input type="checkbox"> <span>A fresh session cited the ADR when asked to simplify <code>OrderService</code></span></li>
+  </ul>
+</div>
+
+<div class="source">
+  <span class="label">Primary source</span>
+  <p><a href="https://agents.md/">AGENTS.md</a>: "a simple, open format for guiding coding agents", a README for agents. Read the suggested sections, then compare them with the <code>AGENTS.md</code> in <code>reference-solution/</code>.</p>
+</div>
+
+<div class="ask">
+  <span class="label">Ask your agent</span>
+  <p>Stuck, or curious? Ask the agent you're learning with, for example: "Read my docs/ai folder and tell me which line, if deleted, would not change how you behave. Then which of my claims you could not verify in the code."</p>
+</div>
+
+<nav class="lesson-nav">
+  <a href="0008-mcp.html">← Lesson 8: MCP</a>
+  <a href="../reference/agents-md.html">AGENTS.md structure</a>
+  <a href="0010-evidence-and-honesty.html">Lesson 10: Evidence and honesty →</a>
+</nav>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The four guards</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body class="ref">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Reference sheet</p>
+<h1>The four guards</h1>
+<p class="lede">Rule vs guard, and the four mechanisms that mechanically block: permission rule, PreToolUse hook, git hook, guard test. Where each lives, what it stops, who it binds.</p>
+
+
+<div class="note"><span class="label">Rule vs guard</span>
+<p>In this course a <strong>guard</strong> always means something that <em>mechanically blocks</em>. A rule the agent is asked to follow is a <strong>rule</strong>. A rule is a request in the context window; a guard sits where the call runs, so it holds after compaction, after <code>/clear</code>, and when the model "wants" otherwise. <span class="small">Write the rule too, so the agent stops walking into the wall.</span></p></div>
+
+<h2>The four kinds, weakest to strongest reach</h2>
+<div class="table-wrap"><table><tr><th>Kind</th><th>Lives in</th><th>Stops</th><th>Binds</th><th>Bypass</th></tr>
+<tr><td><strong>1 Permission rule</strong></td><td><code>.claude/settings.json</code> &rarr; <code>permissions</code> allow / ask / deny</td><td>A tool call the agent was about to make: prompts (ask) or refuses (deny). No script</td><td>The agent only</td><td>Not by the agent. The rule binds the agent's tool calls, not you typing in your own terminal</td></tr>
+<tr><td><strong>2 PreToolUse hook</strong></td><td>A script wired under <code>hooks.PreToolUse</code>, e.g. <code>.claude/hooks/destructive-guard.sh</code></td><td>A tool call, by reading its input and denying it. Can match patterns a permission rule cannot express</td><td>The agent only</td><td>Not by the agent; cannot override a deny or ask rule</td></tr>
+<tr><td><strong>3 Git hook</strong></td><td><code>.githooks/pre-commit</code>, <code>.githooks/commit-msg</code>, enabled by <code>git config core.hooksPath .githooks</code></td><td>A <code>git commit</code> whoever runs it</td><td>Anyone committing, human or agent, in a clone where it is enabled</td><td>The no-verify flag, or a clone that never set <code>core.hooksPath</code></td></tr>
+<tr><td><strong>4 Guard test</strong></td><td>A test, e.g. <code>tests/StockApi.Tests/ConcurrencyTests.cs</code></td><td>A change that breaks a project invariant, at <code>dotnet test</code></td><td>Every test run: agent, human, CI</td><td>Deleting or weakening the test (so the reviewer and the diff must watch it)</td></tr>
+</table></div>
+
+<div class="cols">
+<div>
+<h3>1 Permission rule</h3><p>No script. The tool refuses or prompts. Hand-written, reviewed and committed, unlike the auto-saved <code>settings.local.json</code>.</p><figure class="code"><figcaption>.claude/settings.json (excerpt)</figcaption><pre><code>    "ask": [
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      ...
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git commit --no-verify*)",
+      "Read(./.env)",
+      "Edit(./.env)",
+      "Bash(git config user.email *@*)"
+    ]</code></pre></figure><p class="small">Evaluated <strong>deny, then ask, then allow</strong>; the first match decides (<a href="https://code.claude.com/docs/en/permissions">Permissions</a>). Compound commands are split and each part matched. Deny and ask always apply; project allow rules apply only after workspace trust.</p>
+<h3>3 Git hook</h3><p>Runs for anyone committing. Enable once per clone; hooks must be executable.</p><figure class="code"><figcaption>.githooks/pre-commit (steps 1 and 3)</figcaption><pre><code># 1. No build output, local databases or env files.
+bad=$(git diff --cached --name-only | grep -E '(^|/)(bin|obj|tmp)/|\.db$|(^|/)\.env$')
+[ -n "$bad" ] &amp;&amp; fail "refusing to commit build output or local files:
+$bad
+Unstage with: git restore --staged &lt;path&gt;"
+...
+# 3. Secrets: a pattern check for config-style secrets, which gitleaks misses on low-entropy values
+#    such as "SuperSecretAuthenticationKey…" (measured 2026-09-30), then gitleaks for known key formats.
+# ai-session/ holds raw transcripts, which quote config on purpose; gitleaks still scans them below.
+hits=$(git diff --cached -U0 -- . ':(exclude)ai-session' | grep -E '^\+' | grep -nEi '(key|secret|password|pwd|token)["'\'' ]*[:=] *["'\''][^"'\'' ]{8,}')
+[ -n "$hits" ] &amp;&amp; fail "possible secret in staged changes (move it to .env, document it in .env.example):
+$hits"
+if command -v gitleaks &gt;/dev/null 2&gt;&amp;1; then
+  gitleaks git --pre-commit --staged --redact --no-banner || fail "gitleaks found a secret (see above)."</code></pre></figure><figure class="code"><figcaption>.githooks/commit-msg (excerpt)</figcaption><pre><code>echo "$subject" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9._/-]+\))?!?: .{1,72}$' || {
+...
+if grep -Eqi '^(co-authored-by: .*(claude|codex|gemini|copilot|anthropic|openai|noreply@)|.*generated with .*(claude|codex|gemini|antigravity))' "$msg_file"; then</code></pre></figure><p class="small">Secret scanning runs a pattern check <em>and</em> gitleaks: gitleaks 8.23.3 and 8.30.1 both did not flag the low-entropy "SuperSecretAuthenticationKey..." value, and both flagged a random 32-character key (measured 2026-09-30); the pattern check does. No Node needed: a shell regex. <code>@commitlint/cli</code> 21.2.3 was 11 days old on 2026-09-30, inside the 14-day package rule. Nothing forces <code>core.hooksPath</code>; the deny rule on the no-verify flag covers the agent.</p>
+</div>
+<div>
+<h3>2 PreToolUse hook</h3><p>A script that reads the call and can deny it. Wiring, then the script:</p><figure class="code"><figcaption>.claude/settings.json (wiring)</figcaption><pre><code>    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/destructive-guard.sh\""
+          }
+        ]
+      }
+    ],</code></pre></figure><figure class="code"><figcaption>.claude/hooks/destructive-guard.sh (excerpt)</figcaption><pre><code>deny() {
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' "$1"
+...
+check 'git[[:space:]]+push.*(--force|[[:space:]]-f([[:space:]]|$)|--force-with-lease)' &amp;&amp; deny "Force-push rewrites shared history. Ask the human; they push, not the agent."
+...
+check 'TargetFramework&gt;net[0-7]\.|net7\.0|net6\.0' &amp;&amp; deny "Target framework is net8.0 (AGENTS.md). A missing SDK is a 1-3-1, not a downgrade."</code></pre></figure><p class="small">Block with exit 2 (stderr becomes the reason) or exit 0 with JSON <code>permissionDecision: "deny"</code>. <strong>Exit 0 with no output is "no decision", not approval</strong>, and a hook cannot override a deny or ask rule (<a href="https://code.claude.com/docs/en/hooks">Hooks</a>).</p>
+<h3>4 Guard test</h3><p>A test for a project rule; the only guard that checks behaviour, not text.</p><figure class="code"><figcaption>tests/StockApi.Tests/ConcurrencyTests.cs (asserts)</figcaption><pre><code>        Assert.Equal(3, responses.Count(r =&gt; r.StatusCode == HttpStatusCode.Created));
+        Assert.Equal(9, responses.Count(r =&gt; r.StatusCode == HttpStatusCode.Conflict));
+        var after = await _client.GetFromJsonAsync&lt;Product&gt;($"/api/products/{product.Id}");
+        Assert.Equal(0, after!.Stock);</code></pre></figure><p class="small">Measured 2026-09-30: read-then-write <em>inside</em> <code>BeginTransaction()</code> still passes on SQLite (Microsoft.Data.Sqlite takes the write lock up front); without the transaction it fails with "Expected: 3 / Actual: 12". A green guard test can be green for the wrong reason, so a reviewer agent reads the diff as well.</p>
+</div>
+</div>
+
+<div class="cols">
+<div>
+<h2>Cautions</h2>
+<ul>
+<li><strong>A Bash rule isn't a security boundary.</strong> It matches the command text the agent writes, not what the program does. A deny on <code>git push --force*</code> will not see a wrapper script. That is why the guard hook greps the same patterns, and why git hooks and branch protection sit behind them.</li>
+<li><strong>A trailing space-star also matches the bare command.</strong> The first draft denied <code>Bash(git config user.email *)</code>; it blocked <em>reading</em> the email and broke the commit skill's identity check. Fixed with two wildcards, which do not match the bare command, plus an allow for the bare read: <code>deny Bash(git config user.email *@*)</code>, <code>allow Bash(git config user.email)</code>. Test every guard against your own procedures.</li>
+<li><strong>Allow rules need trust; deny and ask do not.</strong> In an untrusted clone Claude Code prints "Ignoring 10 permissions.allow entries from .claude/settings.json: this workspace has not been trusted" (the number is your allow-list size). Deny and ask still apply. <span class="ver">verified 2026-09-30</span></li>
+<li><strong>Silence is not consent.</strong> A hook that prints nothing decides nothing; the normal permission flow continues.</li>
+<li><strong>Probe every guard once.</strong> Ask for the forbidden thing and watch it refuse: force-push; "Update the changes"; a fake key in <code>appsettings.json</code>; read-then-write with the transaction removed.</li>
+</ul>
+</div>
+<div>
+<h2>The attribution setting</h2>
+<p>Drops the AI trailer and "Generated with" line Claude Code adds to commits and PRs.</p>
+<figure class="code"><figcaption>.claude/settings.json</figcaption><pre><code>  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },</code></pre></figure>
+<ul>
+<li><strong>Portable form</strong> (above) works on old and new versions.</li>
+<li><code>"attribution": false</code> needs <strong>v2.1.281+</strong>; older versions skip the <em>whole settings file</em> that contains it, dropping your permissions too. <span class="ver">v2.1.281+ · verified 2026-09-30</span></li>
+<li><code>includeCoAuthoredBy</code> has been deprecated since v2.0.62.</li>
+</ul>
+<p class="small"><a href="https://code.claude.com/docs/en/settings-reference#attribution">Settings reference: attribution</a></p>
+</div>
+</div>
+
+<h2>Per-tool equivalents</h2>
+<div class="table-wrap"><table><tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+<tr><td>1 Permission rule</td><td><code>.claude/settings.json</code> <code>permissions.allow / ask / deny</code>, e.g. <code>Bash(git commit *)</code>. Evaluated deny, then ask, then allow; first match wins</td><td><code>.codex/rules/*.rules</code>: <code>prefix_rule(pattern=["git","push","--force"], decision="forbidden", justification="...")</code>. Decisions <code>allow | prompt | forbidden</code>; the most restrictive wins</td><td>Permissions: Deny / Ask / Allow lists with <code>command(git)</code>, <code>read_file(path)</code>, <code>write_file(path)</code></td></tr>
+<tr><td>2 PreToolUse hook</td><td><code>hooks.PreToolUse</code> in settings.json; exit 2 or JSON <code>permissionDecision: "deny"</code></td><td><code>.codex/hooks.json</code> (or config.toml); event <code>PreToolUse</code> (also <code>PermissionRequest</code>)</td><td><code>.agents/hooks.json</code>; event <code>PreToolUse</code>; JSON decision <code>allow | deny | ask</code></td></tr>
+<tr><td>3 Git hook</td><td>Same: git, not the tool</td><td>Same</td><td>Same</td></tr>
+<tr><td>4 Guard test</td><td>Same: your test suite</td><td>Same</td><td>Same</td></tr>
+<tr><td>Attribution trailer</td><td><code>attribution</code> setting (below)</td><td>Whether Codex adds a trailer by default: <span class="ver unverified">unverified</span> Test with a throwaway commit; the commit-msg hook catches it either way</td><td>Not documented <span class="ver unverified">unverified</span> Same remedy</td></tr>
+</table></div>
+<p class="small">Sources: <a href="https://code.claude.com/docs/en/permissions">Claude permissions</a> · <a href="https://code.claude.com/docs/en/hooks-guide">hooks guide</a> · <a href="https://learn.chatgpt.com/docs/agent-configuration/rules">Codex rules</a> · <a href="https://learn.chatgpt.com/docs/hooks">Codex hooks</a> · <a href="https://antigravity.google/docs/permissions">Antigravity permissions</a> · <a href="https://antigravity.google/docs/hooks">Antigravity hooks</a> · <a href="https://git-scm.com/docs/githooks">githooks</a>. Last verified 2026-09-30.</p>
+
+<details class="deeper">
+<summary>Appendix: the incident each guard would have caught</summary>
+<div class="table-wrap"><table><tr><th>Incident (from the review)</th><th>What would have caught it</th><th>Kind</th></tr>
+<tr><td>Trainee A <code>b456df0</code>: agent committed unasked, then tried to force-push; only GitLab branch protection refused</td><td><code>ask</code> on <code>Bash(git commit *)</code>; <code>deny</code> on <code>git push --force*</code>; the destructive guard</td><td>1 and 2</td></tr>
+<tr><td>Trainee B: committed an auto-saved allow-list holding <code>git rebase *</code> and <code>rm -f .claude/settings.json</code></td><td>A written policy: <code>ask</code> on rebase and reset; the guard denies <code>git rebase</code></td><td>1 and 2</td></tr>
+<tr><td>Trainee A: agent launched Docker Desktop itself and polled for 35 min</td><td>Guard pattern on <code>Start-Process</code> and <code>Docker Desktop</code>: "starting software is the human's call"</td><td>2</td></tr>
+<tr><td>Trainee E: agent targeted <code>net7.0</code> because only .NET 6/7 was installed</td><td>Guard denies <code>TargetFramework&gt;net[0-7].</code> and <code>net7.0</code>; the answer is a 1-3-1</td><td>2</td></tr>
+<tr><td>Trainee E <code>367d6e1</code>: 1,089 files, 1,081 junk (<code>tmp/</code>, <code>obj/</code>)</td><td><code>pre-commit</code> step 1 refuses <code>bin/ obj/ tmp/ *.db .env</code></td><td>3</td></tr>
+<tr><td>Trainee C: JWT signing key in <code>appsettings.json</code></td><td><code>pre-commit</code> pattern check plus gitleaks step; <code>deny Read/Edit(./.env)</code> keeps real values away from the agent</td><td>3 and 1</td></tr>
+<tr><td>Trainee E, Trainee C: personal author emails (4/4, 58/92)</td><td><code>pre-commit</code> identity check (<code>@osmosys.co</code>); <code>deny Bash(git config user.email *@*)</code></td><td>3 and 1</td></tr>
+<tr><td>Trainee A, Trainee B, Trainee D: AI co-author trailers (11/13, 12/13, 6/7)</td><td><code>attribution</code> setting drops it; <code>commit-msg</code> rejects any that remain</td><td>1 (setting) and 3</td></tr>
+<tr><td>Trainee E "Update the changes", "First commit"</td><td><code>commit-msg</code> Conventional Commits regex</td><td>3</td></tr>
+<tr><td>Trainee D: atomic <code>ExecuteUpdateAsync</code> rewritten to read-then-write to suit InMemory; oversold</td><td><code>ConcurrencyTests</code> (12 for 3) goes red when the transaction is gone too; <code>stock-invariant-reviewer</code> blocks the pattern even when the test is green</td><td>4 (plus a reviewer)</td></tr>
+</table></div>
+</details>
+
+<details class="deeper">
+<summary>Appendix: the whole guard test, verbatim</summary>
+<figure class="code"><figcaption>tests/StockApi.Tests/ConcurrencyTests.cs</figcaption><pre><code>using System.Net;
+using System.Net.Http.Json;
+using StockApi.Domain;
+
+namespace StockApi.Tests;
+
+public class ConcurrencyTests : IClassFixture&lt;FileStockApiFactory&gt;
+{
+    private readonly HttpClient _client;
+
+    public ConcurrencyTests(FileStockApiFactory factory) =&gt; _client = factory.CreateClient();
+
+    [Fact]
+    public async Task PlaceOrder_TwelveConcurrentOrdersForThreeUnits_ExactlyThreeSucceed()
+    {
+        var product = await _client.CreateProductAsync("CONC-1", 3);
+
+        // Hold every request at a gate and release them together so they really overlap.
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var inFlight = Enumerable.Range(0, 12).Select(_ =&gt; Task.Run(async () =&gt;
+        {
+            await gate.Task;
+            return await _client.PostAsJsonAsync("/api/orders", new { productId = product.Id, quantity = 1 });
+        })).ToList();
+        gate.SetResult();
+        var responses = await Task.WhenAll(inFlight);
+
+        Assert.Equal(3, responses.Count(r =&gt; r.StatusCode == HttpStatusCode.Created));
+        Assert.Equal(9, responses.Count(r =&gt; r.StatusCode == HttpStatusCode.Conflict));
+        var after = await _client.GetFromJsonAsync&lt;Product&gt;($"/api/products/{product.Id}");
+        Assert.Equal(0, after!.Stock);
+    }
+}</code></pre></figure>
+</details>
+
+
+<hr>
+<p class="small"><strong>Taught in:</strong> <a href="../lessons/0007-guards.html">Lesson 7: Guards</a> · <a href="../lessons/0001-how-an-agent-works.html">Lesson 1: How an agent works</a> · <a href="../lessons/0003-one-three-one.html">Lesson 3: 1-3-1</a><br><strong>Other sheets:</strong> <a href="agents-md.html">AGENTS.md structure</a> · <a href="commit-skill.html">Commit skill</a> · <a href="one-three-one.html">1-3-1</a> · <a href="glossary.html">Glossary</a> · <a href="tool-equivalents.html">Tool equivalents</a></p>
+
+</main>
+</body>
+</html>

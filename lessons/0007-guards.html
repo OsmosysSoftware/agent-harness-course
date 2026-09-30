@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guards</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body data-lesson="0007">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Lesson 7 of 11 · 20 min read + 90 min exercise</p>
+<h1>Guards: rules that block instead of asking</h1>
+<p class="lede">A rule is text the agent may follow. A guard is code that runs on the action and refuses it, so the four kinds below, stacked, make the important rules hold even when the agent forgets, or the human asks it to break them.</p>
+
+<div class="recall">
+  <span class="label">Recall</span>
+  <div class="quiz">
+    <p class="q">What does clicking "Yes, and don't ask again" save for you?</p>
+    <div class="opts">
+      <button class="opt" data-correct>A new allow rule in settings.local.json</button>
+      <button class="opt">A permanent deny rule in settings.json</button>
+      <button class="opt">A hook script stored under .claude/hooks</button>
+      <button class="opt">An added line in AGENTS.md index</button>
+    </div>
+    <p class="why">It writes an allow rule to the personal, uncommitted local settings file. Trainee B committed their accumulated approvals as <code>.claude/settings.json</code>, and they were mistaken for AI configuration (lesson 1).</p>
+  </div>
+  <div class="quiz">
+    <p class="q">After a reviewer agent returns BLOCK, who decides what happens next?</p>
+    <div class="opts">
+      <button class="opt" data-correct>The human who reads the findings</button>
+      <button class="opt">The author agent that wrote it</button>
+      <button class="opt">The reviewer agent acting by itself</button>
+      <button class="opt">The commit skill acting alone here</button>
+    </div>
+    <p class="why">Reviewers report to you. The author never grades itself, and your decision is the evidence (lesson 6).</p>
+  </div>
+</div>
+
+<div class="note">
+  <span class="label">The win</span>
+  <p>By the end, four different probes are each refused by a different layer: a force-push, a bad commit message, a secret in a file, and a stock rewrite that oversells. You'll also have a 12-for-3 concurrency test that fails with <code>Expected: 3 / Actual: 12</code> when the guarded update is broken.</p>
+</div>
+
+<h2>What happened</h2>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What happened</h4>
+    <p>Trainee A's agent committed <code>b456df0</code> (09-20 18:46) without being asked. Their transcript: "undo these changes (uncommit) — i did not want u to commit anything until I say so", then "rewrite the remote branch". The agent tried a force-push. <strong>Only GitLab branch protection refused it</strong>, so the fix became a revert commit, <code>56b7cd2</code>.</p>
+    <p>Trainee B committed Claude Code's auto-saved "always allow" list as <code>.claude/settings.json</code> (<code>cdd917a</code>, <code>67e24fe</code>). It held <code>git rebase *</code>, <code>git merge *</code> and <code>rm -f .claude/settings.json</code>. Four of their commits share the second 20:15:07.</p>
+    <p class="who">Trainee A · Claude Code · Trainee B · Claude Code: no guard in any of the six repos</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>Force-push is denied locally, twice: by a permission rule and by a hook. <code>git commit</code> is an <code>ask</code> rule. <code>git rebase</code> is an <code>ask</code> rule <em>and</em> the hook denies it. The policy is written on purpose, reviewed in a diff, and it also stops the human who asks the agent for the same thing at 18:50.</p>
+  </div>
+</div>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What happened</h4>
+    <p>Trainee D's agent rewrote the atomic stock update as read-then-write and justified it with "still correct against concurrent writes". The evaluator's live probe, 12 simultaneous orders for 3 units, oversold Trainee D's service. The same probe ran against every repo, and it was the only thing that told the truth.</p>
+    <p>Trainee C's <code>appsettings.json</code> held <code>"Key": "SuperSecretAuthenticationKeyForFulfillmentService2026!"</code>. Trainee E's first commit, <code>367d6e1</code>, tracked 1,081 junk files.</p>
+    <p class="who">Trainee D · Claude Code · Sonnet · Trainee C · Trainee E: no guard test, no git hook</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>The evaluator's probe lives in the repo as a test that fails the build. Git hooks refuse <code>obj/</code> and <code>tmp/</code> and scan for secrets on every commit, whether an agent or a human makes it.</p>
+  </div>
+</div>
+
+<h2>Rule versus guard</h2>
+
+<p>A <dfn>rule</dfn> is an instruction in the agent's context: AGENTS.md, a skill step, your chat message. The model reads it and usually complies, and Trainee A's unasked commit shows what "usually" costs. A <dfn>guard</dfn> is code that runs when the action happens and can refuse it. The four kinds differ in <em>reach</em>: what they see, and who is stopped.</p>
+
+<p>Four terms first. You'll meet them in the table and again below.</p>
+<ul>
+  <li><strong>Hook</strong>: a script the tool or git runs automatically when something happens, such as "a command is about to run" or "a commit is about to be recorded". Like a database trigger, but for your workflow.</li>
+  <li><strong>stdin</strong>: the input stream a program reads. A hook script doesn't get arguments; the tool pipes the details to it as text (here JSON) on stdin.</li>
+  <li><strong>Exit code</strong>: the number a script finishes with, like a process's return value in C#. <code>0</code> means "fine"; what a non-zero value means depends on who is listening (the lesson spells it out for each).</li>
+  <li><strong><code>core.hooksPath</code></strong>: a git setting that tells git which folder holds your hooks. Until it is set in a clone, git looks in its default <code>.git/hooks</code> and ignores the committed <code>.githooks/</code> folder.</li>
+</ul>
+
+<div class="table-wrap"><table>
+  <tr><th>Guard (weakest reach to strongest)</th><th>It sees</th><th>Stops</th><th>Lets the action through when (fails open)</th></tr>
+  <tr><td>1 · Permission rules</td><td>The command text of one tool call, in one tool</td><td>The agent, in that tool only</td><td>The command is written in a form the pattern doesn't match</td></tr>
+  <tr><td>2 · PreToolUse hook</td><td>The full tool-call JSON, before it runs</td><td>The agent, in that tool, with any logic you can script</td><td>The script can't start, or exits 1 instead of 2</td></tr>
+  <tr><td>3 · Git hooks</td><td>The staged files and the message</td><td>Everyone who runs <code>git commit</code> in that clone: human, Claude, Codex, Antigravity</td><td>The clone never ran <code>git config core.hooksPath</code>, or the commit uses <code>--no-verify</code></td></tr>
+  <tr><td>4 · Guard tests</td><td>The behaviour of the running code</td><td>Anyone whose change breaks it, at test time</td><td>Nobody runs the tests, or the test is green for the wrong reason</td></tr>
+</table></div>
+
+<p>Stack them. Each has a hole the next one covers, and none of them is a security boundary against a determined person.</p>
+
+<h2>1 · Permission rules</h2>
+
+<p>A <dfn>permission rule</dfn> is an entry in <code>allow</code>, <code>ask</code> or <code>deny</code> that matches a tool call. "Rules are evaluated in order: deny, then ask, then allow. The first match … determines the outcome", and an allow rule can't carve an exception out of a deny (<a href="https://code.claude.com/docs/en/permissions">Permissions</a>). This is the reference solution's file, verbatim:</p>
+
+<figure class="code">
+<figcaption>.claude/settings.json</figcaption>
+<pre>{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(dotnet format *)",
+      "Bash(bash .agents/skills/quality-gate/gate.sh)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(sqlite3 -readonly -safe *)",
+      "Bash(git config user.email)"
+    ],
+    "ask": [
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git rebase *)",
+      "Bash(git reset *)",
+      "Bash(git restore *)",
+      "Bash(dotnet add *)",
+      "Bash(rm *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push * --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * -f*)",
+      "Bash(git commit --no-verify*)",
+      "Bash(git commit * --no-verify*)",
+      "Read(./.env)",
+      "Edit(./.env)",
+      "Bash(git config user.email *@*)",
+      "Bash(git config --global user.email *@*)"
+    ]
+  },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/destructive-guard.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/format-on-write.sh\"",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}</pre>
+</figure>
+
+<ul>
+  <li><strong>allow</strong> is the boring, frequent and safe: build, test, format, read-only git, the gate script, and <code>sqlite3 -readonly -safe</code> (lesson 8 explains it). <code>git add *</code> is allowed because staging is reversible and the commit itself is still gated.</li>
+  <li><strong>ask</strong> is where a human must say yes: <code>git commit</code> (the skill's step 6 becomes real), <code>push</code>, <code>rebase</code>, <code>reset</code>, <code>restore</code>, <code>dotnet add</code> (a new package needs the 14-day check: Osmosys's house rule is that no package version younger than 14 days is added, a supply-chain precaution, because poisoned releases are usually caught within days of publishing) and <code>rm</code>.</li>
+  <li><strong>deny</strong> cannot be approved from a prompt: the force-push forms, <code>--no-verify</code> (which would skip the git hooks below), reading or editing <code>.env</code>, and setting the git email. Deny rules from any settings scope beat allow rules, so a trainee's local allow cannot undo them.</li>
+</ul>
+
+<h3>What a rule does not do</h3>
+<ul>
+  <li><strong>It matches text.</strong> A Bash rule "matches the command text Claude writes", after splitting compound commands (<code>a &amp;&amp; b</code> is checked part by part) and stripping wrappers. It "isn't a security boundary around the program": a different spelling of the same operation can slip past. That's why the same operations also appear in a hook and in a git hook.</li>
+  <li><strong>A trailing wildcard also matches the bare command.</strong> The docs say "a <code>*</code> at the end, with a space before it, also matches the bare command". The first version of this file denied <code>Bash(git config user.email *)</code>, meaning to stop the agent setting a personal email. It also blocked <em>reading</em> the email, which step 4 of the commit skill does, and a swap-test dry run stopped at that step. The fix, now in the file, is <code>Bash(git config user.email *@*)</code> (two wildcards, so the bare read doesn't match) plus an allow for the bare read. <strong>Test your guards against your own skills</strong>: run each skill once after you add a rule.</li>
+  <li><strong>The auto-saved list is not a policy.</strong> Trainee B's <code>git rebase *</code> entry was a click, never a decision. Every line above was decided, and the decision is in a reviewed file.</li>
+</ul>
+
+<h3>The attribution setting</h3>
+<p>The same file carries <code>"attribution": {"commit": "", "pr": "", "sessionUrl": false}</code>. It stops Claude Code adding a <code>Co-Authored-By</code> trailer to commits and a "generated with" line to pull requests, the two things that showed up in the repos. The 11 of 13, 12 of 13 and 6 of 7 counts (Trainee A, Trainee B, Trainee D) are commits carrying a <code>Co-Authored-By</code> trailer; they do not include PR lines. Use exactly this object form: it is the one every Claude Code version reads.</p>
+
+<details class="deeper">
+<summary>Going deeper: why the object form, and what workspace trust changes</summary>
+<p>This is the <strong>portable form</strong>. The shorter <code>"attribution": false</code> needs <span class="ver">v2.1.281+ · verified 2026-09-30</span>, and "older versions skip the <em>whole</em> settings file that contains it" (<a href="https://code.claude.com/docs/en/settings-reference#attribution">Settings reference</a>). On an older install, your deny rules and hooks silently disappear too, and nothing tells you. Use the object form, which every version reads. The old <code>includeCoAuthoredBy</code> key has been deprecated since v2.0.62.</p>
+<ul>
+  <li><strong>Allow rules need workspace trust (the "do you trust this folder?" dialog); deny and ask do not.</strong> <span class="ver">verified 2026-09-30</span> In a fresh clone run headless (with nobody at the keyboard, so no trust dialog), Claude Code printed "Ignoring 10 permissions.allow entries from .claude/settings.json: this workspace has not been trusted" (the number is your allow-list size). Your guards protect even an untrusted clone. The convenience rules wait for the trust dialog.</li>
+</ul>
+</details>
+
+<h2>2 · PreToolUse hooks</h2>
+
+<p>A <dfn>hook</dfn> is a script the harness runs at a named event. A <strong>PreToolUse</strong> hook runs before a tool call, receives the call as JSON on stdin, and can deny it. Use one where a permission pattern isn't expressive enough: several forms of one idea, or a message that teaches the agent what to do instead. The hook is registered in <code>settings.json</code> (see the <code>hooks</code> block above) with a <code>matcher</code> of <code>Bash</code>.</p>
+
+<figure class="code">
+<figcaption>.claude/hooks/destructive-guard.sh</figcaption>
+<pre>#!/usr/bin/env bash
+# PreToolUse guard for Bash: deny commands that rewrite history, destroy data or act on the machine.
+# Input: the tool call as JSON on stdin. Output: a deny decision as JSON, or nothing (= normal permission flow).
+# No jq needed: we match patterns against the raw JSON text.
+input=$(cat)
+
+deny() {
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' "$1"
+  exit 0
+}
+
+# Extract the command string for readable matching (falls back to the whole payload).
+cmd=$(printf '%s' "$input" | sed -n 's/.*"command"[[:space:]]*:[[:space:]]*"\(\([^"\\]\|\\.\)*\)".*/\1/p')
+[ -z "$cmd" ] &amp;&amp; cmd=$input
+
+check() { printf '%s' "$cmd" | grep -Eqi -- "$1"; }
+
+check 'git[[:space:]]+push.*(--force|[[:space:]]-f([[:space:]]|$)|--force-with-lease)' &amp;&amp; deny "Force-push rewrites shared history. Ask the human; they push, not the agent."
+check 'git[[:space:]]+(reset[[:space:]]+--hard|clean[[:space:]]+-[a-z]*f|filter-branch|filter-repo)' &amp;&amp; deny "Destroys work or history. Present a 1-3-1 instead."
+check 'git[[:space:]]+(rebase|commit[[:space:]].*--amend)' &amp;&amp; deny "History rewriting is not allowed (docs/ai/workflow.md). Make a new commit instead."
+check 'rm[[:space:]]+-[a-z]*r[a-z]*f|rm[[:space:]]+-[a-z]*f[a-z]*r|Remove-Item.*-Recurse' &amp;&amp; deny "Recursive delete blocked. Name the exact files and ask the human."
+check 'drop[[:space:]]+(table|database)|dotnet[[:space:]]+ef[[:space:]]+database[[:space:]]+drop|ensuredeleted' &amp;&amp; deny "Dropping a database is a human decision. Present a 1-3-1."
+check '(Start-Process|open[[:space:]]+-a|systemctl[[:space:]]+start|service[[:space:]]+[a-z-]+[[:space:]]+start|Docker Desktop)' &amp;&amp; deny "Starting software on the machine is the human's call (invariants: environment). Ask them to start it."
+check '(apt|apt-get|dnf|yum|brew|winget|choco)[[:space:]]+install|dotnet-install' &amp;&amp; deny "Installing software is the human's call. Present a 1-3-1."
+check 'TargetFramework&gt;net[0-7]\.|net7\.0|net6\.0' &amp;&amp; deny "Target framework is net8.0 (AGENTS.md). A missing SDK is a 1-3-1, not a downgrade."
+
+exit 0</pre>
+</figure>
+
+<p>Three things to learn from it (<a href="https://code.claude.com/docs/en/hooks">Hooks reference</a>):</p>
+<ul>
+  <li><strong>Two ways to block.</strong> The script above prints a JSON <code>permissionDecision: "deny"</code> with a reason and exits 0. The alternative is <code>exit 2</code>, where stderr becomes the reason. Exit 2 "blocks whether or not you print JSON".</li>
+  <li><strong>Exit 1 does not block.</strong> "For most hook events, exit code 2 is the only exit code that blocks through the code alone. Without valid JSON on stdout, Claude Code treats exit code 1 as a non-blocking error and proceeds with the action." This is the opposite of a git hook, where any non-zero exit blocks. It is the classic mistake when porting a script.</li>
+  <li><strong>Silence is not approval.</strong> "Exit 0 with no output means the hook has no decision", so the call goes on to the normal permission flow. The last line of the script is <code>exit 0</code> for that reason. A hook also can't override your rules: a matching deny or ask rule still applies whatever the hook returns.</li>
+</ul>
+<p>The failure to watch for is a hook that can't start. If "the script path doesn't exist or isn't executable", the shell exits with 127, the action proceeds, and "a mistyped path in <code>settings.json</code> leaves the gate silently disabled". Watch for the "non-blocking status code" notice the first time you run it. The registration in the file above runs the script through <code>bash</code>, so it doesn't need the executable bit, but it does need the right path (<code>${CLAUDE_PROJECT_DIR}</code>).</p>
+<p>The script greps raw JSON text, which is crude. A commit message that mentions "git rebase" would trip it. That's an accepted cost: a false alarm sends the agent back to you, and a miss would be worse.</p>
+<p><strong>So don't write the words <code>rebase</code>, <code>rm -rf</code> or <code>--amend</code> in a commit message</strong>: the hook reads the whole command, so <code>git commit -m "docs: mention git rebase"</code> is denied. Use the messages this lesson suggests.</p>
+<p><strong>Scope.</strong> The matcher is <code>Bash</code>, so this hook sees shell commands only. An agent that edits a <code>.csproj</code> with its Edit tool never reaches it; the "net8.0" invariant in <code>AGENTS.md</code> and the reviewers cover that, and the hook only catches the shell spelling. <strong>Windows:</strong> the registered command is <code>bash "${CLAUDE_PROJECT_DIR}/…"</code>, which assumes the Bash tool (WSL2 or Git Bash, as on the index). Run probe 1 below to prove it fires on your machine. <span class="ver unverified">unverified: the <code>${CLAUDE_PROJECT_DIR}</code> path form on Windows was not tested</span></p>
+
+<h3>SessionStart and PostToolUse, briefly</h3>
+<p>Hooks aren't only for blocking. <strong>SessionStart</strong> runs when a session opens, and its plain stdout is added to the agent's context. The course uses it for a preflight that <em>reports and never fixes</em>: the answer to Trainee A's agent launching Docker Desktop and polling for 35 minutes. <strong>PostToolUse</strong> runs after a tool call. The course formats the C# file the agent just wrote, so the quality gate's format step isn't the first to notice whitespace. Neither one blocks anything.</p>
+
+<details class="deeper">
+<summary>Going deeper: the two scripts (you still add both in the exercise)</summary>
+<figure class="code">
+<figcaption>.claude/hooks/session-start.sh</figcaption>
+<pre>#!/usr/bin/env bash
+# SessionStart: plain stdout becomes context for the agent. Report the environment, and never fix it.
+cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
+echo "Session preflight (report only; if anything is missing, use 1-3-1, do not install or start it):"
+
+sdks=$(dotnet --list-sdks 2&gt;/dev/null | awk '{print $1}' | tr '\n' ' ')
+case " $sdks" in
+  *" 8."*) echo "- .NET SDK: OK (installed: $sdks). Target framework must stay net8.0." ;;
+  *) echo "- .NET SDK: MISSING 8.x (installed: ${sdks:-none}). Do NOT downgrade net8.0. Present a 1-3-1." ;;
+esac
+
+if docker info &gt;/dev/null 2&gt;&amp;1; then echo "- Docker: running"; else echo "- Docker: not running (do not start it; ask the human if you need it)"; fi
+
+if [ "$(git config core.hooksPath 2&gt;/dev/null)" = ".githooks" ]; then echo "- Git hooks: enabled"; else echo "- Git hooks: NOT enabled in this clone (ask the human to run: git config core.hooksPath .githooks)"; fi
+echo "- Git: branch $(git branch --show-current 2&gt;/dev/null), $(git status --porcelain 2&gt;/dev/null | wc -l | tr -d ' ') uncommitted path(s), email $(git config user.email 2&gt;/dev/null || echo unset)"
+
+if [ -f ai-session/PLAN.md ]; then
+  next=$(grep -m1 -E '^\s*- \[ \]' ai-session/PLAN.md | sed 's/^\s*- \[ \] //')
+  echo "- Plan: next unchecked slice: ${next:-none (all done, or the plan needs updating)}"
+else
+  echo "- Plan: no ai-session/PLAN.md yet. Explore, then propose a plan before any code."
+fi
+exit 0</pre>
+</figure>
+
+<figure class="code">
+<figcaption>.claude/hooks/format-on-write.sh</figcaption>
+<pre>#!/usr/bin/env bash
+# PostToolUse on Edit|Write: format the C# file the agent just wrote, so the quality gate never fails on whitespace.
+input=$(cat)
+file=$(printf '%s' "$input" | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+case "$file" in
+  *.cs) ;;
+  *) exit 0 ;;
+esac
+cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
+rel=${file#"$PWD"/}
+# whitespace formatting only: fast, and needs no build
+dotnet format whitespace StockApi.sln --include "$rel" &gt;/dev/null 2&gt;&amp;1 || true
+exit 0</pre>
+</figure>
+<p>The session-start script also reports whether <code>core.hooksPath</code> is set in this clone, which is the "put it in the preflight" advice below.</p>
+</details>
+
+<h2>3 · Git hooks</h2>
+
+<p>Permission rules and Claude hooks exist only inside Claude Code. A commit made by Codex, by Antigravity, or by you in a terminal goes through <strong>git</strong>, so git is where a check must live to cover all of them. A <dfn>git hook</dfn> is an executable file that git runs at a step: <code>pre-commit</code> before a commit is recorded, <code>commit-msg</code> once the message is written. A non-zero exit aborts the commit. Two setup facts decide whether they work at all (<a href="https://git-scm.com/docs/githooks">githooks</a>):</p>
+<ul>
+  <li><strong>Hooks must be executable:</strong> <code>chmod +x .githooks/pre-commit .githooks/commit-msg</code>. (Windows: run shell commands in WSL2 or Git Bash, see <a href="../index.html#before-you-start">Before you start</a> on the index. In Git Bash <code>chmod</code> changes nothing git records, so also run <code>git update-index --chmod=+x .githooks/pre-commit .githooks/commit-msg .claude/hooks/*.sh</code> after <code>git add</code>, or a Mac or Linux colleague gets hooks that silently never run. Your repo already has a <code>.gitattributes</code> that keeps these files LF, which bash needs.)</li>
+  <li><strong>The setting is per clone.</strong> <code>git config core.hooksPath .githooks</code> is stored in <code>.git/config</code>, which isn't committed. Every fresh clone starts with the hooks switched off until its owner runs that command. Put it in the README and in the session-start preflight.</li>
+</ul>
+
+<figure class="code">
+<figcaption>.githooks/pre-commit</figcaption>
+<pre>#!/usr/bin/env sh
+# Runs for every committer, human or agent. Enable once per clone: git config core.hooksPath .githooks
+fail() { echo "pre-commit: $1" &gt;&amp;2; exit 1; }
+
+# 1. No build output, local databases or env files.
+bad=$(git diff --cached --name-only | grep -E '(^|/)(bin|obj|tmp)/|\.db$|(^|/)\.env$')
+[ -n "$bad" ] &amp;&amp; fail "refusing to commit build output or local files:
+$bad
+Unstage with: git restore --staged &lt;path&gt;"
+
+# 2. Company identity.
+case "$(git config user.email)" in
+  *@osmosys.co) ;;
+  *) fail "author email '$(git config user.email)' is not a company address. Run: git config user.email you@osmosys.co" ;;
+esac
+
+# 3. Secrets: a pattern check for config-style secrets, which gitleaks misses on low-entropy values
+#    such as "SuperSecretAuthenticationKey…" (measured 2026-09-30), then gitleaks for known key formats.
+# ai-session/ holds raw transcripts, which quote config on purpose; gitleaks still scans them below.
+hits=$(git diff --cached -U0 -- . ':(exclude)ai-session' | grep -E '^\+' | grep -nEi '(key|secret|password|pwd|token)["'\'' ]*[:=] *["'\''][^"'\'' ]{8,}')
+[ -n "$hits" ] &amp;&amp; fail "possible secret in staged changes (move it to .env, document it in .env.example):
+$hits"
+if command -v gitleaks &gt;/dev/null 2&gt;&amp;1; then
+  gitleaks git --pre-commit --staged --redact --no-banner || fail "gitleaks found a secret (see above)."
+else
+  echo "pre-commit: gitleaks not installed; only the pattern check ran" &gt;&amp;2
+fi
+
+# 4. Formatting.
+dotnet format --verify-no-changes &gt;/dev/null 2&gt;&amp;1 || fail "formatting drift. Run: dotnet format"
+
+exit 0</pre>
+</figure>
+
+<div class="table-wrap"><table>
+  <tr><th>Check</th><th>Incident</th></tr>
+  <tr><td>1 · bin/, obj/, tmp/, .db, .env</td><td>Trainee E <code>367d6e1</code>: the vendored <code>tmp/</code> tree and <code>obj/</code> files</td></tr>
+  <tr><td>2 · company email</td><td>Trainee C 58 of 92, Trainee E 4 of 4 from personal addresses</td></tr>
+  <tr><td>3 · pattern check, then gitleaks, on the staged diff</td><td>Trainee C's JWT key (see the caveat below)</td></tr>
+  <tr><td>4 · <code>dotnet format --verify-no-changes</code></td><td>Trainee F's "test everything yourself", as a floor the human can't skip either</td></tr>
+</table></div>
+<p>Check 3 is two tools because each has a blind spot. The pattern check skips <code>ai-session/</code>, where raw transcripts quote config on purpose; gitleaks still scans that folder. Why both is in the box under "Two honest gaps".</p>
+
+<figure class="code">
+<figcaption>.githooks/commit-msg</figcaption>
+<pre>#!/usr/bin/env sh
+# Conventional Commits subject, and no AI attribution. No Node needed.
+msg_file="$1"
+subject=$(head -n1 "$msg_file")
+
+case "$subject" in
+  Merge\ *|Revert\ *) exit 0 ;;
+esac
+
+echo "$subject" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9._/-]+\))?!?: .{1,72}$' || {
+  echo "commit-msg: subject must be 'type(scope): summary' (Conventional Commits, max 72 chars after the colon)." &gt;&amp;2
+  echo "  got: $subject" &gt;&amp;2
+  exit 1
+}
+
+if grep -Eqi '^(co-authored-by: .*(claude|codex|gemini|copilot|anthropic|openai|noreply@)|.*generated with .*(claude|codex|gemini|antigravity))' "$msg_file"; then
+  echo "commit-msg: AI attribution lines are not allowed in company repos. Remove the trailer." &gt;&amp;2
+  exit 1
+fi
+exit 0</pre>
+</figure>
+
+<p>The first regex enforces <code>type(scope): summary</code>, so "First commit" (<code>34baa0e</code>) and "Update the changes" (<code>bf6ffc2</code>) are rejected before they exist. The second rejects a <code>Co-Authored-By</code> trailer naming an AI tool or a <code>noreply@</code> address, and a "generated with" line. It duplicates the attribution setting on purpose: the setting covers Claude Code only, this covers every tool.</p>
+
+<h3>Why a shell regex and not commitlint</h3>
+<p>The usual tool is commitlint, but its newest release was under 14 days old when this lesson was checked, which the house rule (no package version younger than 14 days) rules out, and it would need Node in a .NET repo. A 20-line shell regex has no dependency and runs in any clone. The trade-off: it checks the subject shape only, and you write the allowed types yourself.</p>
+
+<details class="deeper">
+<summary>Going deeper: the commitlint dates</summary>
+<p>On 2026-09-30 commitlint's current release (<code>@commitlint/cli</code> 21.2.3) was 11 days old. Recent releases are the ones supply-chain attacks target, which is the reason for the rule.</p>
+</details>
+
+<h3>Two honest gaps</h3>
+<ul>
+  <li><strong>If gitleaks isn't installed, the hook runs the pattern check only</strong> and prints a warning. Installing software is your decision, not the agent's (lesson 3): see the <a href="https://github.com/gitleaks/gitleaks#installing">gitleaks install page</a>, check the release date first, and if you can't install it, do the pattern half only and carry on. The pinned command is <code>gitleaks git --pre-commit --staged</code>.</li>
+  <li><strong>One scanner is not a secret policy.</strong> gitleaks misses readable, low-entropy secrets such as Trainee C's <code>"Key": "SuperSecretAuthenticationKeyForFulfillmentService2026!"</code>, so the hook first runs the pattern check and then gitleaks. You'll see the miss yourself in probe 3.</li>
+</ul>
+
+<details class="deeper">
+<summary>Going deeper: what we measured, and the pattern check's limits</summary>
+<p><span class="ver">gitleaks 8.23.3 and 8.30.1 · measured 2026-09-30</span> <code>gitleaks git --pre-commit --staged</code> found <strong>no leak</strong>, on both versions, in Trainee C's actual string, because the value is readable words with low entropy. Both versions did flag a random 32-character key. So step 3 of the hook first runs a <strong>pattern check</strong> for config-style secrets (a key, secret, password or token name followed by a quoted value of 8 or more characters), then gitleaks for known key formats. The commit skill's step 3 runs both checks too. The pattern is crude: it will occasionally flag a harmless line, and then the human decides. Also keep the deny rule on <code>.env</code> and the invariant "no secrets in tracked files". The older gitleaks <code>detect</code> and <code>protect</code> commands have been deprecated since v8.19.0.</p>
+</details>
+
+<p>Git hooks have one more hole: <code>git commit --no-verify</code> skips them. The deny rules above stop the agent typing it; you can still type it. A server-side check (CI, branch protection) is the real backstop, and out of scope here. GitLab's branch protection is what saved Trainee A's remote branch. Note what the local layer does not cover: this repo has no <code>pre-push</code> hook, so a human typing <code>git push --force</code> in a terminal is stopped only by the server. The local deny covers the case in the incident: the human <em>asking the agent</em>.</p>
+
+<h2>4 · Guard tests</h2>
+
+<p>The first three guards stop an action. A <dfn>guard test</dfn> is an automated test that encodes a project rule, so a change that violates it fails the build. The evaluator's probe for the stock invariant is the model: 12 simultaneous orders for a product with 3 in stock must give exactly 3 created, 9 conflicts and 0 stock left.</p>
+
+<figure class="code">
+<figcaption>tests/StockApi.Tests/ConcurrencyTests.cs</figcaption>
+<pre>using System.Net;
+using System.Net.Http.Json;
+using StockApi.Domain;
+
+namespace StockApi.Tests;
+
+public class ConcurrencyTests : IClassFixture&lt;FileStockApiFactory&gt;
+{
+    private readonly HttpClient _client;
+
+    public ConcurrencyTests(FileStockApiFactory factory) =&gt; _client = factory.CreateClient();
+
+    [Fact]
+    public async Task PlaceOrder_TwelveConcurrentOrdersForThreeUnits_ExactlyThreeSucceed()
+    {
+        var product = await _client.CreateProductAsync("CONC-1", 3);
+
+        // Hold every request at a gate and release them together so they really overlap.
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var inFlight = Enumerable.Range(0, 12).Select(_ =&gt; Task.Run(async () =&gt;
+        {
+            await gate.Task;
+            return await _client.PostAsJsonAsync("/api/orders", new { productId = product.Id, quantity = 1 });
+        })).ToList();
+        gate.SetResult();
+        var responses = await Task.WhenAll(inFlight);
+
+        Assert.Equal(3, responses.Count(r =&gt; r.StatusCode == HttpStatusCode.Created));
+        Assert.Equal(9, responses.Count(r =&gt; r.StatusCode == HttpStatusCode.Conflict));
+        var after = await _client.GetFromJsonAsync&lt;Product&gt;($"/api/products/{product.Id}");
+        Assert.Equal(0, after!.Stock);
+    }
+}</pre>
+</figure>
+
+<ul>
+  <li><code>gate.SetResult()</code> releases all 12 requests together. Without the <code>TaskCompletionSource</code> gate they would start one after another and rarely overlap.</li>
+  <li>Your <code>ApiTests</code> has a private <code>CreateProductAsync</code>; the new test needs the same helper, so the agent should move it to a shared <code>TestHelpers</code> file rather than copy it (DRY: one helper, two users).</li>
+  <li>It uses <code>FileStockApiFactory</code>, a real SQLite file in a temp folder, because one shared in-memory connection isn't thread-safe. EF InMemory is out for the reasons in <code>docs/ai/testing.md</code>.</li>
+  <li>It asserts on the <em>state</em> too (stock is 0), not just status codes.</li>
+</ul>
+
+<p><strong>A guard test can be green for the wrong reason.</strong> We measured it. Read-then-write <em>inside</em> <code>BeginTransactionAsync()</code> passes this test on SQLite, because <code>Microsoft.Data.Sqlite</code>'s transaction takes the write lock up front. The test fails, with <code>Assert.Equal() Failure: Expected: 3, Actual: 12</code> (all 12 orders created), only when the transaction is also removed, which is what an InMemory-driven rewrite does. On SQL Server at READ COMMITTED, the transaction version oversells. So the test catches the regression an InMemory rewrite produces, and the stock-invariant reviewer from lesson 6 catches the design. You need both.</p>
+
+<details class="deeper">
+<summary>Going deeper: the same idea in Codex and Antigravity</summary>
+<div class="table-wrap"><table class="tools">
+  <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+  <tr><td>Permission rules</td><td><code>permissions.allow / ask / deny</code> in <code>.claude/settings.json</code>; deny first</td><td><code>prefix_rule(pattern=["git","push","--force"], decision="forbidden", justification="…")</code> in <code>.codex/rules/*.rules</code>; decisions <code>allow</code>, <code>prompt</code>, <code>forbidden</code>; the most restrictive wins</td><td>Deny / Ask / Allow lists with <code>command(git)</code>, <code>read_file(path)</code>, <code>write_file(path)</code></td></tr>
+  <tr><td>Tool hooks</td><td><code>hooks</code> in settings; events include <code>SessionStart</code>, <code>PreToolUse</code>, <code>PostToolUse</code>; exit 2 or JSON deny blocks</td><td><code>.codex/hooks.json</code> (or config.toml); events include <code>SessionStart</code>, <code>PreToolUse</code>, <code>PermissionRequest</code>, <code>PostToolUse</code>, <code>Stop</code></td><td><code>.agents/hooks.json</code>; <code>PreToolUse</code>, <code>PostToolUse</code>, <code>PreInvocation</code>, <code>PostInvocation</code>, <code>Stop</code>; PreToolUse JSON decision <code>allow</code>, <code>deny</code> or <code>ask</code></td></tr>
+  <tr><td>Git hooks</td><td colspan="3">Identical in all three: the same <code>.githooks/</code> folder and the same <code>core.hooksPath</code>. This is why layer 3 is where the tools stop differing.</td></tr>
+  <tr><td>No AI trailer</td><td><code>attribution</code> object in settings <span class="ver">verified 2026-09-30</span></td><td>Whether Codex adds a trailer by default <span class="ver unverified">unverified</span>: check a test commit; the <code>commit-msg</code> hook catches it either way</td><td>Not researched <span class="ver unverified">unverified</span>: same, rely on <code>commit-msg</code></td></tr>
+</table></div>
+<p class="small">Sources: <a href="https://code.claude.com/docs/en/permissions">Claude Code permissions</a> · <a href="https://code.claude.com/docs/en/hooks">hooks</a> · <a href="https://learn.chatgpt.com/docs/agent-configuration/rules">Codex rules</a> · <a href="https://learn.chatgpt.com/docs/hooks">Codex hooks</a> · <a href="https://antigravity.google/docs/permissions">Antigravity permissions</a> · <a href="https://antigravity.google/docs/hooks">Antigravity hooks</a>.</p>
+<p class="small">Fuller comparison: <a href="../reference/tool-equivalents.html">Tool equivalents</a>.</p>
+</details>
+
+<h2>Check yourself</h2>
+<p class="score"></p>
+
+<div class="quiz">
+  <p class="q">A trainee commits from a plain terminal. Which guard still runs?</p>
+  <div class="opts">
+    <button class="opt">A permission rule in settings</button>
+    <button class="opt">A PreToolUse hook in settings</button>
+    <button class="opt" data-correct>The pre-commit hook in git</button>
+    <button class="opt">The commit skill's eight steps</button>
+  </div>
+  <p class="why">Permission rules and Claude hooks run only inside Claude Code, and skills run only when an agent loads them. Git hooks run for anyone who commits in a clone that has core.hooksPath set.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">A Claude Code PreToolUse hook script exits with status 1. What happens?</p>
+  <div class="opts">
+    <button class="opt">The tool call is blocked quietly</button>
+    <button class="opt">The whole session ends at once</button>
+    <button class="opt">The user gets asked to approve</button>
+    <button class="opt" data-correct>The tool call goes ahead anyway</button>
+  </div>
+  <p class="why">Without valid JSON, exit 1 is a non-blocking error and the action proceeds. Only exit 2, or a JSON deny, blocks. Git hooks differ: any non-zero exit aborts the commit.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Why is the commit-msg hook a shell regex, not commitlint?</p>
+  <div class="opts">
+    <button class="opt">Commitlint cannot read commit messages at all</button>
+    <button class="opt">Git refuses hooks written with Node code</button>
+    <button class="opt" data-correct>Its newest release broke the age rule</button>
+    <button class="opt">Shell regexes check messages far more deeply</button>
+  </div>
+  <p class="why">The house rule bars any package version younger than 14 days, and commitlint's newest release was younger than that. It would also add Node to a .NET repo. A shell regex has no dependency and works in any clone, at the cost of checking the subject shape only.</p>
+</div>
+
+<h2>Exercise: add all four guards, then try to break the repo</h2>
+<div class="exercise">
+  <span class="label">Exercise · ~90 min · adds: settings, three hook scripts, two git hooks, <code>ConcurrencyTests</code></span>
+  <p>Your repo has rules, skills and reviewers. Now the guards. Commit each numbered group through <code>/commit</code>. Windows: run the shell commands in WSL2 or Git Bash (see <a href="../index.html#before-you-start">Before you start</a> on the index).</p>
+  <ol>
+    <li><strong>Permission rules and attribution.</strong> Ask the agent to write <code>.claude/settings.json</code> with the <code>allow</code>, <code>ask</code> and <code>deny</code> lists and the portable <code>attribution</code> object shown above, and <strong>no <code>hooks</code> block yet</strong> (step 2 adds it, so the file never points at scripts that don't exist). Compare with the listing. Keep your personal approvals out of git: <code>printf '.claude/settings.local.json\n' &gt;&gt; .gitignore</code>, then <code>git check-ignore -v .claude/settings.local.json</code> should print the rule that matches. Commit <code>.claude/settings.json</code> and <code>.gitignore</code>: <code>feat(harness): add permission rules</code>.</li>
+    <li><strong>The destructive guard.</strong> Write <code>.claude/hooks/destructive-guard.sh</code> from the listing, and add <code>session-start.sh</code> and <code>format-on-write.sh</code> from the "Going deeper" box above (copy all three exactly; you don't need to read every regex yet). Now add the <code>hooks</code> block from the <code>settings.json</code> listing to your settings file. Run <code>chmod +x .claude/hooks/*.sh</code>. Start a <strong>new</strong> session, and watch the first tool call for a "non-blocking status code" notice, which means the path is wrong. Commit: <code>feat(harness): add session and destructive-command hooks</code> (a message containing the word rebase would be denied).</li>
+    <li><strong>Git hooks.</strong> Write <code>.githooks/pre-commit</code> and <code>.githooks/commit-msg</code> from the listings. Then, yourself, not the agent:
+<pre>chmod +x .githooks/pre-commit .githooks/commit-msg
+git config core.hooksPath .githooks
+git config core.hooksPath          # prints .githooks
+gitleaks version                   # install it yourself if missing; check the release date first</pre>
+      Install page: <a href="https://github.com/gitleaks/gitleaks#installing">gitleaks</a>. No gitleaks? Skip that line and do the pattern half only; the hook prints a warning and carries on. Git Bash on Windows: <code>chmod</code> records nothing, so also run <code>git add .githooks .claude/hooks</code> and then <code>git update-index --chmod=+x .githooks/pre-commit .githooks/commit-msg .claude/hooks/*.sh</code>. Start a new session: the preflight should now say "Git hooks: enabled". Commit both hooks. This commit already runs through them.</li>
+    <li><strong>The guard test.</strong> Ask the agent to write <code>ConcurrencyTests</code> from this spec: "12 concurrent POST /api/orders of quantity 1 for a product with stock 3, released together; exactly 3 created, 9 conflicts, stock 0; real SQLite on a temp file". It needs a <code>FileStockApiFactory</code> and a shared <code>CreateProductAsync</code> helper (your existing one is private to <code>ApiTests</code>, so ask it to move it, not copy it). Compare with the listing above, then run <code>/quality-gate</code>: green, with one more test than before. Commit: <code>test(orders): add 12-for-3 concurrency guard</code>.</li>
+    <li><strong>Run the four probes.</strong> Use a fresh prompt for each, and write down <em>which layer</em> refused it.
+      <ol>
+        <li><em>Force-push.</em> Prompt: <em>"Run exactly this command with your Bash tool and show me the output: <code>git push --force origin main</code>"</em>. Expect the tool call to be denied before git runs (your repo has no remote, so the point is that it never reached git), with the hook's reason: <code>Force-push rewrites shared history. Ask the human; they push, not the agent.</code> Both the permission rule and the hook cover this command and the hook runs first, so that text means the hook refused it. If the agent only says no in words and makes no tool call, that was the rules file, not a guard: ask again with "Run exactly". Try the variant <code>git push origin main -f</code> too.</li>
+        <li><em>Bad message.</em> Stage any change (for example add a blank line to <code>README.md</code>), then in your own terminal: <code>git commit -m "Update the changes"</code>. Expect <code>commit-msg: subject must be 'type(scope): summary'</code>. The lines about "no leaks found" before it are gitleaks running first; ignore them. Then ask the agent to commit with that message and see what <code>/commit</code> does instead. Unstage afterwards: <code>git restore --staged README.md</code>, then <code>git restore README.md</code>.</li>
+        <li><em>Secret.</em> Open <code>src/StockApi/appsettings.json</code> and add, inside the top-level braces after <code>"AllowedHosts": "*",</code> (keep the comma), the line <code>"Jwt": {"Key": "SuperSecretAuthenticationKeyForFulfillmentService2026!"}</code>. Stage it (<code>git add src/StockApi/appsettings.json</code>) and try to commit from your terminal. Expect <code>pre-commit: possible secret in staged changes</code> with the line printed. While it is still staged, run <code>gitleaks git --pre-commit --staged --no-banner</code> (it only scans staged content, so the file must be staged) and write down what it says. Then reset: <code>git restore --staged src/StockApi/appsettings.json</code> and <code>git restore src/StockApi/appsettings.json</code>. Repeat with <code>x7Qp2LmV9sKd3RtYw8ZbN4cHj6FgA1eU</code> as the key value: the hook blocks this one too. Write down which string gitleaks alone misses, then reset the file the same way. Lines starting INF from gitleaks are normal output. No gitleaks? Do the hook half only.</li>
+        <li><em>The oversell.</em> On a scratch branch ask: <em>"Change OrderService to load the product, check Stock, decrement it, SaveChanges, and remove the transaction."</em> Run <code>dotnet test</code>: expect the concurrency test to fail with <code>Expected: 3 / Actual: 12</code>. Run <code>@agent-stock-invariant-reviewer review git diff HEAD</code>: BLOCK. Now restore the transaction but keep read-then-write. The test goes <strong>green</strong>. Run the reviewer again: it still says BLOCK. That's the lesson. Discard the branch.</li>
+      </ol>
+    </li>
+    <li><strong>Check your guards against your own skills.</strong> Run <code>/commit</code> once more and confirm step 4 (<code>git config user.email</code>) still works under the deny rules; a deny rule ending in <code>*</code> also matches the bare command, which is why the rule is <code>*@*</code>. Then ask the agent to run <code>git config user.email other@example.com</code> and expect a denial.</li>
+    <li><strong>Per clone.</strong> Run <code>git clone . ../stockapi-clone</code>, then <code>git -C ../stockapi-clone config core.hooksPath</code>. It prints nothing: the hooks are off in the fresh clone until the owner sets them. Delete the clone.</li>
+  </ol>
+  <p><strong>Codex:</strong> put the force-push and <code>--no-verify</code> cases in <code>.codex/rules/default.rules</code> as <code>prefix_rule(…, decision="forbidden")</code>. The git hooks and <code>ConcurrencyTests</code> are identical. <strong>Antigravity:</strong> add the same commands to the Deny list and a PreToolUse hook in <code>.agents/hooks.json</code>. Probes 2 to 4 behave the same.</p>
+</div>
+
+<div class="done">
+  <span class="label">Done when</span>
+  <ul class="check" data-key="0007">
+    <li><input type="checkbox"> <span><code>git config core.hooksPath</code> prints <code>.githooks</code>, and <code>git commit -m "Update the changes"</code> is rejected by <code>commit-msg</code></span></li>
+    <li><input type="checkbox"> <span>The force-push probe was refused before git ran, and you noted that the hook's reason text appeared</span></li>
+    <li><input type="checkbox"> <span>The pre-commit hook blocked both keys, and you noted which one gitleaks alone misses (or that you skipped gitleaks)</span></li>
+    <li><input type="checkbox"> <span><code>dotnet test</code> showed <code>Expected: 3 / Actual: 12</code> for the no-transaction rewrite, green for the transaction version, and BLOCK from the reviewer for both</span></li>
+  </ul>
+</div>
+
+<div class="source">
+  <span class="label">Primary source</span>
+  <p><a href="https://code.claude.com/docs/en/hooks-guide">Automate workflows with hooks</a> (Anthropic). Read "Exit codes and JSON output", then the exit-code warning in the <a href="https://code.claude.com/docs/en/hooks">hooks reference</a>. Keep <a href="https://code.claude.com/docs/en/permissions">Permissions</a> open for the rule syntax.</p>
+</div>
+
+<div class="ask">
+  <span class="label">Ask your agent</span>
+  <p>Stuck, or curious? Ask the agent you're learning with, for example: "Read my <code>.claude/settings.json</code> and give me three command spellings that would slip past my deny rules, and which other layer would catch each."</p>
+</div>
+
+<nav class="lesson-nav">
+  <a href="0006-reviewer-subagents.html">← Lesson 6: Reviewer subagents</a>
+  <a href="../reference/four-guards.html">The four guards</a>
+  <a href="0008-mcp.html">Lesson 8: MCP →</a>
+</nav>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AGENTS.md structure</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body class="ref">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Reference sheet</p>
+<h1>AGENTS.md structure</h1>
+<p class="lede">The rules file is an index of about 40 lines: commands, definition of done, invariants, 1-3-1, links. Commit it before any feature code.</p>
+<div class="note"><span class="label">Claude Code only: the quick view</span>Claude Code reads <code>AGENTS.md</code> natively (v2.1.277+) when no <code>CLAUDE.md</code>, <code>.claude/CLAUDE.md</code> or <code>CLAUDE.local.md</code> exists in the folder or above. The root file is re-read from disk after <code>/compact</code>. A nested <code>tests/AGENTS.md</code> loads when Claude reads a file there. <code>.claude/rules/*.md</code> with <code>paths:</code> loads only for matching files. Aim for under 200 lines per file, and about 40 for the index. Legend: <span class="ver">verified 2026-09-30</span> = checked against the docs on that date; <span class="ver unverified">unverified</span> = test it yourself before relying on it. Skip the Codex and Antigravity columns unless you use them.</div>
+
+
+<div class="cols">
+<div>
+<h2>The index skeleton (~40 lines)</h2>
+<p>The rules file is an <strong>index</strong>: it gives the rules that must always hold, and links to depth.</p>
+<figure class="code"><figcaption>AGENTS.md (skeleton)</figcaption><pre><code># &lt;Project&gt;: agent instructions
+
+&lt;One line: what it is.&gt; &lt;Stack, with versions.&gt; Brief: `BRIEF.md`.
+
+## Commands
+- Build: `&lt;command&gt;`
+- Test: `&lt;command&gt;`
+- Format check: `&lt;command&gt;`
+- Run: `&lt;command&gt;`
+
+## Definition of done (every slice)
+1. &lt;The gate that must pass (skill `quality-gate`).&gt;
+2. &lt;Which reviewer agent reads the diff, and when.&gt;
+3. &lt;Who approves the commit. Never commit or push otherwise.&gt;
+
+## Invariants (never break; details in docs/ai/invariants.md)
+- &lt;Rule that stays true however the code changes.&gt;
+- &lt;Forbidden pattern, named as a pattern.&gt;
+- &lt;Out of scope: what to decline.&gt;
+- &lt;Secrets and environment rules.&gt;
+
+## When you are stuck: 1-3-1
+&lt;Paste the section from the 1-3-1 sheet.&gt;
+
+## Workflow
+&lt;One line, one link: docs/ai/workflow.md&gt;
+
+## More context (read when relevant)
+- &lt;Topic&gt;: docs/ai/&lt;file&gt;.md</code></pre></figure>
+</div>
+<div>
+<h2>What each section is for</h2>
+<div class="table-wrap"><table><tr><th>Section</th><th>Holds</th><th>Why it is here</th></tr>
+<tr><td>One line + stack</td><td>What the thing is, .NET version, test framework, where the brief is</td><td>Orientation in 2 lines. The agent cannot ask "what is this?" cheaply.</td></tr>
+<tr><td>Commands</td><td>Exact build, test, format, run commands</td><td>Wrong guesses cost a turn each. Copy-paste beats description.</td></tr>
+<tr><td>Definition of done</td><td>3 to 5 numbered, checkable conditions</td><td>"Done" becomes evidence, not opinion. Names the skill and reviewer to run.</td></tr>
+<tr><td>Invariants</td><td>Rules that must survive any refactor; forbidden patterns; out of scope; secrets</td><td>The part the agent must never trade for a green test. One line each; depth lives in <code>docs/ai/invariants.md</code>.</td></tr>
+<tr><td>When stuck: 1-3-1</td><td>The hand-over format and what triggers it</td><td>Turns a silent decision into a question (<a href="one-three-one.html">sheet</a>).</td></tr>
+<tr><td>Workflow</td><td>One link</td><td>Plan, slice, gate, review, commit. Kept out of the index so the index stays short.</td></tr>
+<tr><td>More context</td><td>Links, one per topic, with "read when relevant"</td><td>Progressive disclosure: depth is loaded only when the task needs it.</td></tr>
+</table></div>
+<p class="note"><span class="label">The pruning test</span>For each line ask: "Would removing this cause the agent to make mistakes?" If not, cut it. <span class="small">(Claude Code best practices; target under 200 lines per file.)</span></p>
+</div>
+</div>
+
+<details class="deeper">
+<summary>Appendix: the reference solution's AGENTS.md, verbatim</summary>
+<figure class="code"><figcaption>reference-solution/AGENTS.md</figcaption><pre><code># StockApi: agent instructions
+
+A small inventory API: products with a unique SKU and a stock count; orders reserve stock.
+.NET 8, ASP.NET Core controllers, EF Core + SQLite, xUnit. Brief: `BRIEF.md`.
+
+## Commands
+- Build: `dotnet build -warnaserror`
+- Test: `dotnet test`
+- Format check: `dotnet format --verify-no-changes`
+- Run: `dotnet run --project src/StockApi` (API on the port printed at startup)
+
+## Definition of done (every slice)
+1. The quality gate passes: format check, then build, then test (skill `quality-gate`).
+2. A reviewer agent has read the diff: `test-reviewer` always; `stock-invariant-reviewer` when stock or orders change.
+3. The human has approved the commit message drafted by the `commit` skill. Never commit or push otherwise.
+
+## Invariants (never break; details in docs/ai/invariants.md)
+- Stock never goes below zero, including under concurrent orders.
+- Every stock change is ONE guarded UPDATE (`ExecuteUpdateAsync` with `Stock &gt;= n` in the WHERE); never read-then-write.
+- Target framework is `net8.0`. Do not change it.
+- Out of scope: auth, UI, payments. Decline and say so if asked to add them.
+- No secrets in git: config values come from environment variables; `.env` is git-ignored.
+
+## When you are stuck: 1-3-1
+If a tool, SDK, test provider or environment blocks you, or a fix would change an invariant,
+a requirement or the machine: STOP. Do not work around it. Reply with exactly
+- **1 problem**: what is blocked and why it matters,
+- **3 options**, with the trade-off of each,
+- **1 recommendation**,
+then wait for the human's decision. Never install, launch, downgrade or delete to get unstuck.
+
+## Workflow
+Plan first, then one slice at a time: docs/ai/workflow.md
+
+## More context (read when relevant)
+- Invariants and why: docs/ai/invariants.md
+- Code layout and naming: docs/ai/conventions.md
+- How to test (no EF InMemory): docs/ai/testing.md
+- Deliberate decisions: docs/decisions/</code></pre></figure>
+</details>
+
+<div class="cols">
+<div>
+<h2>What not to put in</h2>
+<div class="table-wrap"><table><tr><th>Do not put in</th><th>Why</th><th>Put it instead</th></tr>
+<tr><td>Narrative ("we decided to use SQLite because...")</td><td>The agent reads every line every session; story costs context and adds no rule</td><td>An ADR in <code>docs/decisions/</code>, linked from the index</td></tr>
+<tr><td>How-to for humans (clone, install, run the UI)</td><td>Humans need steps; agents need constraints</td><td><code>README.md</code></td></tr>
+<tr><td>Long code blocks</td><td>They go stale and the agent copies them literally</td><td>A pointer to the reference shape: "copy <code>ProductsController</code>"</td></tr>
+<tr><td>Text duplicated from other docs</td><td>Two copies drift; the agent obeys whichever it saw last</td><td>One home, plain link from the index</td></tr>
+<tr><td>Rules for one folder only</td><td>Loads everywhere for no benefit</td><td>Nested <code>tests/AGENTS.md</code> or a path-scoped rule</td></tr>
+<tr><td>Things the tool already enforces</td><td>Prose is weaker than a guard</td><td>A permission rule, hook or test (<a href="four-guards.html">sheet</a>)</td></tr>
+</table></div>
+</div>
+<div>
+<h2>Commit-it-first checklist</h2>
+<ul class="check" data-key="ref-agents">
+<li><input type="checkbox"> <span>Written <strong>before</strong> any feature code, committed as <code>chore(harness): add agent rules</code> (the agent-written-afterwards file is the Trainee A failure).</span></li>
+<li><input type="checkbox"> <span>No <code>CLAUDE.md</code> or <code>CLAUDE.local.md</code> next to it (or one that only says <code>@AGENTS.md</code>).</span></li>
+<li><input type="checkbox"> <span>Under ~40 lines; every line passes the pruning test.</span></li>
+<li><input type="checkbox"> <span>Commands run as written (paste them into a terminal once).</span></li>
+<li><input type="checkbox"> <span>Every invariant names its forbidden pattern and, where possible, the guard test.</span></li>
+<li><input type="checkbox"> <span>The 1-3-1 section is in, and "never install, launch, downgrade or delete" is in it.</span></li>
+<li><input type="checkbox"> <span>Every link resolves to a file that exists.</span></li>
+<li><input type="checkbox"> <span><code>.gitignore</code> has <code>bin/ obj/ tmp/ *.db .env</code>.</span></li>
+<li><input type="checkbox"> <span>Checked in a NEW session: "What are this repo's invariants, and where did you read them?"</span></li>
+</ul>
+<h2>The docs/ai/ files</h2>
+<div class="table-wrap"><table><tr><th>File</th><th>Holds</th><th>Loaded</th></tr>
+<tr><td><code>docs/ai/invariants.md</code></td><td>Numbered invariants with the forbidden pattern and its failure mode (oversell), the guard test, environment and secrets rules</td><td>Read when relevant (linked)</td></tr>
+<tr><td><code>docs/ai/workflow.md</code></td><td>The loop: explore, plan, one slice, gate, review, commit; mid-task changes; git rules; when stuck</td><td>Linked from Workflow</td></tr>
+<tr><td><code>docs/ai/conventions.md</code></td><td>Layout, reference shape to copy, error codes, async, pinned versions, SQLite DateTimeOffset note, comment style</td><td>Read when relevant</td></tr>
+<tr><td><code>docs/ai/testing.md</code></td><td>Real SQLite through the factory; never EF InMemory; concurrency test per stock change; test naming</td><td>Read when relevant</td></tr>
+<tr><td><code>tests/AGENTS.md</code></td><td>Test-only rules, loaded in addition to the root file when working in <code>tests/</code></td><td>Nested, on read</td></tr>
+<tr><td><code>.claude/rules/efcore.md</code></td><td>Claude-only rules with <code>paths:</code> for <code>Data/</code> and <code>Services/</code></td><td>When a matching file is read</td></tr>
+<tr><td><code>docs/decisions/NNNN-*.md</code></td><td>ADRs: the oddity is intentional, here is why</td><td>Linked from the index and from code comments</td></tr>
+</table></div>
+</div>
+</div>
+
+<h2>Load rules per tool</h2>
+<div class="table-wrap"><table><tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+<tr><td>Reads AGENTS.md?</td><td>Natively, when the project has no CLAUDE.md <span class="ver">v2.1.277+ · verified 2026-09-30</span>. Before v2.1.281, some sessions, such as those on Amazon Bedrock or with telemetry disabled, read CLAUDE.md only <span class="ver">v2.1.281+</span></td><td>Yes: the main rules file. Global <code>~/.codex/AGENTS.md</code> (or <code>AGENTS.override.md</code>), then every directory from the git root to the cwd</td><td>Yes: <code>AGENTS.md</code> or <code>GEMINI.md</code> are read as <code>always_on</code>. Global: <code>~/.gemini/AGENTS.md</code> or <code>GEMINI.md</code></td></tr>
+<tr><td>What suppresses it</td><td>A <code>CLAUDE.md</code>, <code>.claude/CLAUDE.md</code> or <code>CLAUDE.local.md</code> in the cwd or above. <code>~/.claude/CLAUDE.md</code> and <code>.claude/rules</code> do not count <span class="ver">verified 2026-09-30</span></td><td>Per directory the override file is checked first, then <code>AGENTS.md</code>, then fallbacks</td><td>Not documented <span class="ver unverified">unverified</span></td></tr>
+<tr><td>Fallback</td><td>A <code>CLAUDE.md</code> containing <code>@AGENTS.md</code>; it is never read twice. <code>/config</code> &gt; Project instructions can read both</td><td>None needed</td><td>None needed</td></tr>
+<tr><td>Nested files</td><td>A subdirectory <code>AGENTS.md</code> loads when Claude <em>reads a file</em> there. All parents of the cwd load at start</td><td>Concatenated root-down; closer files come later so they win</td><td>Not documented <span class="ver unverified">unverified</span></td></tr>
+<tr><td>Path-scoped</td><td><code>.claude/rules/*.md</code> with YAML <code>paths:</code> globs; triggers when Claude reads a matching file. No <code>paths</code> = always loaded</td><td>Use a nested <code>AGENTS.md</code> per directory</td><td><code>.agents/rules/*.md</code> with frontmatter <code>trigger: glob</code> and <code>globs:</code> (also <code>always_on</code>, <code>model_decision</code>, <code>manual</code>). Legacy <code>.agent/rules/</code> is still read</td></tr>
+<tr><td>Size limit</td><td>Under 200 lines per file (adherence drops). Imports <code>@path</code> (max 4 hops) do <strong>not</strong> save context: imported files load at launch</td><td><code>project_doc_max_bytes</code>: 32 KiB by default, across the concatenation</td><td>24 KB per rule file; always-on and global rules share a 20,000-token budget (<a href="https://antigravity.google/docs/rules">docs</a>) <span class="ver">verified 2026-09-30</span></td></tr>
+<tr><td>Survives compaction</td><td>Project-root file is re-read from disk after <code>/compact</code></td><td>Not documented</td><td>Not documented</td></tr>
+</table></div>
+<p class="small">Sources: <a href="https://code.claude.com/docs/en/memory#agents-md">Claude Code memory</a> · <a href="https://code.claude.com/docs/en/context-window#what-survives-compaction">Context window</a> · <a href="https://learn.chatgpt.com/docs/agent-configuration/agents-md">Codex AGENTS.md</a> · <a href="https://antigravity.google/docs/rules">Antigravity rules</a> · <a href="https://agents.md/">agents.md</a>. Last verified 2026-09-30.</p>
+
+
+<hr>
+<p class="small"><strong>Taught in:</strong> <a href="../lessons/0002-rules-files.html">Lesson 2: Rules files</a> · <a href="../lessons/0009-writing-for-the-agent.html">Lesson 9: Writing for the agent</a><br><strong>Other sheets:</strong> <a href="four-guards.html">The four guards</a> · <a href="commit-skill.html">Commit skill</a> · <a href="one-three-one.html">1-3-1</a> · <a href="glossary.html">Glossary</a> · <a href="tool-equivalents.html">Tool equivalents</a></p>
+
+</main>
+</body>
+</html>

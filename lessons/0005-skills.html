@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Skills</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body data-lesson="0005">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Lesson 5 of 11 · 18 min read + 60 min exercise</p>
+<h1>Skills: procedures the agent runs by name</h1>
+<p class="lede">A skill is a versioned procedure in your repo that the agent loads and follows step by step. It isn't a prompt you paste again each time, so the steps stay the same on every run and for every trainee.</p>
+
+<div class="recall">
+  <span class="label">Recall</span>
+  <div class="quiz">
+    <p class="q">You typed a rule in chat, then ran /compact. Which rule is most likely to survive?</p>
+    <div class="opts">
+      <button class="opt" data-correct>The rule in the root AGENTS.md file</button>
+      <button class="opt">The rule you typed in chat earlier</button>
+      <button class="opt">The rule you pasted into a prompt</button>
+      <button class="opt">The rule a teammate mentioned in chat</button>
+    </div>
+    <p class="why">Project-root rules files are re-read from disk after compaction. Anything said only in conversation is summarised and may be lost (lesson 1).</p>
+  </div>
+  <div class="quiz">
+    <p class="q">The test provider cannot run the atomic stock update. What does the 1-3-1 rule make the agent do?</p>
+    <div class="opts">
+      <button class="opt">Rewrite the service so tests pass</button>
+      <button class="opt" data-correct>Stop and hand over a decision</button>
+      <button class="opt">Switch to a provider that works</button>
+      <button class="opt">Skip the failing tests and continue</button>
+    </div>
+    <p class="why">1-3-1 means one problem, three options, one recommendation, then wait. The choice belongs to the human (lesson 3).</p>
+  </div>
+</div>
+
+<div class="note">
+  <span class="label">The win</span>
+  <p>By the end you'll have a <code>/commit</code> skill and a <code>/quality-gate</code> skill in your repo, visible to Claude Code, Codex and Antigravity. You'll also have seen the commit skill refuse a build-output file, and you'll have committed the skills themselves through it.</p>
+</div>
+
+<h2>What happened</h2>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What happened</h4>
+    <p>Trainee E's first commit, <code>367d6e1</code> ("Initial commit", 09-19 11:53), changed 1,089 files and added 169,721 lines. 1,063 of them were <code>tmp/pdfs/vendor/…</code>, a Python toolchain the agent installed to read the brief PDF, and 10 were <code>obj/</code> files. <code>tmp/</code> was already in <code>.gitignore</code>; it was committed anyway.</p>
+    <p>The rest of the history: <code>34baa0e</code> "First commit" held the entire API, and <code>bf6ffc2</code> was "Update the changes". Trainee F's only commit, <code>908d6fa</code>, says "Add integration and service tests for fulfillment service" and adds all 60 files of the project. Trainee C's <code>appsettings.json</code> held <code>"Key": "SuperSecretAuthenticationKeyForFulfillmentService2026!"</code>. 58 of their 92 commits came from a personal address, as did all 4 of Trainee E's.</p>
+    <p class="who">Trainee E (Codex), Trainee F, Trainee C (Antigravity) · none of the six repos had a commit skill, a git hook or a secret scan</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>One skill, <code>commit</code>, is the only route to a commit. It reads the staged list, refuses <code>bin/</code>, <code>obj/</code> and <code>tmp/</code>, scans for secrets, checks the identity, drafts the message <strong>from the diff</strong>, and waits for a yes. Every step below is a line in a file, not a sentence in a prompt.</p>
+  </div>
+</div>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What happened</h4>
+    <p>Trainee C built a prompt library before starting: nine templates plus <code>AI_CONTEXT/</code> docs. The idea was right. But they pasted the templates by hand, and they still said <code>ExamDomain</code> and <code>Angular</code>, left over from another exercise.</p>
+    <p>Trainee F's 6,000-character prompt told the agent to "test everything yourself". That was a request. Nothing in the repo ran the tests before the single commit.</p>
+    <p class="who">Trainee C · Antigravity, "paste-in templates" · Trainee F · Claude Code, "Delegated" stage</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>Templates become skills the tool discovers and runs by name, written for <em>this</em> repo and reviewed in a diff like code. "Test everything" becomes <code>/quality-gate</code>: a script that runs format, build and test and stops at the first failure.</p>
+  </div>
+</div>
+
+<h2>A skill is a procedure, not a pasted prompt</h2>
+
+<p>A <dfn>skill</dfn> is a folder containing a <code>SKILL.md</code> file: YAML frontmatter, then instructions in Markdown. Claude Code loads the skill's name and description into context at the start, and loads the full body when the skill is invoked, either by you typing <code>/name</code> or by the model choosing it from the description. Custom commands have been merged into skills: a file in <code>.claude/commands/</code> and a skill in <code>.claude/skills/</code> both create the same slash command (<a href="https://code.claude.com/docs/en/skills">Skills</a>).</p>
+
+<p>Three differences from a pasted prompt matter for the harness:</p>
+<ol>
+  <li><strong>It lives in git.</strong> A change to the procedure is a reviewed diff, and everyone who clones gets it. Trainee C's templates lived in a chat window and went stale unnoticed.</li>
+  <li><strong>It loads on demand.</strong> Only the name and description sit in context all the time, which keeps the window small. The body enters the conversation when the skill runs (the same page explains the lifecycle).</li>
+  <li><strong>It can carry code.</strong> A skill folder can hold supporting files, such as a script, that the instructions tell the agent to run. The script's logic then isn't re-invented by the model on each run. <code>quality-gate</code> does exactly this with <code>gate.sh</code>.</li>
+</ol>
+
+<h3>SKILL.md anatomy</h3>
+
+<div class="table-wrap"><table>
+  <tr><th>Field</th><th>What it does</th><th>In this course</th></tr>
+  <tr><td><code>name</code></td><td>The slash-command name. Defaults to the folder name.</td><td><code>commit</code>, <code>quality-gate</code></td></tr>
+  <tr><td><code>description</code></td><td>"What the skill does and when to use it. Claude uses this to decide when to apply the skill." Put the key use case first: long descriptions are cut in the skill listing.</td><td>Each description says what the skill does and when to use it</td></tr>
+  <tr><td><code>disable-model-invocation</code></td><td><code>true</code> means only you can start it, by typing <code>/name</code>. The docs recommend it for workflows with side effects, such as <code>/commit</code> or <code>/deploy</code>.</td><td>Left off. The Definition of done in AGENTS.md tells the agent to run <code>commit</code>, and lesson 7 adds the approval prompt. See the trade-off below.</td></tr>
+  <tr><td><code>allowed-tools</code></td><td>Tools the agent may use <em>without asking</em> during the turn that runs the skill. It doesn't restrict the other tools.</td><td>Not set. The commit approval prompt is the gate; a skill must not pre-approve its own gate.</td></tr>
+  <tr><td>Supporting files</td><td>Any other file in the skill folder.</td><td><code>quality-gate/gate.sh</code></td></tr>
+</table></div>
+<details class="deeper">
+<summary>Going deeper: who can start a skill, and pre-approved tools</summary>
+<p class="small">All frontmatter is optional and <code>description</code> is recommended (<a href="https://code.claude.com/docs/en/skills#frontmatter-reference">frontmatter reference</a>). The docs warn that a project skill can grant itself broad tool access through <code>allowed-tools</code>, so review that field in any skill you clone (<a href="https://code.claude.com/docs/en/skills#pre-approve-tools-for-a-skill">pre-approve tools</a>).</p>
+
+<p><strong>The trade-off on <code>disable-model-invocation</code>.</strong> Leaving it off lets the agent run <code>commit</code> itself when your rules say a slice is done; setting it forces a human to type <code>/commit</code> each time. The course leaves it off, because the harness should steer the agent without the human typing every step, and puts the human approval inside the skill (step 6) and behind an <code>ask</code> rule (lesson 7). If your team wants the stricter form, add the one line. The description is still what decides auto-invocation for every skill that doesn't set it. The description text in the skill listing is cut at 1,536 characters, which is why the key use case goes first.</p>
+</details>
+
+<h2>Where the files live: one folder, three tools</h2>
+
+<p>Claude Code looks for project skills in <code>.claude/skills/&lt;name&gt;/SKILL.md</code>. Codex and Antigravity both read <code>.agents/skills/&lt;name&gt;/SKILL.md</code> (see the table below). To write each skill once, keep the real folder in <code>.agents/skills/</code> and add a <strong>per-skill symlink</strong> (a tiny file that points at another path) in <code>.claude/skills/</code>. The Claude Code docs support this: "a &lt;skill-name&gt; entry in the enterprise, personal, or project location can be a symlink to a directory elsewhere on disk" (<a href="https://code.claude.com/docs/en/skills">Skills</a>).</p>
+
+<figure class="code">
+<figcaption>shell, from the repo root (Windows: run these in WSL2 or Git Bash, see <a href="../index.html#before-you-start">Before you start</a> on the index)</figcaption>
+<pre>mkdir -p .claude/skills
+ln -s ../../.agents/skills/commit       .claude/skills/commit
+ln -s ../../.agents/skills/quality-gate .claude/skills/quality-gate
+ls -l .claude/skills        # commit -> ../../.agents/skills/commit</pre>
+</figure>
+
+<p>The link target is relative to the link's own folder, which is why it starts with <code>../../</code>. Use one link per skill, not one link for the whole <code>.claude/skills</code> folder, so a Claude-only skill can still sit beside them later. Git stores a symlink as a tiny file holding the path, so the link travels in the repo.</p>
+
+<p><strong>Windows.</strong> In WSL2 the commands above work unchanged. In Git Bash, <code>ln -s</code> may quietly make a copy instead of a link, or git may write the link as a plain text file, and then Claude Code finds no skill. If <code>ls -l</code> doesn't show <code>-&gt;</code>, copy the skill folders instead and re-copy after every edit, so you know there are two copies to keep in step. <span class="ver unverified">unverified: Git Bash symlink behaviour is standard git and MSYS behaviour, not checked against the tool docs</span></p>
+
+<h3>Gotcha: a personal skill with the same name wins</h3>
+
+<p>When two skills share a name, the location decides: "Enterprise over personal, and personal over project. With <code>deploy</code> in both <code>~/.claude/skills/</code> and the project's <code>.claude/skills/</code>, <code>/deploy</code> runs the personal one" (<a href="https://code.claude.com/docs/en/skills#resolve-skills-that-share-a-name">Resolve skills that share a name</a>). If you already have a personal <code>~/.claude/skills/commit</code>, it silently replaces the repo's <code>commit</code>, with no warning and none of the steps below. Run <code>ls ~/.claude/skills</code> now, and rename or remove a clash. The same applies to whoever runs your repo in the swap test in lesson 11: that run should use a clean profile.</p>
+
+<h2>The commit skill, step by step</h2>
+
+<p>This is the reference solution's <code>commit</code> skill, verbatim. Read it as a checklist the agent cannot forget to load, because the body is in context the moment the skill runs. Each numbered step below it is tied to a failure from the review.</p>
+
+<figure class="code">
+<figcaption>.agents/skills/commit/SKILL.md</figcaption>
+<pre>---
+name: commit
+description: Commit the current slice. Use whenever a slice has passed the quality gate and review and the work should be committed, or when the user says "commit". Drafts a Conventional Commit message from the staged diff, refuses secrets and build output, checks the company identity, and waits for human approval. Never pushes.
+---
+
+# Commit
+
+Follow every step in order. If any check fails, stop and report; do not work around it.
+
+1. **See what is staged.**
+   `git status --short` and `git diff --cached --stat`.
+   If nothing is staged, list the changed files, propose which belong to this slice, and ask the human
+   before running `git add`. Never use `git add -A` or `git add .`.
+
+2. **Refuse build output and local files.**
+   `git diff --cached --name-only | grep -E '(^|/)(bin|obj|tmp)/|\.db$|(^|/)\.env$'`
+   If anything matches: stop, list the paths, and propose `git restore --staged &lt;path&gt;` plus a `.gitignore` entry.
+
+3. **Refuse secrets.**
+   Run BOTH checks. gitleaks finds known key formats but misses readable config secrets (a JWT signing key
+   spelled as a plain English phrase, for example), and the pattern catches those:
+   - `git diff --cached -- . ':(exclude)ai-session' | grep -nEi '(key|secret|password|pwd|token)["'\'' ]*[:=] *["'\''][^"'\'' ]{8,}'`
+   - `gitleaks git --pre-commit --staged --redact` (if installed; it also scans `ai-session/` transcripts)
+   On any finding: stop, show the file and line (redacted), and explain where the value should live
+   (environment variable, documented in `.env.example`). Continue only if the human confirms it is not a secret.
+
+4. **Check identity.**
+   `git config user.email` must be the company address (`@osmosys.co`).
+   If not, stop and ask the human to run `git config user.email &lt;their company email&gt;`. Do not set it yourself.
+
+5. **Draft the message from the diff, not from memory.**
+   Read `git diff --cached`. Write:
+   - Subject: `type(scope): summary`, imperative, 72 characters or fewer.
+     Types: feat, fix, docs, test, refactor, perf, build, ci, chore, style, revert.
+     Scope: the area (products, orders, harness, plan …).
+   - Body (optional): why, in 1–3 lines; mention any 1-3-1 decision the human made.
+   - **No** `Co-Authored-By`, "Generated with" or any other AI attribution line.
+   If the diff holds more than one slice, say so and propose splitting it instead of writing one message.
+
+6. **Show and wait.** Print the staged file list and the full message. Ask: "Commit with this message?"
+   Wait for an explicit yes. If the human edits the message, use their version verbatim.
+
+7. **Commit.** `git commit -m "&lt;subject&gt;" -m "&lt;body&gt;"`. Report the short hash.
+
+8. **Never push**, never amend a pushed commit, never rebase. Pushing is the human's job.</pre>
+</figure>
+
+<div class="table-wrap"><table>
+  <tr><th>Step</th><th>What it does</th><th>The incident it prevents</th></tr>
+  <tr><td>1 · See what is staged</td><td>Shows status and stat; never <code>git add -A</code> or <code>git add .</code>; asks before staging.</td><td>Trainee E <code>367d6e1</code>: 1,089 files in one commit. Trainee D <code>1009656</code>: 67 files, 11,608 insertions, plan and code together.</td></tr>
+  <tr><td>2 · Refuse build output</td><td>Greps the staged names for <code>bin/</code>, <code>obj/</code>, <code>tmp/</code>, <code>.db</code> and <code>.env</code>.</td><td>The 1,063 <code>tmp/pdfs/vendor/…</code> files and 10 <code>obj/</code> files in <code>367d6e1</code>, tracked despite <code>.gitignore</code>.</td></tr>
+  <tr><td>3 · Refuse secrets</td><td>A pattern check and gitleaks, both run (gitleaks alone misses readable config secrets); a human must confirm a false alarm.</td><td>Trainee C's JWT signing key in <code>appsettings.json</code>.</td></tr>
+  <tr><td>4 · Check identity</td><td>Stops if <code>user.email</code> isn't <code>@osmosys.co</code>; tells the human to fix it, never sets it itself.</td><td>Trainee C: 58 of 92 commits from a personal account. Trainee E: 4 of 4.</td></tr>
+  <tr><td>5 · Draft from the diff</td><td>Conventional Commit subject written from <code>git diff --cached</code>; no AI trailer; splits multi-slice diffs.</td><td>"First commit" (<code>34baa0e</code>), "Update the changes" (<code>bf6ffc2</code>), Trainee F's misleading <code>908d6fa</code>. AI trailers: Trainee A 11 of 13, Trainee B 12 of 13, Trainee D 6 of 7.</td></tr>
+  <tr><td>6 · Show and wait</td><td>Prints files and message, waits for an explicit yes, uses the human's edit verbatim.</td><td>Trainee A's <code>b456df0</code> (09-20 18:46), committed without being asked. Their reaction afterwards: "i did not want u to commit anything until I say so".</td></tr>
+  <tr><td>7 · Commit</td><td>One slice, one commit, at the moment the slice is green.</td><td>Trainee C: 56 commits share one timestamp, replayed in bulk. Trainee B: 4 commits in the same second.</td></tr>
+  <tr><td>8 · Never push</td><td>No push, no amend of pushed work, no rebase.</td><td>Trainee A asked the agent to rewrite the remote branch; only GitLab branch protection refused.</td></tr>
+</table></div>
+
+<p>Two terms in that file. <strong>Conventional Commits</strong> is a convention for commit subjects, <code>type(scope): summary</code> such as <code>feat(products): add low-stock endpoint</code>, so history reads as a list of changes (<a href="https://www.conventionalcommits.org">spec</a>). <strong>gitleaks</strong> is a command-line scanner that looks for passwords and API keys in code (<a href="https://github.com/gitleaks/gitleaks#installing">install page</a>). No gitleaks? Do the pattern half of step 3 only; the skill says "if installed", and lesson 7 adds a git hook that warns when it is missing.</p>
+
+<p>Two design choices are worth copying. First, every refusal ends in an action for the human ("propose <code>git restore --staged</code>", "ask the human to run <code>git config</code>"), so the agent has somewhere to go that isn't a workaround. Second, step 5 says "from the diff, not from memory". Trainee F's <code>908d6fa</code> described the last thing the agent did, not what was in the commit.</p>
+
+<h2>The quality gate: a skill that carries a script</h2>
+
+<p>"Test everything yourself" asks the model to remember which commands to run, in which order, and to stop when one fails. <code>quality-gate</code> moves that into a script, and the skill only says when to run it and what to do with the result.</p>
+
+<figure class="code">
+<figcaption>.agents/skills/quality-gate/SKILL.md</figcaption>
+<pre>---
+name: quality-gate
+description: Run the format, build and test gate for this .NET solution and report the first failure. Use after every slice and before every commit, or when the user asks "is it green?".
+---
+
+# Quality gate
+
+Run `bash .agents/skills/quality-gate/gate.sh` from the repository root.
+It runs three steps and stops at the first failure:
+
+1. `dotnet format --verify-no-changes`: formatting matches `.editorconfig`
+2. `dotnet build -warnaserror`: no warnings, no errors
+3. `dotnet test --no-build`: every test passes
+
+Then:
+- **Green**: report "quality gate: green" with the test count line.
+- **Red**: quote the failing step's first error verbatim (file:line and message), then fix it.
+  - Formatting: run `dotnet format` and re-run the gate.
+  - Build or test: fix the cause in the code the slice touched.
+  - **Never** delete, skip (`[Fact(Skip=…)]`) or weaken a test to go green.
+  - **Never** change production logic to suit a test tool (for example, rewriting an atomic UPDATE so that
+    EF InMemory can run it). If the only way to green touches an invariant, stop and use 1-3-1.
+- After two failed fix attempts on the same error, stop and use 1-3-1.</pre>
+</figure>
+
+<figure class="code">
+<figcaption>.agents/skills/quality-gate/gate.sh</figcaption>
+<pre>#!/usr/bin/env bash
+# Quality gate: format -&gt; build -&gt; test, stop at the first failure.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel 2&gt;/dev/null || pwd)"
+
+step() { printf '\n== %s ==\n' "$1"; }
+
+step "1/3 format (dotnet format --verify-no-changes)"
+dotnet format --verify-no-changes || { echo "GATE FAILED at format: run 'dotnet format' and re-run"; exit 1; }
+
+step "2/3 build (dotnet build -warnaserror)"
+dotnet build -warnaserror --nologo -v q || { echo "GATE FAILED at build"; exit 1; }
+
+step "3/3 test (dotnet test --no-build)"
+dotnet test --no-build --nologo -v q || { echo "GATE FAILED at test"; exit 1; }
+
+echo; echo "quality gate: green"</pre>
+</figure>
+
+<ul>
+  <li><code>set -euo pipefail</code> plus <code>|| { …; exit 1; }</code> makes the first red step stop the run with a message that names the step.</li>
+  <li><code>cd "$(git rev-parse --show-toplevel …)"</code> makes it work from any folder in the repo.</li>
+  <li>Your starter repo has no <code>.editorconfig</code>, so step 1 checks against the .NET defaults. It still catches the stray indentation you'll add in the exercise.</li>
+  <li><code>.gitattributes</code> is already in your repo: it keeps scripts LF so bash works on Windows checkouts.</li>
+  <li>The path is repo-relative, not <code>${CLAUDE_SKILL_DIR}</code> (a Claude Code variable the docs describe), so Codex and Antigravity can run the same command.</li>
+  <li>The skill body holds the judgement the script can't: never delete, skip or weaken a test to get green, and after two failed fixes use 1-3-1. That's Trainee D's InMemory rewrite, forbidden in a sentence.</li>
+</ul>
+
+<h2>Why a skill is still only a request</h2>
+
+<p>A skill is text the model reads. It can skip step 3, run steps out of order, or never load the skill at all if it decides the description doesn't match. The review calls this out for Trainee F: "Test everything yourself" was a request, not a gate. A skill raises the odds a lot because the steps are specific and in context, but it doesn't <em>block</em> anything.</p>
+
+<p>That's why the harness has layers. Lesson 7 backs each skill step with something the harness enforces:</p>
+<div class="table-wrap"><table>
+  <tr><th>Skill step</th><th>Enforced by (lesson 7)</th></tr>
+  <tr><td>6 · Wait for approval</td><td>A permission <code>ask</code> rule on <code>git commit</code></td></tr>
+  <tr><td>2, 3, 4 · Refuse build output, secrets, wrong identity</td><td><code>.githooks/pre-commit</code>, which also runs for humans</td></tr>
+  <tr><td>5 · No AI trailer, conventional subject</td><td><code>.githooks/commit-msg</code> and the attribution setting</td></tr>
+  <tr><td>8 · Never push, never force-push</td><td>An <code>ask</code> rule on plain <code>git push</code>; <code>deny</code> rules on the force-push variants; a PreToolUse hook on force-push</td></tr>
+</table></div>
+
+<details class="deeper">
+<summary>Going deeper: the same idea in Codex and Antigravity</summary>
+<div class="table-wrap"><table class="tools">
+  <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+  <tr><td>Skill location</td><td><code>.claude/skills/&lt;name&gt;/SKILL.md</code> (symlink allowed)</td><td><code>.agents/skills/&lt;name&gt;/</code> in the repo, plus <code>~/.agents/skills</code></td><td><code>.agents/skills/&lt;name&gt;/SKILL.md</code></td></tr>
+  <tr><td>Required fields</td><td>None; <code>description</code> recommended</td><td><code>name</code> and <code>description</code></td><td><code>name</code> and <code>description</code></td></tr>
+  <tr><td>Invoke</td><td><code>/name</code>, or the model picks it</td><td>Mention <code>$skill-name</code>, or selected implicitly</td><td><code>/name</code>, or chosen automatically</td></tr>
+  <tr><td>Older "commands"</td><td>Merged into skills</td><td>Custom prompts (<code>~/.codex/prompts</code>) deprecated for skills</td><td>Workflows deprecated in favour of skills by 1 November 2026; <code>/migrate-workflows</code> converts them <span class="ver">verified 2026-09-30</span></td></tr>
+</table></div>
+<p class="small">Sources: <a href="https://code.claude.com/docs/en/skills">Claude Code skills</a> · <a href="https://learn.chatgpt.com/docs/build-skills">Codex skills</a> · <a href="https://antigravity.google/docs/skills">Antigravity skills</a> · <a href="https://antigravity.google/docs/ide/workflows">Antigravity workflows</a>. Antigravity's exact workflow path is <span class="ver unverified">unverified</span>; don't build on it.</p>
+<p class="small">Fuller comparison: <a href="../reference/tool-equivalents.html">Tool equivalents</a>.</p>
+</details>
+
+<h2>Check yourself</h2>
+<p class="score"></p>
+
+<div class="quiz">
+  <p class="q">Which part of a skill mainly decides whether the agent picks it up on its own?</p>
+  <div class="opts">
+    <button class="opt" data-correct>The description field in the YAML header</button>
+    <button class="opt">The name of the skill's parent folder</button>
+    <button class="opt">The length of the skill's whole body</button>
+    <button class="opt">The date the skill file was saved</button>
+  </div>
+  <p class="why">The description is what the model reads to decide when the skill applies, so it should say what the skill does and when to use it. Put the key use case first, because the listing cuts long descriptions.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Step 2 of the commit skill refuses paths under tmp/. Which failure is that?</p>
+  <div class="opts">
+    <button class="opt">A personal email address on the commits</button>
+    <button class="opt" data-correct>A vendored toolchain in the first commit</button>
+    <button class="opt">A signing key in the settings file</button>
+    <button class="opt">A push that rewrote the remote branch</button>
+  </div>
+  <p class="why">Trainee E's <code>367d6e1</code> tracked 1,063 files under <code>tmp/pdfs/vendor/</code>. Step 2 greps the staged file names for bin, obj and tmp before any commit is drafted.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Why is the commit skill still only a request, not a block?</p>
+  <div class="opts">
+    <button class="opt">Skills cannot run shell commands at all</button>
+    <button class="opt">Skills get dropped after a compaction run</button>
+    <button class="opt" data-correct>The agent could still skip any step</button>
+    <button class="opt">Skills only work in plan mode sessions</button>
+  </div>
+  <p class="why">A skill is text the model reads and follows. Only the harness can refuse a tool call, so lesson 7 adds an ask rule and git hooks underneath the skill.</p>
+</div>
+
+<h2>Exercise: add the two skills, then commit them through /commit</h2>
+<div class="exercise">
+  <span class="label">Exercise · ~60 min · adds: <code>.agents/skills/commit</code>, <code>.agents/skills/quality-gate</code>, and the skills in your workflow rules</span>
+  <p>You are in your practice repo, which already has <code>AGENTS.md</code> and the plan workflow from lessons 2 to 4. The skills are the next piece of harness, still before any new feature code.</p>
+  <ol>
+    <li><strong>Set your identity first.</strong> The commit skill refuses any email that isn't a company address. Run <code>git config user.email you@osmosys.co</code> (your own address), then <code>git config user.email</code> should print it.</li>
+    <li>Ask the agent to write the skills from the spec, not from a copy. Prompt:
+<pre>Create two skills in .agents/skills/ (tool-neutral location).
+1. commit: steps to see staged files (never git add -A), refuse bin/ obj/ tmp/ .db .env,
+   scan for secrets, check the git user.email ends in @osmosys.co, draft a Conventional
+   Commit from git diff --cached with no AI attribution, show it and wait for my yes,
+   then commit. Never push.
+2. quality-gate: a gate.sh that runs dotnet format --verify-no-changes, dotnet build
+   -warnaserror, dotnet test --no-build, stopping at the first failure; plus a SKILL.md
+   that says to fix, never weaken a test, and use 1-3-1 after two failed attempts.
+Write the descriptions so each skill is chosen at the right moment. Do not commit.</pre>
+      Compare its result with the two listings above. Keep your version if it covers every step; if it misses one (often step 4 or the "no <code>git add -A</code>" rule), ask it to add it.</li>
+    <li>Check for a name clash first: <code>ls ~/.claude/skills</code>. A personal <code>commit</code> or <code>quality-gate</code> there would win over the repo's. Then make Claude Code see them. From the repo root run the <code>ln -s</code> commands above (Windows: in WSL2 or Git Bash; if Git Bash makes copies, copy the folders instead), then <code>ls -l .claude/skills</code>. Start a new session and type <code>/</code>; both names should appear. Check that Claude Code follows the symlink before you rely on it.</li>
+    <li>Run <code>/quality-gate</code>. Claude Code will ask permission for <code>bash …/gate.sh</code> and <code>dotnet format</code>: answer "Yes" once each, not "Yes, and don't ask again", because lesson 7 writes the real rules. Expect three steps and "quality gate: green". If <code>dotnet format</code> fails on the starter files, that's the skill working: let the agent run <code>dotnet format</code> and re-run.</li>
+    <li><strong>Break it on purpose.</strong> Add three spaces of indentation to one line in <code>src/StockApi/Program.cs</code> and run <code>/quality-gate</code> again. It must stop at step 1 with "GATE FAILED at format" and not reach build. Revert the edit.</li>
+    <li><strong>Make /commit refuse.</strong> Run <code>dotnet build</code>, then force-add a build file: <code>git add -f src/StockApi/obj/project.assets.json</code> (any file under <code>obj/</code> works). Run <code>/commit</code>. It should stop at step 2, list the path, and propose <code>git restore --staged</code>. Run the restore it proposes.</li>
+    <li><strong>Commit the skills through the skill.</strong> Ask <code>/commit</code> to stage the two skill folders and <code>.claude/skills</code>. You should see the file list and a drafted message such as <code>feat(harness): add commit and quality-gate skills</code>, then a question. Answer yes. Check <code>git log -1 --format='%h %an &lt;%ae&gt;%n%B'</code>: company email, no AI trailer.</li>
+    <li><strong>Point your rules at the skills.</strong> In <code>docs/ai/workflow.md</code> your steps 4 and 6 are still manual (run the tests by hand, write the commit message by hand). Edit them to name the skills: step 4 "run the <code>quality-gate</code> skill", step 6 "run the <code>commit</code> skill; it drafts the message and waits for approval". Make the same swap in the Definition of done in <code>AGENTS.md</code>: the "format check, build and test pass" item becomes "the <code>quality-gate</code> skill passes", and the commit approval item names the <code>commit</code> skill. Leave step 5 (review) manual until lesson 6. Commit the two files through <code>/commit</code>: <code>docs(ai): point workflow at skills</code>.</li>
+    <li>Write one sentence: which step of the commit skill could the agent skip, and what would notice? (Lesson 7 answers it.)</li>
+  </ol>
+  <p><strong>Codex:</strong> skills in <code>.agents/skills/</code> are read as they are, so skip the symlinks. Start a new session and type <code>$commit</code> or <code>$quality-gate</code>. Codex may or may not add a co-author trailer by default <span class="ver unverified">unverified</span>, so check the message of this first commit. <strong>Antigravity:</strong> the same folder works, invoked as <code>/commit</code>. If you have Antigravity workflows (path unverified), convert them with <code>/migrate-workflows</code>.</p>
+</div>
+
+<div class="done">
+  <span class="label">Done when</span>
+  <ul class="check" data-key="0005">
+    <li><input type="checkbox"> <span><code>ls -l .claude/skills</code> shows two symlinks into <code>../../.agents/skills/</code>, and both skills appear in a fresh session</span></li>
+    <li><input type="checkbox"> <span>You saw <code>/quality-gate</code> stop at the format step with "GATE FAILED at format", then go green after the fix</span></li>
+    <li><input type="checkbox"> <span><code>/commit</code> refused a forced-add <code>obj/</code> file and named the path</span></li>
+    <li><input type="checkbox"> <span><code>git log -1</code> shows the skills commit with a conventional subject, company email and no AI trailer</span></li>
+    <li><input type="checkbox"> <span><code>docs/ai/workflow.md</code> and <code>AGENTS.md</code> name <code>quality-gate</code> and <code>commit</code></span></li>
+  </ul>
+</div>
+
+<div class="source">
+  <span class="label">Primary source</span>
+  <p><a href="https://code.claude.com/docs/en/skills">Extend Claude with skills</a> (Anthropic). Read "Control who invokes a skill" and the frontmatter reference. For the open folder layout that Codex and Antigravity share, read <a href="https://learn.chatgpt.com/docs/build-skills">Build skills</a>.</p>
+</div>
+
+<div class="ask">
+  <span class="label">Ask your agent</span>
+  <p>Stuck, or curious? Ask the agent you're learning with, for example: "Read my <code>.agents/skills/commit/SKILL.md</code> and tell me which step is most likely to be skipped, and what in this repo would notice if it were."</p>
+</div>
+
+<nav class="lesson-nav">
+  <a href="0004-plan-gated-workflow.html">← Lesson 4: Plan-gated workflow</a>
+  <a href="../reference/commit-skill.html">Commit skill checklist</a>
+  <a href="../reference/tool-equivalents.html">Tool equivalents</a>
+  <a href="0006-reviewer-subagents.html">Lesson 6: Reviewer subagents →</a>
+</nav>
+
+</main>
+</body>
+</html>

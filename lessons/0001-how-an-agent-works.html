@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How an Agent Works</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body data-lesson="0001">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Lesson 1 of 11 · 20 min read + 30 min exercise</p>
+<h1>How a coding agent actually works</h1>
+<p class="lede">The agent is a loop that re-reads its context window every turn, and that window is all it knows. Once you see that, it's clear why a rule typed into the chat fades, while a rule in a file keeps steering.</p>
+
+<div class="note">
+  <span class="label">The win</span>
+  <p>By the end you'll have the practice repo under git with your company identity. You'll also have shown yourself, in about two minutes, that a rule given only in chat is gone after <code>/clear</code>.</p>
+</div>
+
+<div class="note">
+  <span class="label">Words you'll meet</span>
+  <p>Five words carry this course. Each is explained properly later; for now, one plain clause each (all in the <a href="../reference/glossary.html">glossary</a>).</p>
+  <ul>
+    <li><a href="../reference/glossary.html">Harness</a>: the agent tool plus the files in your repo that configure it.</li>
+    <li><a href="../reference/glossary.html">Rule</a>: an instruction written in a file the agent reads, so it does not depend on chat.</li>
+    <li><a href="../reference/glossary.html">Skill</a>: a saved, named procedure the agent follows when you call it.</li>
+    <li><a href="../reference/glossary.html">Reviewer</a>: a second agent that checks the first one's work with a fresh mind.</li>
+    <li><a href="../reference/glossary.html">Hook or guard</a>: a script or rule that blocks an action before it runs, rather than asking nicely.</li>
+  </ul>
+</div>
+
+<h2>What happened</h2>
+
+<div class="incident">
+  <div class="happened">
+    <h4>What happened</h4>
+    <p>Trainee A's rules for the agent lived in a 17,000-character prompt inside a 356-turn session. The agent wrote <code>CLAUDE.md</code> at wrap-up, after every feature was done: commit <code>c19c72a</code>, 31 minutes after the last feature commit <code>6c9922b</code>.</p>
+    <p>The same session shows the agent committing without being asked (<code>b456df0</code>). Their reply: <em>"undo these changes (uncommit) — i did not want u to commit anything until I say so"</em>.</p>
+    <p class="who">Trainee A · Claude Code · "Gated chat" stage: the best of the six, still below the bar</p>
+  </div>
+  <div class="harness">
+    <h4>What the harness does instead</h4>
+    <p>The rules go in a file that the tool loads at the start of <em>every</em> session and re-reads from disk after compaction. Rules about commits are backed by something that <strong>blocks</strong>, not something the agent is asked to remember.</p>
+    <p>That's the whole course: move each rule out of the chat and into the layer that can't forget it.</p>
+  </div>
+</div>
+
+<h2>The loop</h2>
+
+<p>An <dfn>agent</dfn> is a model in a loop with <dfn>tools</dfn>. The tools are functions it may call: read a file, edit a file, run a shell command, search, fetch a URL. Each turn, the model reads its whole context and chooses the next tool call. The harness runs the call and appends the result, and the model reads everything again. Anthropic describes three repeating phases: <strong>gather context, take action, verify results</strong> (<a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code works</a>).</p>
+
+<figure class="code">
+<figcaption>one turn, simplified</figcaption>
+<pre>context = system prompt + rules files + conversation + tool results
+loop:
+  next = model(context)              # "call Bash: dotnet test"
+  if next is a message to you: stop and wait
+  result = harness.run(next)         # permission check happens HERE
+  context += next + result           # the window only grows</pre>
+</figure>
+
+<p>Two consequences matter for the rest of the course:</p>
+<ol>
+  <li><strong>The model has no memory outside the window.</strong> Anything it "knows" about your project is either in its training data (stale, generic) or in the window right now.</li>
+  <li><strong>The harness sits between the model and your machine.</strong> Every tool call passes through it, so that's where things can be <em>blocked</em>, not just requested. <dfn>Harness</dfn> means the tool (Claude Code, Codex, Antigravity) plus everything in your repo that configures it: rules, skills, reviewers, hooks and permissions.</li>
+</ol>
+
+<h2>The context window, and why prose rules drift</h2>
+
+<p>The <dfn>context window</dfn> is the model's working memory, and it's finite. It holds the system instructions, your rules files, loaded skills, the conversation, and every file and command output so far (<a href="https://code.claude.com/docs/en/context-window">Context window</a>). In a long session it fills up. Claude Code then <dfn>compacts</dfn>: it summarises older turns to make room. Run <code>/context</code> to see what's using the space, <code>/compact</code> to compact on demand, and <code>/clear</code> to start fresh.</p>
+
+<p>What survives compaction is documented. The difference between the two rows below is the core reason for a harness:</p>
+
+<div class="table-wrap"><table>
+  <tr><th>Where the rule lives</th><th>After <code>/compact</code></th><th>After <code>/clear</code> or a new session</th></tr>
+  <tr><td>Project-root <code>CLAUDE.md</code> / <code>AGENTS.md</code></td><td>Re-read from disk and re-injected</td><td>Loaded again</td></tr>
+  <tr><td>Your message in the chat</td><td>Summarised; details may be lost</td><td><strong>Gone</strong></td></tr>
+</table></div>
+
+<p>The docs name the causes when a rule goes missing after compaction: it "was given only in conversation, lives in a nested CLAUDE.md that hasn't reloaded yet, or is a path-scoped rule that hasn't matched a file since" (<a href="https://code.claude.com/docs/en/memory">Memory</a>). Trainee A's 17k-character prompt was a conversation message in a 356-turn session: exactly the kind of instruction compaction summarises.</p>
+
+<h2>Permission modes and plan mode</h2>
+
+<p>A <dfn>permission mode</dfn> decides which tool calls run without asking you. In Claude Code, <kbd>Shift</kbd>+<kbd>Tab</kbd> cycles through them, and <code>permissions.defaultMode</code> sets the starting one. The table follows the official one (<a href="https://code.claude.com/docs/en/permission-modes">Permission modes</a>):</p>
+
+<div class="table-wrap"><table>
+  <tr><th>Mode</th><th>What runs without asking</th><th>Use it for</th></tr>
+  <tr><td><code>default</code> (shown as "Manual")</td><td>Reads only</td><td>Reviewing every action yourself</td></tr>
+  <tr><td><code>acceptEdits</code></td><td>Reads, file edits, common filesystem commands</td><td>A slice you have planned and approved</td></tr>
+  <tr><td><code>plan</code></td><td>Reads, plus classifier-approved commands when auto mode is available; <strong>no source edits</strong> until you approve a plan</td><td>Exploring and planning (lesson 4)</td></tr>
+  <tr><td><code>auto</code></td><td>Everything, with background safety checks by a classifier model</td><td>Long, lower-risk work</td></tr>
+  <tr><td><code>bypassPermissions</code></td><td>Everything</td><td>Isolated containers and VMs only</td></tr>
+</table></div>
+
+<p><strong>Check which mode you start in.</strong> On Claude Code v2.1.283 or later you start in <code>auto</code>, where a second model approves most actions for you. That is why a commit or an app launch can happen without a prompt, unless your repo says otherwise. <span class="ver">v2.1.283+ · verified 2026-09-30</span></p>
+
+<details class="deeper">
+  <summary>Going deeper: the classifier, deny rules and ask rules</summary>
+  <p>The docs: "With Claude Code v2.1.283 or later, auto mode is the built-in starting permission mode for interactive terminal and VS Code sessions". The <dfn>classifier</dfn> is that second model; it checks each action in the background. Two things still hold in every mode: a <em>deny rule</em> (a line in your settings saying "never run this") always blocks, and an <em>ask rule</em> ("always check with me first") still prompts "even in auto mode" (<a href="https://code.claude.com/docs/en/permissions">Permissions</a>). Lesson 7 writes both.</p>
+</details>
+
+<p>Clicking "Yes, and don't ask again" saves an <dfn>allow rule</dfn> (a line that lets that command run without asking) in <code>.claude/settings.local.json</code>, your personal file. Trainee B copied such a pile of clicked approvals into the shared <code>.claude/settings.json</code>. It held rules that let the agent rewrite git history and delete files, and was then credited as "AI configuration". <strong>An allow-list you clicked together isn't a policy.</strong> Lesson 7 writes a real one.</p>
+
+<details class="deeper">
+<summary>Going deeper: the same idea in Codex and Antigravity</summary>
+<div class="table-wrap"><table class="tools">
+  <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+  <tr><td>Approval</td><td>Permission modes, <kbd>Shift</kbd>+<kbd>Tab</kbd></td><td><code>approval_policy</code>: <code>on-request</code>, <code>never</code>, <code>auto_review</code> (<code>untrusted</code> retired) <span class="ver">verified 2026-09-30</span></td><td>Presets: Default, Request Review, Turbo; terminal auto-execution setting</td></tr>
+  <tr><td>Sandbox</td><td>Permission rules; OS sandboxing (<a href="https://code.claude.com/docs/en/sandboxing">Sandboxing</a>)</td><td><code>sandbox_mode</code>: <code>read-only</code>, <code>workspace-write</code>, <code>danger-full-access</code></td><td><code>enableTerminalSandbox</code> (<a href="https://antigravity.google/docs/sandbox">docs</a>)</td></tr>
+  <tr><td>Plan first</td><td>Plan mode, or a <code>/plan</code> prefix</td><td>Ask for a plan; read-only sandbox</td><td><code>/plan</code> produces an Implementation Plan artifact</td></tr>
+</table></div>
+<p class="small">Sources: <a href="https://learn.chatgpt.com/docs/agent-approvals-security">Codex approvals and security</a> · <a href="https://antigravity.google/docs/permissions">Antigravity permissions</a>. Codex docs moved to learn.chatgpt.com in 2026.</p>
+</details>
+
+<h2>One setting for this course: the Learning output style</h2>
+<p>An <dfn>output style</dfn> changes how Claude Code talks to <em>you</em>, not what it knows about the repo. The built-in <strong>Learning</strong> style writes the routine code itself. At real design decisions it leaves a <code>TODO(human)</code> for you to write a few lines, and it explains its choices in <code>Insight</code> blocks (<a href="https://code.claude.com/docs/en/output-styles">Output styles</a>). Turn it on for the whole course with <code>/output-style learning</code>. It's saved to <code>.claude/settings.local.json</code>, which isn't committed, so it's a personal setting and not part of your harness. It's Claude Code only; Codex and Antigravity have no equivalent as of 2026-09-30.</p>
+
+<h2>Check yourself</h2>
+<p class="score"></p>
+
+<div class="quiz">
+  <p class="q">You told the agent in chat, 200 turns ago, "never commit without asking". It just committed. What is the most likely cause?</p>
+  <div class="opts">
+    <button class="opt" data-correct>The chat instruction was compacted away.</button>
+    <button class="opt">The model ignores all negative instructions.</button>
+    <button class="opt">Permission mode silently switched to bypass.</button>
+    <button class="opt">Git hooks overrode the chat instruction.</button>
+  </div>
+  <p class="why">Chat instructions are summarised during compaction; only files like AGENTS.md / CLAUDE.md are re-read from disk. Auto mode then let the commit run without a prompt. And even a remembered instruction is only a request, so lesson 7 makes "ask before commit" a permission rule.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Where can a tool call be stopped regardless of what the model "wants"?</p>
+  <div class="opts">
+    <button class="opt">In the system prompt the model reads.</button>
+    <button class="opt" data-correct>In the harness, before the call runs.</button>
+    <button class="opt">In the rules file the model loads.</button>
+    <button class="opt">In the output style for the session.</button>
+  </div>
+  <p class="why">Everything the model reads is a request. The harness runs the call, so the harness is where permission rules and hooks can refuse it.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">A trainee commits <code>.claude/settings.local.json</code> full of approvals they clicked. What is it?</p>
+  <div class="opts">
+    <button class="opt">A reviewed permission policy for the team.</button>
+    <button class="opt">A hook script that blocks risky commands.</button>
+    <button class="opt" data-correct>A personal record of clicks, not policy.</button>
+    <button class="opt">A shared rules file every agent loads.</button>
+  </div>
+  <p class="why">"Don't ask again" writes to settings.local.json, which is personal and meant to be git-ignored. A policy is written on purpose, reviewed, and lives in .claude/settings.json.</p>
+</div>
+
+<h2>Exercise: set up the practice repo and watch a chat rule vanish</h2>
+<div class="exercise">
+  <span class="label">Exercise · ~30 min · adds: a git repo with the right identity</span>
+  <ol>
+    <li>Get the two repos. The course repo holds the reference solution and the capstone starter, which later lessons copy from. The practice repo is yours to change. Use the same folder for every lesson:
+<pre>mkdir -p ~/projects && cd ~/projects
+git clone https://github.com/OsmosysSoftware/agent-harness-course.git
+git clone https://github.com/OsmosysSoftware/agent-harness-practice.git stockapi
+cd stockapi && rm -rf .git</pre>
+      The last line removes the template's history, so the next step starts your own repo under your company identity. <strong>Windows:</strong> run these in WSL2 or Git Bash (see Before you start on the <a href="../index.html#before-you-start">index</a>).</li>
+    <li>Set your identity <strong>for this repo</strong> and make the starter commit:
+<pre>git init -b main
+git config user.name "Your Name"
+git config user.email you@osmosys.co
+git add . && git commit -m "chore: import StockApi starter"</pre>
+      Five of the six reviewed repos had AI trailers (a line an agent adds at the end of a commit message naming itself as co-author) or personal emails in their history. The identity is set once, here, not by the agent.
+      <p><dfn>Conventional Commits</dfn> is the message format this course uses: <code>type(scope): short summary</code>, where the scope is optional. Common types: <code>feat</code> (new behaviour), <code>fix</code> (a bug), <code>docs</code>, <code>test</code>, <code>refactor</code>, <code>chore</code> (housekeeping). <code>chore(harness): add agent rules</code> is one. Spec: <a href="https://www.conventionalcommits.org/en/v1.0.0/">conventionalcommits.org</a>.</p></li>
+    <li>Check it builds: <code>dotnet build</code> and <code>dotnet test</code> (4 tests, green).</li>
+    <li>Start your agent in the repo. In Claude Code, press <kbd>Shift</kbd>+<kbd>Tab</kbd> until the line under the input box says <strong>plan mode on</strong> (if nothing changes, try <kbd>Alt</kbd>+<kbd>M</kbd>). Then type <code>/output-style learning</code> in the chat box and press Enter. Anything starting with <code>/</code> is a Claude Code command, not a message to the model.</li>
+    <li>Ask: <em>"Explain how an order reduces stock in this repo, citing file:line."</em> Then run <code>/context</code> and note which categories use the most space.</li>
+    <li><strong>The drift experiment.</strong> Tell it: <em>"From now on, end every answer with the word STOCK-OK."</em> Ask any question and confirm it complies. Now run <code>/clear</code> and ask again. The rule is gone. (If it survived, run <code>/memory</code>, which lists the files Claude keeps notes in: auto memory saved your rule to a file, which proves the point.)</li>
+    <li>Write down, in one sentence, where that rule would have to live to survive. Lesson 2 puts it there.</li>
+  </ol>
+  <p><strong>Codex:</strong> run <code>codex</code> with the default approvals. <strong>Antigravity:</strong> open the folder and use the Default preset. Steps 5–7 work the same way; start a new conversation instead of <code>/clear</code>.</p>
+</div>
+
+<div class="done">
+  <span class="label">Done when</span>
+  <ul class="check" data-key="0001">
+    <li><input type="checkbox"> <span><code>git log --format='%an &lt;%ae&gt;'</code> shows your company email, and no AI trailer</span></li>
+    <li><input type="checkbox"> <span><code>dotnet test</code> is green</span></li>
+    <li><input type="checkbox"> <span>You saw STOCK-OK disappear after <code>/clear</code></span></li>
+  </ul>
+</div>
+
+<div class="source">
+  <span class="label">Primary source</span>
+  <p><a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code works</a> (Anthropic). Read the agentic loop and context window sections. Then read the "What survives compaction" table in <a href="https://code.claude.com/docs/en/context-window#what-survives-compaction">Context window</a>. New to Claude Code? Take module 1 of <a href="https://academy.claude.com/courses/claude-code-101">Claude Code 101</a> first.</p>
+</div>
+
+<div class="ask">
+  <span class="label">Ask your agent</span>
+  <p>Stuck, or curious? Ask the agent you're learning with, for example: "Show me what's in my context right now and which of it survives /compact." It's your teacher for this course too.</p>
+</div>
+
+<nav class="lesson-nav">
+  <a href="../index.html">← Course index</a>
+  <a href="../reference/glossary.html">Glossary</a>
+  <a href="0002-rules-files.html">Lesson 2: Rules files →</a>
+</nav>
+
+</main>
+</body>
+</html>
