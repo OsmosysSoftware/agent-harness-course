@@ -281,6 +281,16 @@ git show --stat HEAD</pre>
   </ul>
 </div>
 
+<div class="kit">
+  <span class="label">Worth installing or reading</span>
+  <ul>
+    <li><a href="https://code.claude.com/docs/en/memory">/init</a>: Built in: drafts a rules file from your repo. It writes <strong>CLAUDE.md</strong>, which switches AGENTS.md off, so make its first line <code>@AGENTS.md</code> or fold the draft into AGENTS.md.</li>
+    <li><a href="https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management">claude-md-management</a>: Anthropic's plugin for auditing and keeping a rules file tidy. <code>/plugin install claude-md-management@claude-plugins-official</code></li>
+    <li><a href="https://github.com/anthropics/claude-plugins-official/tree/main/plugins/csharp-lsp">csharp-lsp</a>: C# code intelligence for the agent (go to definition, references). Then /plugin install csharp-lsp@claude-plugins-official. <code>dotnet tool install --global csharp-ls</code></li>
+  </ul>
+  <p class="small">Install only what you will use, check how recent it is, and read what a plugin adds before you enable it. Links checked 2026-10-01.</p>
+</div>
+
 <div class="tip">
   <span class="label">Harness it</span>
   <p>Every time you correct the agent in chat, ask: should this be a line in AGENTS.md? If so, add it now, not at the end of the work.</p>

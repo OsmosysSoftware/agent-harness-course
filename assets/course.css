@@ -807,6 +807,14 @@ pre .copy:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px;
 .tip .label { color: var(--pass); }
 .tip > :last-child { margin-bottom: 0; }
 
+
+/* ---------- "Worth installing" resources ---------- */
+.kit { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 20px; margin-bottom: 1.4em; background: var(--bg); font-size: .95rem; }
+.kit .label { color: var(--accent); }
+.kit ul { margin: 0 0 .6em; padding-left: 1.1em; }
+.kit li { margin: .45em 0; }
+.kit > :last-child { margin-bottom: 0; }
+
 /* ---------- Print ---------- */
 @media print {
   :root, :root[data-theme="dark"] {
