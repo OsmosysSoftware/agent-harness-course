@@ -252,23 +252,28 @@
       var play = bar.querySelector('[data-act="play"]'), timer = null, visible = false;
       var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
       var auto = !reduce && fig.getAttribute("data-autoplay") !== "off";
-      function tick() { at = at >= steps.length - 1 ? 0 : at + 1; show(); }
-      function start() { if (!timer && auto && visible) { if (at < 0) tick(); timer = setInterval(tick, 3800); } play.textContent = "Pause"; }
-      function stop() { clearInterval(timer); timer = null; play.textContent = "Play"; }
+      // Each step stays up long enough to read its caption (about 4 to 9 seconds).
+      function wait() { var n = at >= 0 ? cap.textContent.length : 0; return Math.min(9000, Math.max(4000, 2000 + n * 40)); }
+      function tick() { at = at >= steps.length - 1 ? 0 : at + 1; show(); timer = setTimeout(tick, wait()); }
+      function start() {
+        play.textContent = "Pause";
+        if (timer || !auto || !visible) return;
+        if (at < 0) tick(); else timer = setTimeout(tick, wait());
+      }
+      function halt() { clearTimeout(timer); timer = null; }
+      function stop() { halt(); play.textContent = "Play"; }
       function manual() { auto = false; stop(); }
-      play.addEventListener("click", function () { if (timer) manual(); else { auto = true; start(); } });
+      play.addEventListener("click", function () { if (auto) manual(); else { auto = true; start(); } });
       next.addEventListener("click", function () { manual(); at = at === steps.length - 1 ? -1 : at + 1; show(); });
       prev.addEventListener("click", function () { manual(); if (at > 0) { at--; show(); } });
-      fig.addEventListener("mouseenter", function () { if (timer) { clearInterval(timer); timer = null; } });
-      fig.addEventListener("mouseleave", function () { if (auto) start(); });
       show();
       if (!auto) play.textContent = "Play";
       if ("IntersectionObserver" in window) {
         new IntersectionObserver(function (es) {
           visible = es[0].isIntersecting;
-          if (visible) start(); else if (timer) { clearInterval(timer); timer = null; }
-        }, { threshold: 0.5 }).observe(fig);
-      }
+          if (visible) start(); else halt();
+        }, { threshold: 0.3 }).observe(fig);
+      } else { visible = true; start(); }
     });
   }
 
