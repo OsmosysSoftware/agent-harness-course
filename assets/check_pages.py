@@ -21,6 +21,7 @@ class Page(HTMLParser):
         self.quiz_depth = 0
         self.depth = 0
         self.has_css = False
+        self.svg = 0               # <style> inside a rendered diagram's <svg> is allowed
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
@@ -34,7 +35,9 @@ class Page(HTMLParser):
             self.srcs.append(a.get("href", ""))
             if a.get("href", "").endswith("assets/course.css"):
                 self.has_css = True
-        if tag == "style":
+        if tag == "svg":
+            self.svg += 1
+        if tag == "style" and not self.svg:
             self.styles += 1
         if tag == "div" and "quiz" in cls:
             self.quizzes.append([])
@@ -43,6 +46,8 @@ class Page(HTMLParser):
 
     def handle_endtag(self, tag):
         self.depth -= 1
+        if tag == "svg":
+            self.svg -= 1
         if tag == "button" and self.in_opt is not None:
             self.quizzes[-1].append((self.in_opt[0].strip(), self.in_opt[1]))
             self.in_opt = None
