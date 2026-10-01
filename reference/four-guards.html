@@ -95,11 +95,83 @@ check 'TargetFramework&gt;net[0-7]\.|net7\.0|net6\.0' &amp;&amp; deny "Target fr
 <div>
 <h2>The attribution setting</h2>
 <p>Drops the AI trailer and "Generated with" line Claude Code adds to commits and PRs.</p>
-<figure class="code"><figcaption>.claude/settings.json</figcaption><pre><code>  "attribution": {
+<figure class="code"><figcaption>.claude/settings.json</figcaption><pre>{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(dotnet format *)",
+      "Bash(bash .agents/skills/quality-gate/gate.sh)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(sqlite3 -readonly -safe *)",
+      "Bash(git config user.email)"
+    ],
+    "ask": [
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git rebase *)",
+      "Bash(git reset *)",
+      "Bash(git restore *)",
+      "Bash(dotnet add *)",
+      "Bash(rm *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push * --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * -f*)",
+      "Bash(git commit --no-verify*)",
+      "Bash(git commit * --no-verify*)",
+      "Read(./.env)",
+      "Edit(./.env)",
+      "Bash(git config user.email *@*)",
+      "Bash(git config --global user.email *@*)"
+    ]
+  },
+  "attribution": {
     "commit": "",
     "pr": "",
     "sessionUrl": false
-  },</code></pre></figure>
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/destructive-guard.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/format-on-write.sh\"",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}</pre></figure>
 <ul>
 <li><strong>Portable form</strong> (above) works on old and new versions.</li>
 <li><code>"attribution": false</code> needs <strong>v2.1.281+</strong>; older versions skip the <em>whole settings file</em> that contains it, dropping your permissions too. <span class="ver">v2.1.281+ · verified 2026-09-30</span></li>
@@ -137,7 +209,7 @@ check 'TargetFramework&gt;net[0-7]\.|net7\.0|net6\.0' &amp;&amp; deny "Target fr
 
 <details class="deeper">
 <summary>Appendix: the whole guard test, verbatim</summary>
-<figure class="code"><figcaption>tests/StockApi.Tests/ConcurrencyTests.cs</figcaption><pre><code>using System.Net;
+<figure class="code"><figcaption>tests/StockApi.Tests/ConcurrencyTests.cs</figcaption><pre>using System.Net;
 using System.Net.Http.Json;
 using StockApi.Domain;
 
@@ -169,7 +241,7 @@ public class ConcurrencyTests : IClassFixture&lt;FileStockApiFactory&gt;
         var after = await _client.GetFromJsonAsync&lt;Product&gt;($"/api/products/{product.Id}");
         Assert.Equal(0, after!.Stock);
     }
-}</code></pre></figure>
+}</pre></figure>
 </details>
 
 

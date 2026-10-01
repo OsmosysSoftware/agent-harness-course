@@ -8,10 +8,10 @@ bad=$(git diff --cached --name-only | grep -E '(^|/)(bin|obj|tmp)/|\.db$|(^|/)\.
 $bad
 Unstage with: git restore --staged <path>"
 
-# 2. Company identity.
+# 2. Work identity. Change yourcompany.com to your own work email domain.
 case "$(git config user.email)" in
-  *@osmosys.co) ;;
-  *) fail "author email '$(git config user.email)' is not a company address. Run: git config user.email you@osmosys.co" ;;
+  *@yourcompany.com) ;;
+  *) fail "author email '$(git config user.email)' is not your work address. Run: git config user.email you@yourcompany.com" ;;
 esac
 
 # 3. Secrets: a pattern check for config-style secrets, which gitleaks misses on low-entropy values

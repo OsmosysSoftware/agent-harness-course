@@ -10,103 +10,153 @@
 <body data-lesson="0006">
 <main>
 
-<p class="kicker"><a href="../index.html">Agent Harness</a> · Lesson 6 of 11 · 17 min read + 55 min exercise</p>
-<h1>Reviewer subagents: the author never grades itself</h1>
-<p class="lede">A reviewer is a second agent with a fresh context and read-only tools, asked one narrow question about a diff. The agent that wrote the code is the worst judge of it, and you are the final one.</p>
+<header class="lesson-head">
+  <span class="stage">Stage 6 of 11</span>
+  <h1>Reviewer subagents: the author never grades itself</h1>
+  <p class="lede">The agent that wrote the code is the worst judge of it: it reads the diff through its own reasons for writing it. A reviewer is a second agent with a fresh context and no edit tools, asked one narrow question. You still make the call.</p>
+  <div class="chips">
+    <span class="chip">12 min read</span>
+    <span class="chip">40 min exercise</span>
+    <span class="chip badge-chip">Plaque: Second Opinion</span>
+  </div>
+</header>
+
+<div class="tldr">
+  <span class="label">In 30 seconds</span>
+  <ul>
+    <li>Asking the author to check its own work gets you its <strong>assumptions back</strong>, not a review.</li>
+    <li>A <strong>subagent</strong> starts with a clean context window. Given only the diff and your rules, it has to judge the code as written, and point at <code>file:line</code>.</li>
+    <li>You add two reviewers, then watch one <strong>block</strong> a change that every test passed.</li>
+  </ul>
+</div>
 
 <div class="recall">
   <span class="label">Recall</span>
   <div class="quiz">
-    <p class="q">A CLAUDE.md file sits in the repo next to AGENTS.md. What does Claude Code read?</p>
+    <p class="q">Lesson 3: the agent needs Docker, and the Docker daemon is not running. What should it do?</p>
     <div class="opts">
-      <button class="opt" data-correct>Only CLAUDE.md, unless it imports AGENTS.md</button>
-      <button class="opt">Both files, with AGENTS.md taking priority</button>
-      <button class="opt">Only AGENTS.md, because it is tool-neutral</button>
-      <button class="opt">Neither file until the session restarts</button>
+      <button class="opt" data-correct>Stop, hand over 1-3-1, then wait.</button>
+      <button class="opt">Launch Docker Desktop, then keep polling.</button>
+      <button class="opt">Skip every Docker step, then continue.</button>
+      <button class="opt">Swap in an in-memory database instead.</button>
     </div>
-    <p class="why">Claude Code falls back to AGENTS.md only when no CLAUDE.md exists. The usual fix is a CLAUDE.md that contains <code>@AGENTS.md</code> (lesson 2).</p>
+    <p class="why">Starting software on your machine is your call, so it hands over a 1-3-1 and waits. One real session launched Docker Desktop itself and polled for 35 minutes before asking.</p>
   </div>
   <div class="quiz">
-    <p class="q">Why is the plan committed on its own, before any code?</p>
+    <p class="q">Lesson 5: where does the <code>commit</code> skill draft its message from?</p>
     <div class="opts">
-      <button class="opt" data-correct>History then shows the plan came first</button>
-      <button class="opt">It lets the compiler verify the plan</button>
-      <button class="opt">Git forbids plan files beside code changes</button>
-      <button class="opt">The agent ignores any uncommitted plan file</button>
+      <button class="opt" data-correct>The staged diff, read with git.</button>
+      <button class="opt">Your last message in the chat.</button>
+      <button class="opt">The plan slice that was ticked.</button>
+      <button class="opt">A template you paste each time.</button>
     </div>
-    <p class="why">Trainee D's PLAN.md arrived inside the commit that held the whole API, so nothing could show it was written first. A plan committed alone, with the human's edits, is evidence (lesson 4).</p>
+    <p class="why">It reads <code>git diff --cached</code>, so the message describes what is actually staged, not what the agent believes it did. Today's reviewers use the same move: judge the diff, not the story.</p>
   </div>
-</div>
-
-<div class="note">
-  <span class="label">The win</span>
-  <p>By the end you'll have two reviewer agents in <code>.claude/agents/</code>. You'll have watched <code>stock-invariant-reviewer</code> return <strong>Verdict: BLOCK</strong> on a "simplified" <code>OrderService</code> that the agent was happy with, and <code>test-reviewer</code> flag a missing concurrency test.</p>
 </div>
 
 <h2>What happened</h2>
 
 <div class="incident">
   <div class="happened">
-    <h4>What happened</h4>
-    <p>Trainee B's repo shows a "review round that found eight real defects". The evaluator scored it 5 for critical review of AI output. It was the agent running a review skill over <strong>its own diff</strong>. No transcript shows them asking for the review or judging the findings.</p>
-    <p>Trainee A pasted a 9-point "critically review your code" checklist into the prompt, and the same agent reviewed its own work. Two misleading tests got through until they caught them themselves.</p>
-    <p class="who">Trainee B · Claude Code, "Chat" stage, self-review · Trainee A · Claude Code, "Gated chat" stage, human-led</p>
+    <h4>Failed run</h4>
+    <p>A developer's tests could not run the atomic stock update, so the agent rewrote it as read-then-write (load the product, check, subtract, save) and explained it was <em>"still correct against concurrent writes"</em>. The tests passed. A live test of 12 concurrent orders for 3 units oversold.</p>
+    <p>In another session, the agent ran a review skill over <strong>its own diff</strong>, and that was reported as "critical review". Same context, same assumptions.</p>
+    <p class="who">Two real sessions, anonymised</p>
   </div>
   <div class="harness">
-    <h4>What the harness does instead</h4>
-    <p>The review runs in a <strong>separate agent with a fresh context</strong>. It has never seen the conversation that produced the diff, so it can't share the author's assumptions. It gets only the diff and a narrow question, and it reports to you. Whether the code goes in is your call, and the transcript shows it.</p>
+    <h4>With the harness</h4>
+    <p>A reviewer that never saw the conversation reads only the diff and the invariants:</p>
+    <pre>| File:line          | Finding            | Severity |
+| OrderService.cs:19 | read-then-write    | BLOCKER  |
+Verdict: BLOCK</pre>
+    <p class="who">The author's explanation never reaches it. You read the verdict and decide.</p>
   </div>
 </div>
 
-<div class="incident">
-  <div class="happened">
-    <h4>What happened</h4>
-    <p>Trainee D's agent hit <code>ExecuteUpdateAsync … could not be translated (InMemory provider)</code>. It rewrote the order service to load tracked <code>Product</code> entities, decrement in memory and save. Its log justified this: "still correct against concurrent writes, because SQL Server's row locking … serializes two orders".</p>
-    <p>That justification was false. The evaluator's live probe, 12 concurrent orders for 3 units, oversold. The rewrite sat inside commit <code>1009656</code>, a 67-file commit, where no one could review it alone.</p>
-    <p class="who">Trainee D · Claude Code · Sonnet · "Chat" stage: every catch was the agent's, and they accepted a racy rewrite</p>
-  </div>
-  <div class="harness">
-    <h4>What the harness does instead</h4>
-    <p>A <code>stock-invariant-reviewer</code> reads every diff that touches stock or orders, and treats read-then-write as a <strong>BLOCKER "whatever the comments or tests claim"</strong>. The author's own explanation ("row locking makes it safe") is exactly what it is told not to accept.</p>
-  </div>
+<h2>Two windows, two judges</h2>
+
+<p>The agent knows only what is in its context window (lesson 1). After a change, that window is full of its own reasoning. Watch what that does to a self-review:</p>
+
+<figure class="diagram" data-intro="One diff, two reviewers. It plays by itself; use <b>Back</b> and <b>Next</b> to go at your own pace." data-steps='[
+  {"cls":"s1","text":"<b>The author’s window.</b> By review time it holds your request, the error it hit, its workaround, and its own reason why that is safe: “row locking keeps this safe”."},
+  {"cls":"s2","text":"Ask the same agent to review its work and it reads the diff through all of that, so it agrees with itself. A review checklist pasted into this window is read the same way."},
+  {"cls":"s3","text":"<b>A reviewer subagent</b> starts with a fresh window. It sees what it is given and what it reads: here, the diff and <code>docs/ai/invariants.md</code>. None of the author’s reasoning comes along."},
+  {"cls":"s4","text":"It has to judge the code as written, so it points at a line: <code>OrderService.cs:19</code>, a read-then-write stock change that the invariants forbid."},
+  {"cls":"s5","text":"Only its short report comes back to the main conversation, where you read it. <b>You decide</b>: fix it, reject the finding with a reason, or ask the author why."}
+]'>
+<div class="canvas">
+<!-- d2:l0006-two-windows -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 500" role="img" aria-label="Two context windows. Left, the author agent’s window is crowded with its own request, workaround, assumption that row locking makes it safe, and green tests; asked to review itself, it says looks good. Right, a reviewer subagent starts with a clean window holding only the diff and the invariants file. It points at OrderService.cs line 19, the read-then-write decrement, marks it a blocker and returns Verdict: BLOCK to you, and you decide.">
+<defs><marker id="l6w-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<rect class="l6-win" x="30" y="20" width="380" height="380" rx="12"/>
+<rect class="l6-winbar" x="30" y="20" width="380" height="34" rx="12"/><rect class="l6-winbar" x="30" y="40" width="380" height="14"/>
+<text class="l6-wintitle" x="48" y="43">Author’s window</text><text class="l6-winmeta" x="392" y="43">most of it full</text>
+<rect class="l6-win" x="450" y="20" width="380" height="380" rx="12"/>
+<rect class="l6-winbar" x="450" y="20" width="380" height="34" rx="12"/><rect class="l6-winbar" x="450" y="40" width="380" height="14"/>
+<text class="l6-wintitle" x="468" y="43">Reviewer’s window</text><text class="l6-winmeta" x="812" y="43">fresh, almost empty</text>
+<g class="st s1 s2"><text class="l6-faint" x="52" y="78">… many earlier turns …</text><rect class="l6-bubble " x="52" y="88" width="336" height="30" rx="9"/><text class="l6-txt " x="66" y="108">you: simplify PlaceAsync</text><rect class="l6-bubble " x="52" y="124" width="336" height="30" rx="9"/><text class="l6-txt " x="66" y="144">InMemory can’t run ExecuteUpdateAsync</text><rect class="l6-bubble " x="52" y="160" width="336" height="30" rx="9"/><text class="l6-txt " x="66" y="180">so: load, check, decrement, save</text><rect class="l6-bubble l6-assume" x="52" y="196" width="336" height="30" rx="9"/><text class="l6-txt l6-assume" x="66" y="216">“row locking keeps this safe”</text><rect class="l6-bubble " x="52" y="232" width="336" height="30" rx="9"/><text class="l6-txt " x="66" y="252">dotnet test: all passed ✓</text><text class="l6-faint" x="52" y="290">its reasons, its assumptions, its fix</text></g>
+<g class="st bad s2"><path class="arc" d="M392,212 C420,240 420,300 360,322" marker-end="url(#l6w-head)"/><g transform="rotate(-5 200 340)"><rect class="l6-stamp-ok" x="96" y="314" width="210" height="52" rx="8"/><text class="l6-stamptxt-ok" x="201" y="340">LOOKS GOOD</text><text class="l6-stampsub-ok" x="201" y="358">judged by its own assumptions</text></g></g>
+<g class="st s3 s4 s5"><rect class="l6-doc" x="470" y="70" width="340" height="128" rx="8"/><text class="l6-docname" x="484" y="91">git diff HEAD</text><text class="l6-code l6-del" x="484" y="115">- .ExecuteUpdateAsync(… Stock &gt;= n …)</text><text class="l6-code l6-add" x="484" y="137">+ var product = await …FindAsync(…)</text><text class="l6-code l6-add" x="484" y="159">+ if (product.Stock &lt; quantity) return …</text><text class="l6-code l6-add" x="484" y="181">+ product.Stock -= quantity;</text><rect class="l6-doc" x="470" y="210" width="340" height="56" rx="8"/><text class="l6-docname" x="484" y="231">docs/ai/invariants.md</text><text class="l6-code" x="484" y="253">never read-then-write stock</text><text class="l6-faint" x="640" y="292" style="text-anchor:middle">no chat, no reasons, no “I’m sure”</text></g>
+<g class="st s4 s5"><rect class="l6-hit" x="476" y="166" width="236" height="22" rx="4"/><text class="l6-code l6-add l6-strong" x="484" y="181">+ product.Stock -= quantity;</text><path class="l6-point" d="M712,177 L822,177 L822,329 L812,329"/><rect class="l6-row" x="470" y="312" width="340" height="34" rx="6"/><text class="l6-code l6-strong" x="482" y="334">OrderService.cs:19</text><text class="l6-sev" x="702" y="334">BLOCKER</text></g>
+<g class="st s5"><rect class="l6-block" x="560" y="356" width="160" height="32" rx="16"/><text class="l6-blocktxt" x="640" y="377">Verdict: BLOCK</text></g>
+<g class="st s5"><path class="arc" d="M640,392 C640,440 520,456 470,456" marker-end="url(#l6w-head)"/><circle class="ring-node" cx="430" cy="456" r="30"/><g class="ico" transform="translate(415.0,441.0) scale(1.2500)"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></g><text class="lbl" x="335" y="452" style="text-anchor:end">You decide</text><text class="sub" x="335" y="472" style="text-anchor:end">fix, reject or ask why</text></g>
+</svg>
+<!-- /d2 -->
 </div>
+</figure>
 
-<h2>Why a fresh context beats a checklist</h2>
+<p>A <dfn>subagent</dfn> is a helper agent that your main agent starts for one job. In Claude Code, "each subagent runs in its own context window with a custom system prompt, specific tool access, and independent permissions". It does not inherit your conversation, and it "returns only the summary" (<a href="https://code.claude.com/docs/en/sub-agents">Subagents</a>). A reviewer needs exactly that: no shared assumptions, and a short verdict back.</p>
 
-<p>A <dfn>subagent</dfn> is an agent that the main agent starts to do one job. In Claude Code it "runs in its own context window with a custom system prompt, specific tool access, and independent permissions", and it starts fresh: it does not inherit the conversation (<a href="https://code.claude.com/docs/en/sub-agents">Subagents</a>). Two properties follow:</p>
-<ol>
-  <li><strong>No shared assumptions.</strong> The author "knows" why it chose read-then-write, and every later message builds on that. A reviewer that sees only the diff and the rules has to judge the code as written. Trainee A's 9-point checklist failed for this reason: a checklist in the author's own context is read by the author.</li>
-  <li><strong>A small, cheap context.</strong> The reviewer's reading (diff, invariants, tests) stays in its window, and only the findings come back to yours.</li>
-</ol>
+<h2>A reviewer is one Markdown file</h2>
 
-<h2>The anatomy of a reviewer file</h2>
-
-<p>A Claude Code subagent is a Markdown file in <code>.claude/agents/&lt;name&gt;.md</code>: frontmatter, then the system prompt. <code>name</code> and <code>description</code> are required. The <code>description</code> is how the main agent decides when to delegate to it, the same role as in a skill (<a href="https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields">frontmatter fields</a>).</p>
-
-<div class="table-wrap"><table>
-  <tr><th>Field</th><th>What it does</th><th>Reviewer choice</th></tr>
-  <tr><td><code>tools</code></td><td>An allowlist. "Inherits every tool available to subagents if omitted." With <code>Read, Grep, Glob, Bash</code> the subagent "can't edit files, write files, or use any MCP tools".</td><td>No <code>Edit</code>, no <code>Write</code>: a reviewer that cannot change the code cannot quietly fix what it disliked.</td></tr>
-  <tr><td><code>model</code></td><td><code>sonnet</code>, <code>opus</code>, <code>haiku</code>, <code>fable</code>, a full model ID, or <code>inherit</code>.</td><td><code>sonnet</code>: reading a diff and filling a table doesn't need the biggest model, and it keeps the cost of "review every slice" low.</td></tr>
-  <tr><td>Body</td><td>The system prompt: the question, the input, the exact output format.</td><td>A table and a verdict, "and nothing else", so the result is short enough to read in full.</td></tr>
-</table></div>
-
-<h3>Read-only, honestly</h3>
-
-<p>Leaving out <code>Edit</code> and <code>Write</code> makes the reviewer <em>read-only in practice</em>, not in principle. It still has <code>Bash</code>, because it needs <code>git diff</code>. <code>Bash</code> is still bound by the project's permission rules: the docs say project deny rules apply to subagents too, so the <code>deny</code> and <code>ask</code> rules in <code>.claude/settings.json</code> (lesson 7) cover the commands they name, such as <code>git push</code>. None of them forbids <code>sed -i</code> or a redirect, and a shell can write a file (<code>sed -i</code>, a redirect) unless a rule stops that. "Do not edit files" in the agent body is a request. <code>disallowedTools</code> can't narrow this, because "an entry with a specifier, such as <code>Bash(git push *)</code>, still removes the whole tool". So: no edit tools, plus the settings rules, plus a reviewer prompt that says not to, and all three are still not a sandbox. Codex offers a real one, below.</p>
-
-<h3>How to invoke one</h3>
-<p>There are three ways, from loosest to strictest (<a href="https://code.claude.com/docs/en/sub-agents#invoke-subagents-explicitly">Invoke subagents explicitly</a>):</p>
-<ul>
-  <li><strong>Natural language:</strong> "Use the test-reviewer subagent on the staged diff." Claude decides whether to delegate.</li>
-  <li><strong>@-mention:</strong> type <code>@</code> and pick the agent, or write <code>@agent-test-reviewer</code>. This "guarantees the subagent runs for one task". Use it when you want certainty, and in the exercise.</li>
-  <li><strong><code>--agent &lt;name&gt;</code>:</strong> the whole session becomes that agent, with its tool limits. Good for a dedicated review session.</li>
-</ul>
-<p>Create the files by hand or ask the agent to write them. <span class="ver">v2.1.198+ · verified 2026-09-30</span> The <code>/agents</code> creation wizard was removed in v2.1.198, and the docs tell you to edit <code>.claude/agents/</code> directly. If the agent isn't found, restart Claude Code. The docs say a running session watches only the <code>agents</code> directories that existed when it started, so creating the first file in a new one (their example is <code>~/.claude/agents/</code>) needs a restart. Edits to files in an existing directory are picked up within seconds.</p>
-
-<h2>The two reviewers, verbatim</h2>
+<p>A Claude Code subagent lives in <code>.claude/agents/&lt;name&gt;.md</code>: YAML frontmatter, then the system prompt. Only <code>name</code> and <code>description</code> are required; the <code>description</code> tells the main agent when to delegate, the same job it does in a skill. Here is the stock reviewer as you will write it, adapted from the reference solution:</p>
 
 <figure class="code">
-<figcaption>.claude/agents/test-reviewer.md</figcaption>
+<figcaption>.claude/agents/stock-invariant-reviewer.md (your version)</figcaption>
+<pre>---
+name: stock-invariant-reviewer
+description: Independent read-only reviewer for any diff touching stock, orders, OrderService, StockDbContext or transactions. Use before committing such a slice. Blocks read-then-write stock updates.
+tools: Read, Grep, Glob, Bash
+model: sonnet
+---
+
+You guard one invariant: **stock never goes below zero, even under concurrent requests.** Read
+docs/ai/invariants.md first.
+
+Review the diff (default: `git diff --cached`, or `git diff HEAD`). For every code path that changes `Stock`:
+1. Is it ONE guarded statement, `ExecuteUpdateAsync` with `Stock &gt;= n` (or the equivalent SQL) in the WHERE?
+   **Read-then-write** (load the entity, compare, assign, `SaveChanges`) is a **BLOCKER**, whatever the comments
+   or tests claim. It can pass the concurrency test on SQLite, where the transaction takes the write lock up front,
+   and still oversell without the transaction or on another provider.
+2. Does it check the affected row count and map 0 rows to 404 or 409?
+3. Is the stock change in the same transaction as the related write (order insert, cancel state)?
+4. Does a concurrency test (N parallel requests, successes ≤ stock) cover this path? If there is none, say so.
+5. Did the diff change a test provider, a test helper or `Directory.Build.props` in a way that hides a
+   concurrency failure?
+
+Output, and nothing else:
+| File:line | Finding | Severity (BLOCKER / MAJOR / MINOR) | Why it can oversell |
+Then "Verdict: PASS" or "Verdict: BLOCK". Do not edit files. Do not accept "SQLite locking makes it safe"
+without a passing concurrency test in the diff or on main.</pre>
+</figure>
+
+<p>Three choices carry it. <code>tools</code> is an allowlist with no <code>Edit</code> or <code>Write</code>, so the reviewer can report a problem but not quietly "fix" it. "Whatever the comments or tests claim" tells it to distrust the author's justification, where the incident's rewrite hid. And a fixed table "and nothing else" forces <code>file:line</code> findings and a one-word verdict, short enough for you to read in full.</p>
+
+<p>The second reviewer, <code>test-reviewer</code>, asks of every test: <strong>which production line makes it fail if the feature breaks?</strong> A test with no such line is <dfn>hollow</dfn>: it stays green whatever the code does, so the gate looks fine when it isn't.</p>
+
+<p><strong>"Read-only", honestly.</strong> No <code>Edit</code> or <code>Write</code> means no edit <em>tools</em>. The reviewer still has <code>Bash</code> for <code>git diff</code>, and a shell can write files (<code>sed -i</code>, a redirect). Only your settings' permission rules (lesson 7) bind Bash; "Do not edit files" is a request. A reviewer is not a sandbox.</p>
+
+<details class="deeper">
+  <summary>Going deeper: every field, the test reviewer in full, and why you can't narrow Bash in the agent file</summary>
+<div class="table-wrap"><table>
+  <tr><th>Part</th><th>What it does</th><th>Why this choice</th></tr>
+  <tr><td><code>tools</code></td><td>An allowlist. Left out, the subagent inherits every tool. With <code>Read, Grep, Glob, Bash</code> it "cannot edit files, write files, or use any MCP tools".</td><td>A reviewer with no edit tool can't quietly "fix" what it disliked. It has to report it.</td></tr>
+  <tr><td><code>model</code></td><td><code>sonnet</code>, <code>opus</code>, <code>haiku</code>, a full model ID, or <code>inherit</code>.</td><td>Reading a diff against a short rule list doesn't need the largest model, and it keeps "review every slice" cheap.</td></tr>
+  <tr><td>"whatever the comments or tests claim"</td><td>Tells it to distrust the author's justification.</td><td>The incident's rewrite hid behind exactly such a justification.</td></tr>
+  <tr><td>A fixed table, "and nothing else"</td><td>Forces <code>file:line</code> findings and a one-word verdict.</td><td>Short enough for you to read in full. No praise, no essay.</td></tr>
+</table></div>
+  <figure class="code">
+  <figcaption>.claude/agents/test-reviewer.md (copy as is)</figcaption>
 <pre>---
 name: test-reviewer
 description: Independent read-only reviewer for tests in a diff. Use after every slice, before committing, to check that each new or changed test would fail if the feature broke.
@@ -130,172 +180,155 @@ Output, and nothing else:
 | Test | Fails if this line breaks | Verdict (OK / HOLLOW / WEAK / MISSING) | Fix |
 Then one line: "Blocking: yes/no". Blocking is yes if anything is HOLLOW or MISSING for a stock change.
 Do not edit files. Do not praise.</pre>
+  </figure>
+  <p>Subagent files also accept <code>disallowedTools</code>, but it can't block one command: "a <code>disallowedTools</code> entry with a specifier, such as <code>Bash(git push *)</code>, still removes the whole tool from the subagent". To block specific commands while keeping Bash, the docs point to <code>permissions.deny</code> in settings. That is lesson 7.</p>
+</details>
+
+<h2>Green for the wrong reason</h2>
+
+<p>Why not just trust the tests? Because a test only sees the cases it runs. This is the change you will make on a scratch branch in the exercise:</p>
+
+<figure class="diagram" data-intro="A diff the tests pass and the reviewer blocks. It plays by itself; use <b>Back</b> and <b>Next</b> to go at your own pace." data-steps='[
+  {"cls":"s1","text":"On a scratch branch the agent “simplifies” <code>PlaceAsync</code>: load the product, check <code>Stock</code>, subtract, save. The guarded update and the transaction are gone."},
+  {"cls":"s2","text":"<code>dotnet test</code> is green. Every test sends one order at a time, and one at a time this code is correct."},
+  {"cls":"s3","text":"What no test sends yet: two orders at the same moment. Both can read 3, both pass the check, both write 0. Six units sold of three."},
+  {"cls":"s4","text":"<b>Measured</b> on the course’s reference solution with a 12-for-3 test. Without a transaction, all 12 orders succeed. Inside <code>BeginTransaction()</code> on SQLite, exactly 3 do, because the provider takes the write lock up front. Even a concurrency test can be green for the wrong reason."},
+  {"cls":"s5","text":"The reviewer doesn’t need the race to happen. Its rule is about the shape of the code, so it flags line 19 and returns <b>Verdict: BLOCK</b>."}
+]'>
+<div class="canvas">
+<!-- d2:l0006-green-wrong-reason -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 470" role="img" aria-label="Green for the wrong reason. A read-then-write version of OrderService passes every test, because each test sends one order at a time. Two orders arriving together both read stock 3, both pass the check and both write 0: six units sold of three. Measured: 12 concurrent orders for 3 units all succeed without the transaction, and exactly 3 succeed inside one on SQLite, because the provider locks up front. The stock reviewer reads the code’s shape and blocks line 19.">
+<g class="st s1 s2 s5"><rect class="l6-doc" x="30" y="20" width="412" height="226" rx="10"/><text class="l6-docname" x="46" y="50">OrderService.cs · scratch branch</text><text class="l6-ln" x="58" y="84">15</text><text class="l6-code" x="76" y="84">var product = await db.Products.FindAsync(…);</text><text class="l6-ln" x="58" y="106">16</text><text class="l6-code" x="76" y="106">if (product is null) return …NotFound;</text><text class="l6-ln" x="58" y="128">17</text><text class="l6-code" x="76" y="128">if (product.Stock &lt; quantity) return …;</text><text class="l6-ln" x="58" y="150">18</text><text class="l6-code" x="76" y="150"></text><text class="l6-ln" x="58" y="172">19</text><text class="l6-code" x="76" y="172">product.Stock -= quantity;</text><text class="l6-ln" x="58" y="194">20</text><text class="l6-code" x="76" y="194">db.Orders.Add(order);</text><text class="l6-ln" x="58" y="216">21</text><text class="l6-code" x="76" y="216">await db.SaveChangesAsync(ct);</text></g>
+<g class="st s2"><rect class="chip pass" x="30" y="264" width="250" height="34" rx="17"/><text class="chiptxt" x="155" y="286">dotnet test · all passed ✓</text><text class="l6-note" x="30" y="324">each test sends one order at a time,</text><text class="l6-note" x="30" y="344">so nothing races</text></g>
+<g class="st s3"><text class="l6-head" x="466" y="44">Two orders of 3, stock 3, same moment</text><text class="l6-lane" x="466" y="89">Order A</text><rect class="l6-step" x="540" y="70" width="92" height="28" rx="6"/><text class="l6-steptxt" x="586" y="89">reads 3</text><rect class="l6-step" x="640" y="70" width="80" height="28" rx="6"/><text class="l6-steptxt" x="680" y="89">3 ≥ 3 ✓</text><rect class="l6-step l6-stepbad" x="728" y="70" width="92" height="28" rx="6"/><text class="l6-steptxt" x="774" y="89">writes 0</text><text class="l6-lane" x="466" y="131">Order B</text><rect class="l6-step" x="540" y="112" width="92" height="28" rx="6"/><text class="l6-steptxt" x="586" y="131">reads 3</text><rect class="l6-step" x="640" y="112" width="80" height="28" rx="6"/><text class="l6-steptxt" x="680" y="131">3 ≥ 3 ✓</text><rect class="l6-step l6-stepbad" x="728" y="112" width="92" height="28" rx="6"/><text class="l6-steptxt" x="774" y="131">writes 0</text><text class="l6-oversell" x="640" y="180" style="text-anchor:middle">2 orders created · 6 sold of 3</text></g>
+<g class="st s4"><rect class="l6-measure" x="456" y="206" width="380" height="122" rx="10"/><text class="l6-key" x="466" y="230">MEASURED · 12 orders for 3 units, at once</text><text class="l6-txt" x="466" y="260">without a transaction</text><text class="l6-bad" x="814" y="260" style="text-anchor:end">12 succeed</text><text class="l6-txt" x="466" y="288">inside BeginTransaction (SQLite)</text><text class="l6-ok" x="814" y="288" style="text-anchor:end">3 succeed</text><text class="l6-note" x="466" y="314">the second is the provider’s lock, not the design</text></g>
+<g class="st s5"><rect class="l6-hit" x="70" y="153" width="220" height="22" rx="4"/><path class="l6-point" d="M290,164 L449,164 L449,356"/><rect class="l6-row" x="300" y="356" width="530" height="40" rx="8"/><text class="l6-code l6-strong" x="316" y="381">OrderService.cs:19 · read-then-write</text><rect class="l6-block" x="652" y="362" width="164" height="28" rx="14"/><text class="l6-blocktxt" x="734" y="381">Verdict: BLOCK</text><text class="l6-caption" x="430" y="432" style="text-anchor:middle">The tests check results they can see. The reviewer checks the shape of the code.</text></g>
+</svg>
+<!-- /d2 -->
+</div>
 </figure>
 
-<p>The core question is item 1 of the procedure: <strong>"what line fails if the feature breaks?"</strong> For each test, the reviewer must name the exact <code>file:line</code> whose removal or inversion makes the test fail. A test that has no such line is <dfn>hollow</dfn>: it can pass forever whatever the production code does (it asserts "no exception", or asserts on a value the test itself set). Trainee A's two misleading tests got through because nothing asked that question. A hollow test is worse than none, because the gate goes green. Note the last rule of the body: "Do not praise". A reviewer that opens with compliments is producing the tone of a chat, not a verdict.</p>
+<p>Lesson 7 adds the 12-for-3 test as a guard. The reviewer stays, because a green run can come from the database's locking rather than the design.</p>
 
-<figure class="code">
-<figcaption>.claude/agents/stock-invariant-reviewer.md</figcaption>
-<pre>---
-name: stock-invariant-reviewer
-description: Independent read-only reviewer for any diff touching stock, orders, OrderService, StockDbContext or transactions. Use before committing such a slice. Blocks read-then-write stock updates.
-tools: Read, Grep, Glob, Bash
-model: sonnet
----
+<h2>Running a reviewer</h2>
 
-You guard one invariant: **stock never goes below zero, even under concurrent requests.** Read
-docs/ai/invariants.md and docs/decisions/0001-atomic-guarded-update.md first.
+<p>Use an <strong>@-mention</strong>: type <code>@</code> and pick the agent, or write <code>@agent-stock-invariant-reviewer</code>. It "ensures that specific subagent runs rather than leaving the choice to Claude", and your transcript shows you asked. Plain language ("use the test-reviewer subagent") lets Claude decide, and <code>claude --agent test-reviewer</code> runs a whole session as the reviewer. There is no creation wizard any more (<code>/agents</code> lost it in v2.1.198 <span class="ver">verified 2026-10-01</span>): write the file, or ask the agent to. Edits are picked up within seconds, but the first file in a new <code>agents</code> folder needs a restart.</p>
 
-Review the diff (default: `git diff --cached`, or `git diff HEAD`). For every code path that changes `Stock`:
-1. Is it ONE guarded statement, `ExecuteUpdateAsync` with `Stock &gt;= n` (or the equivalent SQL) in the WHERE?
-   **Read-then-write** (load the entity, compare, assign, `SaveChanges`) is a **BLOCKER**, whatever the comments
-   or tests claim. It can pass the concurrency test on SQLite, where the transaction takes the write lock up front,
-   and still oversell without the transaction or on another provider.
-2. Does it check the affected row count and map 0 rows to 404 or 409?
-3. Is the stock change in the same transaction as the related write (order insert, cancel state)?
-4. Does `tests/StockApi.Tests/ConcurrencyTests.cs` cover this path (N parallel requests, successes ≤ stock)?
-5. Did the diff change a test provider, a test helper or `Directory.Build.props` in a way that hides a
-   concurrency failure?
+<h2>You are still the judge</h2>
 
-Output, and nothing else:
-| File:line | Finding | Severity (BLOCKER / MAJOR / MINOR) | Why it can oversell |
-Then "Verdict: PASS" or "Verdict: BLOCK". Do not edit files. Do not accept "SQLite locking makes it safe"
-without a passing concurrency test in the diff or on main.</pre>
-</figure>
-
-<p>This one guards <em>one</em> invariant, and only runs on diffs that touch stock, orders, <code>OrderService</code>, <code>StockDbContext</code> or transactions. (In your copy, drop "and docs/decisions/0001-atomic-guarded-update.md" from the first paragraph until lesson 9 creates that file.) Two lines carry the lesson:</p>
-<ul>
-  <li><strong>"whatever the comments or tests claim."</strong> The reviewer is told to distrust the author's justification, which is where Trainee D's rewrite hid.</li>
-  <li><strong>Item 5</strong> asks whether the diff changed a test provider or helper "in a way that hides a concurrency failure". That's the InMemory swap itself.</li>
-</ul>
-
-<h3>A green test can be green for the wrong reason</h3>
-
-<p>We measured this on the reference solution. Read-then-write <em>inside</em> <code>BeginTransactionAsync()</code> <strong>passes</strong> the 12-for-3 concurrency test on SQLite, because <code>Microsoft.Data.Sqlite</code> starts a non-deferred transaction that takes the write lock up front (<a href="https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/transactions">Microsoft docs</a>). It fails (<code>Expected: 3 / Actual: 12</code>) only when the transaction is removed too, which is what an InMemory-driven rewrite does, since InMemory rejects transactions. On SQL Server at READ COMMITTED it oversells, as Trainee D's did. So the test passing tells you about the provider's locking, not about the design. That's why the reviewer blocks read-then-write even when the suite is green, and why <code>docs/ai/invariants.md</code> says it "only <em>looks</em> safe inside <code>BeginTransaction()</code>". A guard test and a reviewer cover different failures, and lesson 7 adds the test.</p>
-
-<h2>The human is still the final judge</h2>
-
-<p>A reviewer is another model. It can be wrong, it can miss things, and <code>Verdict: BLOCK</code> doesn't stop a commit by itself. The workflow in <code>docs/ai/workflow.md</code> says it in one line: "Report its findings to the human. The author never grades its own work." So:</p>
-<ol>
-  <li>You trigger the review (an @-mention is the clearest trace), or the Definition of done in <code>AGENTS.md</code> does.</li>
-  <li>The findings come back <strong>to you</strong>, unedited by the author agent.</li>
-  <li>You decide: fix it, reject the finding with a reason, or ask the author to explain. Write that decision in the chat.</li>
-</ol>
-<p>This matters for how you'll be assessed. Credit for critical review of AI output needs "a human prompt that triggered the review, or a human rejection or change, visible in the transcript". The agent reviewing itself, even through a review skill, is "agent work — note it, do not credit it as human review". Trainee B's "eight defects" were not credited as human review, because the human's decision wasn't visible. The assessment caps the score for critical review at 3 when the only review is the agent's own.</p>
+<p>A reviewer is another model. It can be wrong, it can miss things, and <code>Verdict: BLOCK</code> stops nothing by itself. Its job is to put a specific claim in front of you. Yours: read the <code>file:line</code>, check it against the code, then decide in one sentence, with the reason. "Reject the rewrite: it breaks the stock invariant." That sentence, in your transcript and your plan, is the review. An agent agreeing with itself is not.</p>
 
 <details class="deeper">
-<summary>Going deeper: the same idea in Codex and Antigravity</summary>
-<div class="table-wrap"><table class="tools">
-  <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
-  <tr><td>Reviewer file</td><td><code>.claude/agents/&lt;name&gt;.md</code>: <code>name</code>, <code>description</code> required; <code>tools</code>, <code>model</code></td><td>TOML in <code>.codex/agents/</code> or <code>~/.codex/agents/</code>: <code>name</code>, <code>description</code>, <code>developer_instructions</code> required; <code>model</code>, <code>sandbox_mode</code> optional</td><td><code>.agents/agents/&lt;name&gt;.md</code> with <code>name</code>, <code>description</code>, <code>tools</code>, <code>model</code></td></tr>
-  <tr><td>Read-only</td><td>Leave out <code>Edit</code> and <code>Write</code> in <code>tools</code>; Bash stays bound by settings rules</td><td><code>sandbox_mode = "read-only"</code> on the agent</td><td>Leave edit tools out of <code>tools</code></td></tr>
-  <tr><td>Invoke</td><td>Name it, @-mention it, or <code>--agent</code></td><td>Ask Codex to spawn the agent by name <span class="ver unverified">unverified</span></td><td>Ask by name <span class="ver unverified">unverified</span></td></tr>
-  <tr><td>Approvals</td><td>Permission modes</td><td><code>approval_policy</code> is <code>on-request</code>, <code>never</code>, <code>granular</code> or <code>auto_review</code>; what <code>auto_review</code> does is <span class="ver unverified">unverified</span> here, so read the source before relying on it</td><td>Presets and Deny / Ask / Allow lists</td></tr>
-</table></div>
-<p class="small">Sources: <a href="https://learn.chatgpt.com/docs/agent-configuration/subagents">Codex subagents</a> · <a href="https://learn.chatgpt.com/docs/agent-approvals-security">Codex approvals and security</a> · <a href="https://antigravity.google/docs/subagents">Antigravity subagents</a>. Codex docs moved to learn.chatgpt.com in 2026.</p>
-
-<figure class="code">
-<figcaption>.codex/agents/test-reviewer.toml (sketch: field names from the Codex docs, body shortened)</figcaption>
-<pre>name = "test-reviewer"
-description = "Independent read-only reviewer for tests in a diff. Use after every slice."
-sandbox_mode = "read-only"
-developer_instructions = """
-You review tests you did not write. For every test in the diff, name the file:line
-whose removal makes it fail. If you cannot, the test is hollow. Output a table and
-'Blocking: yes/no'. Do not edit files. Do not praise.
-"""</pre>
-</figure>
-<p class="small">Fuller comparison: <a href="../reference/tool-equivalents.html">Tool equivalents</a>.</p>
+  <summary>Going deeper: reviewers in Codex and Antigravity</summary>
+  <div class="table-wrap"><table class="tools">
+    <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+    <tr><td>File</td><td><code>.claude/agents/&lt;name&gt;.md</code>: <code>name</code>, <code>description</code>; optional <code>tools</code>, <code>model</code></td><td>TOML in <code>.codex/agents/</code>: <code>name</code>, <code>description</code>, <code>developer_instructions</code>; optional <code>model</code>, <code>sandbox_mode</code></td><td><code>.agents/agents/&lt;name&gt;.md</code>: <code>name</code>, <code>description</code>; optional <code>tools</code>, <code>model</code> (<code>inherit</code>, <code>flash</code> or <code>pro</code>)</td></tr>
+    <tr><td>No edits</td><td>Leave <code>Edit</code> and <code>Write</code> out of <code>tools</code>; Bash follows settings rules</td><td><code>sandbox_mode = "read-only"</code>. Without it the agent inherits the parent's sandbox.</td><td>Leave edit tools out of <code>tools</code></td></tr>
+    <tr><td>Run it</td><td>@-mention, ask by name, or <code>--agent</code></td><td>Ask by name: "Have test_reviewer review git diff HEAD"</td><td>Ask by name; the main agent spawns it, with no access to its conversation</td></tr>
+  </table></div>
+  <p class="small">Sources: <a href="https://code.claude.com/docs/en/sub-agents">Claude Code subagents</a> · <a href="https://learn.chatgpt.com/docs/agent-configuration/subagents">Codex subagents</a> · <a href="https://antigravity.google/docs/subagents">Antigravity subagents</a> <span class="ver">verified 2026-10-01</span></p>
 </details>
 
 <h2>Check yourself</h2>
 <p class="score"></p>
 
 <div class="quiz">
-  <p class="q">When does the test reviewer call a test hollow?</p>
+  <p class="q">Why ask a subagent to review the diff instead of the agent that wrote it?</p>
   <div class="opts">
-    <button class="opt">It runs more slowly than other tests</button>
-    <button class="opt" data-correct>No production line exists that breaks it</button>
-    <button class="opt">It uses a real database during runs</button>
-    <button class="opt">Its name does not fit the pattern</button>
+    <button class="opt">It always runs a much larger model.</button>
+    <button class="opt" data-correct>It never saw the author's own reasoning.</button>
+    <button class="opt">It runs the whole test suite faster.</button>
+    <button class="opt">It may commit the fix it suggests.</button>
   </div>
-  <p class="why">The core question is "what line fails if the feature breaks?" If the reviewer cannot name one, the test would stay green whatever the code does. A naming slip is only a style note.</p>
+  <p class="why">It starts with a fresh context, without the workaround or the "row locking keeps this safe" story, so it judges the code as written. These reviewers run on a smaller model and can't edit.</p>
 </div>
 
 <div class="quiz">
-  <p class="q">The reviewer has no Edit or Write tool. Can it still change files?</p>
+  <p class="q">A reviewer's <code>tools</code> line is <code>Read, Grep, Glob, Bash</code>. Can it change a file?</p>
   <div class="opts">
-    <button class="opt">No, because Bash is read-only too</button>
-    <button class="opt">No, because the model field forbids</button>
-    <button class="opt" data-correct>Yes, because Bash can write files</button>
-    <button class="opt">No, because the description forbids it</button>
+    <button class="opt">No, none of its tools can write.</button>
+    <button class="opt" data-correct>Yes, through Bash, unless rules stop it.</button>
+    <button class="opt">No, the description in its file forbids.</button>
+    <button class="opt">Only when you start it with --agent.</button>
   </div>
-  <p class="why">Without Edit and Write the reviewer has no edit tool, but Bash can still run <code>sed -i</code> or a redirect. The prompt asks it not to, and settings rules cover only the commands they name. "Read-only" here is a strong request, not a sandbox; a real guarantee needs one (Codex offers it).</p>
+  <p class="why">No Edit or Write means no edit tools, but a shell can still run <code>sed -i</code> or a redirect. Only your settings' permission rules (lesson 7) can stop specific commands. "Do not edit files" in the prompt is a request.</p>
 </div>
 
 <div class="quiz">
-  <p class="q">The concurrency test is green, but the diff is read-then-write. What should the reviewer do?</p>
+  <p class="q">Every test is green, but the diff is read-then-write. What should the stock reviewer say?</p>
   <div class="opts">
-    <button class="opt">Pass it, since the suite is green</button>
-    <button class="opt">Pass it if comments explain the locking</button>
-    <button class="opt">Ask the author agent for its view</button>
-    <button class="opt" data-correct>Block it, because green may be luck</button>
+    <button class="opt">PASS, because the whole suite is green.</button>
+    <button class="opt">PASS, if a comment explains the locking.</button>
+    <button class="opt" data-correct>BLOCK, since green may be the provider.</button>
+    <button class="opt">Ask the author agent whether it's safe.</button>
   </div>
-  <p class="why">On SQLite, read-then-write inside a transaction can pass the test because of the provider's write lock. The design still oversells without the transaction or on another database, so it is a BLOCKER whatever the tests claim.</p>
+  <p class="why">The tests may never race, and even a concurrency test can pass on SQLite thanks to the provider's lock. Read-then-write still oversells elsewhere, so it is a BLOCKER whatever the tests claim.</p>
 </div>
 
-<h2>Exercise: two reviewers, then a rewrite they should stop</h2>
+<h2>Exercise: two reviewers, then a change they should stop</h2>
 <div class="exercise">
-  <span class="label">Exercise · ~35 min · adds: <code>.claude/agents/test-reviewer.md</code> and <code>stock-invariant-reviewer.md</code></span>
-  <p>Your repo now has <code>AGENTS.md</code>, the plan workflow, and the <code>commit</code> and <code>quality-gate</code> skills. Commit every step below through <code>/commit</code>.</p>
+  <span class="label">Exercise · about 40 min · you add: two reviewer agents, and a review step in your workflow</span>
+  <p>Work in your practice repo (<code>~/projects/stockapi</code>), which has <code>AGENTS.md</code>, <code>docs/ai/</code>, a plan and the <code>commit</code> and <code>quality-gate</code> skills from lessons 2 to 5. <strong>Windows:</strong> use WSL2 or Git Bash (<a href="../index.html#before-you-start">setup</a>).</p>
   <ol>
-    <li>Create <code>.claude/agents/</code> (<code>mkdir -p .claude/agents</code>; Windows: run shell commands in WSL2 or Git Bash, see <a href="../index.html#before-you-start">Before you start</a> on the index) and ask the agent to write the two reviewers from this spec (or compare its attempt with the two listings above):
-<pre>Create two read-only reviewer subagents in .claude/agents/.
-test-reviewer: for each test in the diff, name the production file:line whose removal
-makes it fail, else mark it HOLLOW; check assertions are on behaviour; check
-docs/ai/testing.md (real SQLite, concurrency test for stock changes); output a table
-and "Blocking: yes/no". stock-invariant-reviewer: block any read-then-write stock
-update; require one guarded ExecuteUpdateAsync, a row-count check, one transaction,
-and a concurrency test; output a table and "Verdict: PASS or BLOCK".
-Tools: Read, Grep, Glob, Bash only. Model: sonnet. They must not edit files.</pre>
-      The stock reviewer reads <code>docs/ai/invariants.md</code>, which you wrote in lesson 2. <strong>In your copy, leave out the sentence that names <code>docs/decisions/0001-atomic-guarded-update.md</code></strong> (and any "Why: docs/decisions/0001…" line in your <code>invariants.md</code>): that decision record doesn't exist until lesson 9 adds it, and a reviewer told to read a missing file wastes its first move.</li>
-    <li>Start a new session, then run <code>/quality-gate</code> and <code>/commit</code> for the two files (<code>feat(harness): add reviewer agents</code>).</li>
-    <li><strong>Point the workflow at the reviewers.</strong> Step 5 of <code>docs/ai/workflow.md</code> is still a manual placeholder. Edit it to say: dispatch <code>test-reviewer</code> on every diff, and <code>stock-invariant-reviewer</code> as well when stock or orders change; report the findings to the human; the author never grades its own work. Make item 2 of the Definition of done in <code>AGENTS.md</code> say the same. Commit both through <code>/commit</code>: <code>docs(ai): point workflow at reviewers</code>.</li>
-    <li><strong>Try the trap on a scratch branch.</strong> Run <code>git switch -c scratch/simplify</code>. Ask the agent: <em>"Simplify OrderService.PlaceAsync: load the product, check Stock, decrement it and SaveChanges."</em> Let it edit. Then remove the transaction if it kept one, which is what an InMemory-driven rewrite does. Run <code>dotnet test</code> and note the result: expect every test <strong>green</strong>, because your repo has no concurrency test yet (lesson 7 adds one). Hold on to that: green tests are exactly why the agent thought the rewrite was fine.</li>
-    <li>Run the stock reviewer with an @-mention so you know it ran: <code>@agent-stock-invariant-reviewer review git diff HEAD</code>. Expect a table with a BLOCKER on the read-then-write and <strong>Verdict: BLOCK</strong>. Now say to the main agent, in your own words, what you decide (for example "Reject the rewrite, keep the guarded update"). That sentence is your evidence of critical review.</li>
-    <li>Run <code>@agent-test-reviewer review the tests</code>. Expect it to flag that no test covers concurrent orders (lesson 7 adds one). Read how it names the production line for each existing test; if a verdict looks wrong, argue with it.</li>
-    <li>Discard the experiment: <code>git restore .</code> then <code>git switch main</code> and <code>git branch -D scratch/simplify</code>. You need no commit for discarded work.</li>
-    <li>Optional: start a dedicated review session with <code>claude --agent test-reviewer</code> and compare how the same diff looks there.</li>
+    <li><strong>Start clean.</strong> <code>git status</code> should say <em>nothing to commit, working tree clean</em>, and <code>git branch --show-current</code> should print <code>main</code>.</li>
+    <li><strong>Add the reviewers.</strong> Copy them from the reference solution and look for lines about things your repo doesn't have yet:
+<pre>mkdir -p .claude/agents
+cp ../agent-harness-course/reference-solution/.claude/agents/*.md .claude/agents/
+grep -n 'decisions/\|ConcurrencyTests' .claude/agents/*.md</pre>
+      Two lines in <code>stock-invariant-reviewer.md</code> match. Edit them to match the listing above: read only <code>docs/ai/invariants.md</code> (the decision record arrives in lesson 9), and ask for <em>a</em> concurrency test (yours arrives in lesson 7). Re-run the <code>grep</code>: no output. Read both files end to end.</li>
+    <li><strong>Check they load, then commit.</strong> Start a fresh session and type <code>@</code>: both reviewers should be listed. Run <code>/quality-gate</code>, then <code>/commit</code> for <code>.claude/agents/</code> (for example <code>feat(harness): add reviewer agents</code>).</li>
+    <li><strong>Make the bad change on a scratch branch.</strong> Run <code>git switch -c scratch/simplify</code>, then start <code>claude --permission-mode default</code> and ask: <em>"Simplify OrderService.PlaceAsync: load the product, check Stock, subtract the quantity and SaveChanges. Drop the transaction."</em> Your <code>AGENTS.md</code> forbids this, so it may refuse or send a 1-3-1: lessons 2 and 3 working. Reply <em>"This is a throwaway experiment to test a reviewer; make the change."</em> If it still declines, replace the body of <code>PlaceAsync</code> yourself:
+<pre>var product = await db.Products.FindAsync([productId], ct);
+if (product is null) return new PlaceOrderResult(PlaceOrderStatus.ProductNotFound);
+if (product.Stock &lt; quantity) return new PlaceOrderResult(PlaceOrderStatus.InsufficientStock);
+
+product.Stock -= quantity;
+var order = new Order { ProductId = productId, Quantity = quantity, CreatedAt = DateTimeOffset.UtcNow };
+db.Orders.Add(order);
+await db.SaveChangesAsync(ct);
+
+return new PlaceOrderResult(PlaceOrderStatus.Created, order);</pre></li>
+    <li><strong>Run the tests.</strong> <code>dotnet test</code>: expect <strong>every test green</strong>. There is no concurrency test yet (lesson 7 adds one), so nothing sends two orders at once.</li>
+    <li><strong>Run the stock reviewer.</strong> In the session, type <code>@agent-stock-invariant-reviewer review git diff HEAD</code>. Expect a BLOCKER at the decrement in <code>OrderService.cs</code> and <strong>Verdict: BLOCK</strong>. Open that line and check the claim, then tell the main agent your decision in one sentence, with the reason.</li>
+    <li><strong>Run the test reviewer.</strong> <code>@agent-test-reviewer review git diff HEAD and the tests in tests/</code>. Expect a MISSING row for a concurrency test, and <code>Blocking: yes</code>. If a verdict looks wrong, argue with it.</li>
+    <li><strong>Throw the experiment away</strong>, in this order. If you switch branches first, the uncommitted change follows you to <code>main</code>:
+<pre>git restore .
+git switch main
+git branch -D scratch/simplify
+grep -c ExecuteUpdateAsync src/StockApi/Services/OrderService.cs</pre>
+      The <code>grep</code> should print <code>1</code>: the guarded update is back.</li>
+    <li><strong>Put the reviewers into the workflow.</strong> Replace step 5 of <code>docs/ai/workflow.md</code> ("the human reviews the diff") with:
+<pre>5. **Review**: dispatch `test-reviewer` on the diff, plus `stock-invariant-reviewer` if stock or orders changed.
+   Report the findings to the human, who decides. The author never grades its own work.</pre>
+      Make item 2 of the Definition of done in <code>AGENTS.md</code> say the same, and add your decision from step 6 under "Decisions made by the human" in <code>ai-session/PLAN.md</code>. Commit the three files with <code>/commit</code>, for example <code>docs(ai): add reviewer step to workflow</code>.</li>
   </ol>
-  <p><strong>Codex:</strong> write the two files as TOML in <code>.codex/agents/</code> with <code>sandbox_mode = "read-only"</code>, and ask Codex to use them by name. <strong>Antigravity:</strong> put Markdown files in <code>.agents/agents/</code> with <code>name</code>, <code>description</code>, <code>tools</code>, <code>model</code>. Steps 3 to 6 are the same.</p>
+  <p class="tools-note"><strong>Codex:</strong> write each reviewer as <code>.codex/agents/&lt;name&gt;.toml</code> with <code>developer_instructions</code> holding the body and <code>sandbox_mode = "read-only"</code>, then ask by name in steps 6 and 7. <strong>Antigravity:</strong> copy the Markdown files to <code>.agents/agents/</code>, set <code>model</code> to <code>inherit</code>, and list Antigravity's own read-only tools under <code>tools</code>; then ask for each reviewer by name.</p>
 </div>
 
-<div class="done">
-  <span class="label">Done when</span>
+<div class="done" data-built="two reviewer agents with no edit tools, a BLOCK on a change every test passed, and a review step in your workflow that ends with your decision.">
+  <span class="label">Done when: tick all four to earn the Second Opinion plaque</span>
   <ul class="check" data-key="0006">
-    <li><input type="checkbox"> <span>Both reviewer files are committed, and neither lists <code>Edit</code> or <code>Write</code> in <code>tools</code></span></li>
-    <li><input type="checkbox"> <span>You saw <code>stock-invariant-reviewer</code> print <strong>Verdict: BLOCK</strong> on the read-then-write rewrite and quoted its <code>File:line</code> in your notes</span></li>
-    <li><input type="checkbox"> <span><code>test-reviewer</code> flagged the missing concurrency test, and your own decision sentence is in the transcript</span></li>
-    <li><input type="checkbox"> <span><code>docs/ai/workflow.md</code> and <code>AGENTS.md</code> name both reviewers</span></li>
-    <li><input type="checkbox"> <span>The scratch branch is deleted and <code>OrderService.cs</code> on <code>main</code> still uses <code>ExecuteUpdateAsync</code></span></li>
+    <li><input type="checkbox" aria-label="Reviewers committed"> <span>Both files in <code>.claude/agents/</code> are committed, neither lists <code>Edit</code> or <code>Write</code>, and neither mentions <code>docs/decisions/</code></span></li>
+    <li><input type="checkbox" aria-label="Saw BLOCK while green"> <span>You saw <code>dotnet test</code> green and <strong>Verdict: BLOCK</strong> on the same diff, with a <code>file:line</code> you checked yourself</span></li>
+    <li><input type="checkbox" aria-label="Test reviewer flagged gap"> <span><code>test-reviewer</code> flagged the missing concurrency test, and your decision is in <code>ai-session/PLAN.md</code></span></li>
+    <li><input type="checkbox" aria-label="Workflow updated, branch gone"> <span><code>docs/ai/workflow.md</code> step 5 and <code>AGENTS.md</code> name both reviewers, the scratch branch is gone, and <code>git status</code> is clean</span></li>
   </ul>
 </div>
 
-<div class="source">
-  <span class="label">Primary source</span>
-  <p><a href="https://code.claude.com/docs/en/sub-agents">Create custom subagents</a> (Anthropic). Read "Supported frontmatter fields", "Restrict tools" and "Invoke subagents explicitly".</p>
-</div>
-
-<div class="ask">
-  <span class="label">Ask your agent</span>
-  <p>Stuck, or curious? Ask the agent you're learning with, for example: "Take the test in <code>tests/StockApi.Tests</code> that you trust least and tell me which production line makes it fail. If you can't name one, tell me it's hollow."</p>
+<div class="split">
+  <div class="source">
+    <span class="label">Read next</span>
+    <p><a href="https://code.claude.com/docs/en/sub-agents">Create custom subagents</a>, especially the frontmatter fields, tool restrictions and explicit invocation. Then <a href="https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/transactions">Microsoft.Data.Sqlite transactions</a>: a transaction is not deferred unless you ask, which is why read-then-write passed the measured test inside one.</p>
+  </div>
+  <div class="ask">
+    <span class="label">Ask your agent</span>
+    <p>"Pick the test in <code>tests/StockApi.Tests</code> you trust least and name the production line whose removal makes it fail. If you can't name one, tell me it's hollow."</p>
+  </div>
 </div>
 
 <nav class="lesson-nav">
-  <a href="0005-skills.html">← Lesson 5: Skills</a>
-  <a href="../reference/tool-equivalents.html">Tool equivalents</a>
-  <a href="../reference/glossary.html">Glossary</a>
-  <a href="0007-guards.html">Lesson 7: Guards →</a>
+  <a href="0005-skills.html"><small>← Back to</small>5. Skills</a>
+  <a class="next" href="0007-guards.html"><small>Next stage →</small>7. Guards</a>
 </nav>
 
 </main>

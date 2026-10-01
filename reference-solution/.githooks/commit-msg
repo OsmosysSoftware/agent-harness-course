@@ -14,7 +14,7 @@ echo "$subject" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|ch
 }
 
 if grep -Eqi '^(co-authored-by: .*(claude|codex|gemini|copilot|anthropic|openai|noreply@)|.*generated with .*(claude|codex|gemini|antigravity))' "$msg_file"; then
-  echo "commit-msg: AI attribution lines are not allowed in company repos. Remove the trailer." >&2
+  echo "commit-msg: AI attribution lines are not allowed in this repo. Remove the trailer." >&2
   exit 1
 fi
 exit 0

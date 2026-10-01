@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Commit the current slice. Use whenever a slice has passed the quality gate and review and the work should be committed, or when the user says "commit". Drafts a Conventional Commit message from the staged diff, refuses secrets and build output, checks the company identity, and waits for human approval. Never pushes.
+description: Commit the current slice. Use whenever a slice has passed the quality gate and review and the work should be committed, or when the user says "commit". Drafts a Conventional Commit message from the staged diff, refuses secrets and build output, checks your work identity, and waits for human approval. Never pushes.
 ---
 
 # Commit
@@ -25,8 +25,8 @@ Follow every step in order. If any check fails, stop and report; do not work aro
    (environment variable, documented in `.env.example`). Continue only if the human confirms it is not a secret.
 
 4. **Check identity.**
-   `git config user.email` must be the company address (`@osmosys.co`).
-   If not, stop and ask the human to run `git config user.email <their company email>`. Do not set it yourself.
+   `git config user.email` must be your work address (`@yourcompany.com`; change this to your own domain).
+   If not, stop and ask the human to run `git config user.email <their work email>`. Do not set it yourself.
 
 5. **Draft the message from the diff, not from memory.**
    Read `git diff --cached`. Write:
