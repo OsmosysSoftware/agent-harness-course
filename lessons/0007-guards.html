@@ -514,6 +514,60 @@ public class FileStockApiFactory : WebApplicationFactory&lt;Program&gt;
   <p class="why">That green proves SQLite's locking, not the design. The reviewer reads the diff and blocks read-then-write even when the suite is green.</p>
 </div>
 
+<h2>Practice first</h2>
+<p>Quick drills with instant feedback, before you touch the repo: read a permissions block the way the tool does, then pick the guard that actually binds.</p>
+
+<div class="spot">
+  <p class="q">A teammate proposes these permission rules for <code>.claude/settings.json</code>. Click the rules that let a risky command run with no prompt.</p>
+  <ol class="lines">
+    <li>"allow": [</li>
+    <li>  "Bash(dotnet build *)", "Bash(dotnet test *)",</li>
+    <li data-bad data-why="Far too wide: anything not caught by ask or deny, such as git push, git reset or git rebase, now runs with no prompt. Allow only git status, git diff, git log and git add.">  "Bash(git *)",</li>
+    <li data-bad data-why="A new package should get the 14-day rule, so dotnet add belongs under ask, where you say yes after checking the version.">  "Bash(dotnet add *)",</li>
+    <li data-bad data-why="Force-push belongs in deny, which can't be approved from a prompt. In allow it runs with no question at all.">  "Bash(git push --force*)"</li>
+    <li>],</li>
+    <li>"ask": [ "Bash(git commit *)", "Bash(rm *)" ],</li>
+    <li data-why="Fine: --no-verify skips git hooks, and a deny rule can't be approved from a prompt. You can still type it yourself.">"deny": [ "Bash(git commit --no-verify*)", "Read(./.env)",</li>
+    <li data-why="Fine: *@* blocks setting a new address while still allowing the commit skill's plain read, git config user.email.">  "Bash(git config user.email *@*)" ]</li>
+  </ol>
+  <p class="result"></p>
+</div>
+
+<h3>What would you do?</h3>
+<div class="quiz">
+  <p class="q"><code>AGENTS.md</code> says <em>"never force-push"</em>. You want that to hold even when someone asks the agent to do it. What do you add?</p>
+  <div class="opts">
+    <button class="opt" data-correct>A deny rule and a PreToolUse hook</button>
+    <button class="opt">Bold capitals on the line in AGENTS.md</button>
+    <button class="opt">A never-push step in the commit skill</button>
+    <button class="opt">An allow rule for plain git push</button>
+  </div>
+  <p class="why">Rules and skills shape what the agent tries; they don't change what Claude Code allows. A deny rule and the hook refuse the call before git runs, even when the human asks.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">After a week of answering <em>"Yes, and don't ask again"</em>, <code>git status</code> lists <code>.claude/settings.local.json</code> as a new file. What do you do?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Add it to .gitignore, don't commit</button>
+    <button class="opt">Commit it so teammates share it</button>
+    <button class="opt">Copy its rules into deny instead</button>
+    <button class="opt">Move every rule into settings.json now</button>
+  </div>
+  <p class="why">That file holds your own approvals, so the exercise keeps it out of git with a <code>.gitignore</code> line. Shared rules go in <code>settings.json</code>, written on purpose and reviewed.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">The agent writes a JWT key into <code>appsettings.json</code> with the Edit tool, and you then commit. Which guard stops the commit?</p>
+  <div class="opts">
+    <button class="opt" data-correct>The pre-commit git hook</button>
+    <button class="opt">The PreToolUse Bash hook</button>
+    <button class="opt">The commit ask rule</button>
+    <button class="opt">The .env deny rule</button>
+  </div>
+  <p class="why">The Bash hook never sees Edit-tool calls, and the deny rule covers <code>.env</code>, not <code>appsettings.json</code>. The ask rule only asks you. The pre-commit hook scans the staged diff, whoever wrote it.</p>
+</div>
+
+
 <h2>Exercise: add four guards, then try to break the repo</h2>
 <div class="exercise">
   <span class="label">Exercise · about 75 min · you add: settings.json, three Claude Code hooks, two git hooks, ConcurrencyTests</span>

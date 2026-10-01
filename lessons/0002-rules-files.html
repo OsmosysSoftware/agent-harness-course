@@ -243,6 +243,59 @@ paths:
   <p class="why">Length and the agent's own summary are claims. Commit order is evidence: <code>git log --diff-filter=A</code> shows when the file first appeared, and whether it arrived alone.</p>
 </div>
 
+<h2>Practice first</h2>
+<p>Quick drills with instant feedback on writing and placing rules, before you touch the repo.</p>
+
+<div class="spot">
+  <p class="q">A developer's first draft of the root AGENTS.md. Click the lines that don't belong in it as written.</p>
+  <ol class="lines">
+    <li># StockApi: agent instructions</li>
+    <li>- Test: `dotnet test`</li>
+    <li data-bad data-why="Too vague to act on or check. Write a concrete one-line rule, or cut it.">- Write clean, high-quality code and follow best practices.</li>
+    <li data-why="An invariant every stock task needs, in one line: exactly what the root file is for.">- Stock never goes below zero, including under concurrent orders.</li>
+    <li>- Target framework is `net8.0`. Do not change it.</li>
+    <li data-bad data-why="Only matters when touching Data or Services files. Put it in a path-scoped rule so other tasks don&#x27;t pay for it.">- DateTimeOffset columns need DateTimeOffsetToBinaryConverter on SQLite.</li>
+    <li data-bad data-why="An @ import loads at launch in every session. Link detail files as plain paths, so they load only when a task needs them.">- @docs/ai/invariants.md</li>
+    <li data-why="A plain path is a pointer: it costs nothing until a task opens it.">- How to test (real SQLite, never EF InMemory): docs/ai/testing.md</li>
+  </ol>
+  <p class="result"></p>
+</div>
+
+<h3>What would you do?</h3>
+
+<div class="quiz">
+  <p class="q">A teammate ran <code>/init</code>, and it wrote a CLAUDE.md into a repo that already relies on AGENTS.md. What do you do with the new file?</p>
+  <div class="opts">
+    <button class="opt">Keep it; Claude merges both</button>
+    <button class="opt" data-correct>Make its first line @AGENTS.md</button>
+    <button class="opt">Delete AGENTS.md as now redundant</button>
+    <button class="opt">Add &quot;read AGENTS.md&quot; in words</button>
+  </div>
+  <p class="why">A CLAUDE file switches AGENTS.md off. The @AGENTS.md import pulls it back in, read once. Written as words, Claude sees it only if it decides to open it.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">You keep telling the agent &quot;never weaken a test to make it pass&quot;. It only matters when it works on test files. Where does that rule go?</p>
+  <div class="opts">
+    <button class="opt">In root AGENTS.md, at the top</button>
+    <button class="opt" data-correct>In tests/AGENTS.md, next to the tests</button>
+    <button class="opt">In CLAUDE.local.md, as notes for you</button>
+    <button class="opt">In a chat message every session</button>
+  </div>
+  <p class="why">A nested AGENTS.md loads when Claude reads a file in that folder, so tasks that never touch tests don't pay for it. CLAUDE.local.md would switch AGENTS.md off.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">A fresh Claude Code session doesn't print the &quot;AGENTS.md loaded&quot; line, and <code>/memory</code> doesn't list the file. What do you check first?</p>
+  <div class="opts">
+    <button class="opt">Make AGENTS.md much longer now</button>
+    <button class="opt" data-correct>Look for stray CLAUDE files</button>
+    <button class="opt">Retype the rules into chat</button>
+    <button class="opt">Rename it to AGENTS.local.md now</button>
+  </div>
+  <p class="why">Any CLAUDE.md, .claude/CLAUDE.md or CLAUDE.local.md in the folder or above switches AGENTS.md off, with no error. Claude Code never reads AGENTS.local.md.</p>
+</div>
+
 <h2>Exercise: write the index and commit it first</h2>
 <div class="exercise">
   <span class="label">Exercise · about 30 min · you add: AGENTS.md, docs/ai/ (3 files), tests/AGENTS.md</span>

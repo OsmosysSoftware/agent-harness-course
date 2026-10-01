@@ -67,7 +67,8 @@ class Page(HTMLParser):
 def check(path: Path):
     problems = []
     p = Page()
-    p.feed(path.read_text(encoding="utf-8"))
+    text = path.read_text(encoding="utf-8")
+    p.feed(text)
     if not p.has_css:
         problems.append("does not link ../assets/course.css")
     if p.styles:
@@ -83,6 +84,13 @@ def check(path: Path):
             problems.append(f"broken local link: {href}")
     for e in p.bad_steps:
         problems.append(f"diagram data-steps is not valid JSON: {e}")
+    for k, blk in enumerate(re.findall(r'<div class="spot">(.*?)<p class="result">', text, re.S), 1):
+        items = re.findall(r"<li([^>]*)>", blk)
+        bad = [x for x in items if "data-bad" in x]
+        if not bad:
+            problems.append(f"spot {k}: no data-bad line")
+        if any("data-why" not in x for x in bad):
+            problems.append(f"spot {k}: a data-bad line has no data-why")
     for i, q in enumerate(p.quizzes, 1):
         if not q:
             problems.append(f"quiz {i}: no options")

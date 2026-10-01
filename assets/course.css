@@ -825,6 +825,27 @@ pre .copy:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px;
 .start .btn { text-decoration: none; padding: 12px 18px; font-size: 1rem; }
 .start .small { flex-basis: 100%; margin: .3em 0 0; }
 
+
+/* ---------- Spot the problem ---------- */
+.spot { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); padding: 16px 20px; margin: 0 0 1.4em; box-shadow: var(--shadow); }
+.spot .q { font-weight: 600; margin: 0 0 .7em; }
+.spot .lines { list-style: none; margin: 0 0 12px; padding: 0; font-family: var(--mono); font-size: .86rem; counter-reset: ln; }
+.spot .lines li { counter-increment: ln; position: relative; padding: 6px 10px 6px 3em; border: 1px solid transparent; border-radius: 6px; cursor: pointer; white-space: pre-wrap; line-height: 1.45; }
+.spot .lines li::before { content: counter(ln); position: absolute; left: 10px; width: 1.6em; text-align: right; color: var(--ink-3); }
+.spot .lines li:hover { background: var(--surface); }
+.spot .lines li:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.spot .lines li.picked { background: var(--accent-soft); border-color: var(--accent); }
+.spot.checked .lines li { cursor: default; }
+.spot .lines li.hit { background: var(--pass-soft); border-color: var(--pass); }
+.spot .lines li.miss { background: var(--warn-soft); border-color: var(--warn); }
+.spot .lines li.wrong { background: var(--fail-soft, var(--warn-soft)); border-color: var(--fail); }
+.spot .lines li .why-line { display: block; font-family: var(--sans); font-size: .84rem; color: var(--ink-2); margin-top: 4px; white-space: normal; }
+.spot .lines li.hit .why-line::before { content: "Caught: "; font-weight: 700; color: var(--pass); }
+.spot .lines li.miss .why-line::before { content: "Missed: "; font-weight: 700; color: var(--warn); }
+.spot .lines li.wrong .why-line::before { content: "Fine as is: "; font-weight: 700; color: var(--fail); }
+.spot .result { margin: 10px 0 0; font-size: .95rem; }
+.spot .result:empty { display: none; }
+
 /* ---------- Print ---------- */
 @media print {
   :root, :root[data-theme="dark"] {

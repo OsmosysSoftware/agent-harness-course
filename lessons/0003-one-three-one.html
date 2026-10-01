@@ -238,6 +238,59 @@ then wait for the human's decision. Never install, launch, downgrade or delete t
   <p class="why">An option that breaks an invariant needs a stated reason, not just a recommendation. Ask for it, or choose another option, and write your reason down.</p>
 </div>
 
+<h2>Practice first</h2>
+<p>Quick drills with instant feedback on giving and answering a 1-3-1, before you touch the repo.</p>
+
+<div class="spot">
+  <p class="q">An agent's integration tests need Docker, and it wrote this hand-over. Click the lines that break the 1-3-1 rule.</p>
+  <ol class="lines">
+    <li>PROBLEM   The integration tests need Docker, and the daemon is not running.</li>
+    <li>          Without them, the order endpoints go untested.</li>
+    <li data-bad data-why="It acted before you decided. The rule says never install or launch to get unstuck: stop, hand over, wait.">          I have started Docker Desktop and am polling until it is up.</li>
+    <li>OPTIONS   1. You start Docker yourself (about a minute)</li>
+    <li data-bad data-why="No cost stated. Each option needs its trade-off, here: those tests go unrun and unproven.">          2. Skip the Docker-backed tests for now</li>
+    <li data-why="Fine: a rule-breaking option may be on the list, as long as its cost is written next to it.">          3. Swap in EF InMemory (testing.md forbids it; can&#x27;t run ExecuteUpdateAsync)</li>
+    <li data-bad data-why="No recommendation. The agent must pick one, so you can reply in one word or disagree with a reason.">RECOMMEND Whichever you prefer.</li>
+    <li>Waiting for your call.</li>
+  </ol>
+  <p class="result"></p>
+</div>
+
+<h3>What would you do?</h3>
+
+<div class="quiz">
+  <p class="q">The agent's new OrderService method doesn't compile: a typo in a variable name. It replies with a full 1-3-1. What do you tell it?</p>
+  <div class="opts">
+    <button class="opt">Pick option one and keep going</button>
+    <button class="opt">Good call; always hand these over</button>
+    <button class="opt" data-correct>Fix it; that is ordinary debugging</button>
+    <button class="opt">Revert the method and stop work</button>
+  </div>
+  <p class="why">Its own new code failing to compile isn't a wall. Read the error, fix, re-run: that is the agent's job, not your decision.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">A 1-3-1 says a test failed &quot;because SQLite is flaky&quot; and offers three ways to retry. The output shows stock went below zero. What do you do?</p>
+  <div class="opts">
+    <button class="opt">Pick the recommended retry option</button>
+    <button class="opt">Ask for three different options</button>
+    <button class="opt" data-correct>Challenge the problem before picking</button>
+    <button class="opt">Accept it and rerun everything</button>
+  </div>
+  <p class="why">Check one: is the problem right? Stock below zero is a broken invariant, not flakiness. Say so instead of picking a retry.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">This week you answered the same 1-3-1, &quot;real SQLite, never InMemory&quot;, the same way twice. What do you do the next time it appears?</p>
+  <div class="opts">
+    <button class="opt">Answer it the same way once more</button>
+    <button class="opt">Let the agent decide this one alone</button>
+    <button class="opt" data-correct>Write it into the rules, then answer</button>
+    <button class="opt">Ask for a longer list of options</button>
+  </div>
+  <p class="why">The same answer twice is a decision, not a question. Write it into invariants.md or AGENTS.md so the agent stops asking.</p>
+</div>
+
 <h2>Exercise: add the rule, set two traps, be the human</h2>
 <div class="exercise">
   <span class="label">Exercise · about 35 min · you add: the 1-3-1 rule and your first recorded decisions</span>

@@ -54,6 +54,7 @@
     initToc();
     initStart();
     initCopy();
+    initSpots();
   });
 
   // ---- Cabinet: brand, a plaque per lesson, a tape flag where you stopped, progress, theme ----
@@ -406,5 +407,46 @@
     var i = LESSONS.findIndex(function (l, k) { return lessonId(k) === flag; });
     btn.textContent = "Continue: lesson " + (i + 1) + ", " + LESSONS[i][1] + " →";
     btn.href = "lessons/" + LESSONS[i][0];
+  }
+
+  // ---- Spot the problem: click the faulty lines, then Check ----
+  function initSpots() {
+    document.querySelectorAll(".spot").forEach(function (box) {
+      var lines = box.querySelectorAll(".lines li"), res = box.querySelector(".result");
+      var btn = document.createElement("button");
+      btn.className = "btn primary"; btn.type = "button"; btn.textContent = "Check";
+      box.querySelector(".lines").after(btn);
+      lines.forEach(function (li) {
+        li.tabIndex = 0;
+        li.setAttribute("role", "checkbox"); li.setAttribute("aria-checked", "false");
+        function toggle() {
+          if (box.classList.contains("checked")) return;
+          var on = li.classList.toggle("picked"); li.setAttribute("aria-checked", on ? "true" : "false");
+        }
+        li.addEventListener("click", toggle);
+        li.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); } });
+      });
+      btn.addEventListener("click", function () {
+        if (box.classList.contains("checked")) {
+          box.classList.remove("checked"); btn.textContent = "Check"; res.innerHTML = "";
+          lines.forEach(function (li) { li.classList.remove("picked", "hit", "miss", "wrong"); li.setAttribute("aria-checked", "false"); var n = li.querySelector(".why-line"); if (n) n.remove(); });
+          return;
+        }
+        var hit = 0, bad = 0, wrong = 0;
+        lines.forEach(function (li) {
+          var isBad = li.hasAttribute("data-bad"), picked = li.classList.contains("picked"), why = li.getAttribute("data-why");
+          if (isBad) bad++;
+          var state = isBad && picked ? "hit" : isBad ? "miss" : picked ? "wrong" : "";
+          if (state === "hit") hit++;
+          if (state === "wrong") wrong++;
+          if (state) {
+            li.classList.add(state);
+            if (why) { var n = document.createElement("span"); n.className = "why-line"; n.textContent = why.replace(/^(Fine|True)[:.]\s*/, ""); li.appendChild(n); }
+          }
+        });
+        box.classList.add("checked"); btn.textContent = "Try again";
+        res.innerHTML = "<b>" + hit + " of " + bad + " found" + (wrong ? ", " + wrong + " false alarm" + (wrong > 1 ? "s" : "") : "") + ".</b> " + (hit === bad && !wrong ? "Clean." : "Read the notes under the marked lines.");
+      });
+    });
   }
 })();

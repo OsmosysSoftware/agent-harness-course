@@ -422,6 +422,61 @@ evaluate my commit skill with skill-creator</pre></figure>
   <p class="why">A skill is text the model follows, so it raises the odds without blocking anything. Only the tool can refuse a command, which is what permission rules and git hooks do.</p>
 </div>
 
+<h2>Practice first</h2>
+<p>Quick drills with instant feedback, before you touch the repo: apply what a skill is to files and situations you haven't seen yet.</p>
+
+<div class="spot">
+  <p class="q">Someone shares this commit skill. Click the lines that would let a bad commit through or keep the skill from being picked.</p>
+  <ol class="lines">
+    <li>---</li>
+    <li>name: commit</li>
+    <li data-bad data-why="Too vague to match anything: the agent picks a skill from its description, so say what it does and when to use it, key use case first.">description: Helps with git stuff.</li>
+    <li data-why="Fine: only you can start it with /commit, the form the docs suggest for side effects. This course leaves it off, but it is the stricter choice.">disable-model-invocation: true</li>
+    <li data-bad data-why="allowed-tools runs commands without asking while the skill runs, so this pre-approves the very commit you should approve. Leave it out.">allowed-tools: Bash(git commit *)</li>
+    <li>---</li>
+    <li data-why="Fine: proposing files and asking first is the safe form. The line to fear is git add -A.">1. If nothing is staged, propose the files and ask before git add.</li>
+    <li>2. Refuse staged bin/, obj/, tmp/, .db or .env paths; name them and stop.</li>
+    <li>3. Draft the message from git diff --cached; wait for an explicit yes.</li>
+    <li data-bad data-why="Pushing is the human's job. The skill makes one local commit, reports the short hash, and stops.">4. Commit, then git push so the team sees it.</li>
+  </ol>
+  <p class="result"></p>
+</div>
+
+<h3>What would you do?</h3>
+<div class="quiz">
+  <p class="q">You write a <code>/deploy-staging</code> skill. The agent must never start it on its own; only you, by typing the command. What do you change?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Turn off model invocation in the header</button>
+    <button class="opt">Turn off user invocation in the header</button>
+    <button class="opt">List the deploy commands under allowed tools</button>
+    <button class="opt">Write never run this in the description</button>
+  </div>
+  <p class="why"><code>disable-model-invocation: true</code> means only you can start it, the form the docs suggest for side effects. <code>user-invocable: false</code> does the opposite, and <code>allowed-tools</code> only pre-approves commands.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Your new skill must run format, then build, then test, stopping at the first failure, the same way every run. Where do those commands belong?</p>
+  <div class="opts">
+    <button class="opt" data-correct>A script the skill folder carries</button>
+    <button class="opt">Numbered steps in the skill body</button>
+    <button class="opt">A line in the skill description</button>
+    <button class="opt">A reminder in the rules file</button>
+  </div>
+  <p class="why">A script gives the same result every run, which is why <code>quality-gate</code> carries <code>gate.sh</code>. The <code>SKILL.md</code> beside it keeps the judgement a script can't: fix the cause, never weaken a test.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">A teammate says <code>/commit</code> let a <code>tmp/</code> folder through on their machine, though the repo's commit skill refuses <code>tmp/</code>. What do you check first?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Their personal skills folder</button>
+    <button class="opt">The repo's .gitignore entries</button>
+    <button class="opt">The skill's description line</button>
+    <button class="opt">The commit message format</button>
+  </div>
+  <p class="why">Personal beats project: a <code>~/.claude/skills/commit</code> from another project replaces the repo's <code>/commit</code>, so none of its gates run. Rename or move it.</p>
+</div>
+
+
 <h2>Exercise: two skills, two refusals, one commit through the skill</h2>
 <div class="exercise">
   <span class="label">Exercise · about 45 min · you add: the commit and quality-gate skills, and the workflow pointing at them</span>

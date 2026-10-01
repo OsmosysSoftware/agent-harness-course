@@ -181,7 +181,7 @@
 </div>
 <div class="modes-scale"><span>Asks you more</span><span>Asks you less</span></div>
 
-<p>On Claude Code v2.1.283 or later you <strong>start in auto</strong> <span class="ver">verified 2026-09-30</span>. That is why a commit or an app launch can happen with no prompt, unless your repo says otherwise.</p>
+<p>On Claude Code v2.1.283 or later you <strong>start in auto</strong> <span class="ver">verified 2026-09-30</span>. That is why a commit or an app launch can happen with no prompt, unless your repo says otherwise: an <em>ask rule</em> in its permission settings still prompts even in auto mode, whatever the model decides. Lesson 7 writes those.</p>
 
 <details class="deeper">
   <summary>Going deeper: deny rules, ask rules, and a clicked-together allow list</summary>
@@ -241,6 +241,59 @@
     <button class="opt">A shared rules file every agent loads.</button>
   </div>
   <p class="why">"Don't ask again" writes to settings.local.json, which is personal and meant to stay out of git. A policy is written on purpose, reviewed, and lives in .claude/settings.json.</p>
+</div>
+
+<h2>Practice first</h2>
+<p>Quick drills with instant feedback on this lesson's ideas, before you touch the repo.</p>
+
+<div class="spot">
+  <p class="q">A developer wrote down how they think their agent session works. Click the lines that get it wrong.</p>
+  <ol class="lines">
+    <li>Each turn, the model reads the whole context window before it acts.</li>
+    <li data-bad data-why="Chat can be summarised away when the window is compacted. A rule that matters goes in a file, and even then it is a request, not a block.">I said &quot;never commit&quot; in chat on turn 3, so it holds for the whole session.</li>
+    <li data-why="True: the root rules file is re-read from disk. That is why rules belong there.">After compaction, the project-root AGENTS.md is re-read from disk.</li>
+    <li data-bad data-why="That describes acceptEdits. Plan mode reads and plans, with no edits until you approve the plan.">Plan mode lets it edit files freely; it only asks before commands.</li>
+    <li data-why="True: /clear doesn&#x27;t delete the old conversation.">/clear starts a new chat, and /resume can bring the old one back.</li>
+    <li>Auto mode: a second model approves most actions.</li>
+    <li data-bad data-why="Everything the model reads is a request. The harness enforces permission rules and hooks, not the rules file.">My rules file is enforced by the harness, so the agent can&#x27;t break it.</li>
+    <li>A deny rule in settings blocks the action in every mode.</li>
+  </ol>
+  <p class="result"></p>
+</div>
+
+<h3>What would you do?</h3>
+
+<div class="quiz">
+  <p class="q">You want the agent to read ProductsController and propose how to add the low-stock endpoint, without touching a single file yet. Which permission mode?</p>
+  <div class="opts">
+    <button class="opt">acceptEdits</button>
+    <button class="opt" data-correct>plan</button>
+    <button class="opt">auto</button>
+    <button class="opt">bypass</button>
+  </div>
+  <p class="why">Plan mode reads and plans, with no edits until you approve. acceptEdits edits freely, auto lets a second model approve most actions, and bypass never asks.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">For the third session in a row you type &quot;run dotnet test before you say done&quot;. Where should that sentence live?</p>
+  <div class="opts">
+    <button class="opt">In the first message of every chat</button>
+    <button class="opt" data-correct>In a rules file inside the repo</button>
+    <button class="opt">In a reply after each /compact run</button>
+    <button class="opt">In a chat note after every /clear</button>
+  </div>
+  <p class="why">A file in the repo loads at the start of every session and is re-read after compaction. Anything you type twice is a candidate for the harness.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">In auto mode the agent ran <code>git commit</code> without asking, though your rules file says to ask first. What actually makes it stop and ask next time?</p>
+  <div class="opts">
+    <button class="opt">A stronger line in the rules file</button>
+    <button class="opt" data-correct>An ask rule in the permission settings</button>
+    <button class="opt">A reminder typed into the chat window</button>
+    <button class="opt">A note in the model&#x27;s system prompt</button>
+  </div>
+  <p class="why">Everything the model reads is a request. The harness checks every call, and an ask rule still prompts even in auto mode. Lesson 7 writes these.</p>
 </div>
 
 <h2>Exercise: set up the repo, then watch a chat rule vanish</h2>

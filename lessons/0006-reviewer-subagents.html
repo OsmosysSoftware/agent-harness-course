@@ -265,6 +265,61 @@ Do not edit files. Do not praise.</pre>
   <p class="why">The tests may never race, and even a concurrency test can pass on SQLite thanks to the provider's lock. Read-then-write still oversells elsewhere, so it is a BLOCKER whatever the tests claim.</p>
 </div>
 
+<h2>Practice first</h2>
+<p>Quick drills with instant feedback, before you touch the repo: judge a reviewer you didn't write, then decide what to do with what it says.</p>
+
+<div class="spot">
+  <p class="q">A teammate drafts this reviewer. Click the lines that stop it being an independent reviewer whose verdict you can check.</p>
+  <ol class="lines">
+    <li>---</li>
+    <li>name: order-reviewer</li>
+    <li>description: Read-only reviewer for any diff touching orders. Use before committing.</li>
+    <li data-bad data-why="Edit and Write let the reviewer quietly fix what it disliked instead of reporting it. Leave them out of the allowlist.">tools: Read, Grep, Glob, Bash, Edit, Write</li>
+    <li data-why="Fine: reading a diff against a short rule list doesn't need the largest model, and it keeps reviewing every slice cheap.">model: sonnet</li>
+    <li>---</li>
+    <li data-bad data-why="That hands it the author's reasoning, so it agrees with the author. A reviewer judges the diff and the invariants, never the conversation.">First read the author's chat transcript to understand why the change is safe.</li>
+    <li>Read docs/ai/invariants.md, then review git diff --cached.</li>
+    <li data-why="Fine: distrusting the author's justification is the point. The incident's rewrite hid behind exactly such a justification.">Read-then-write stock changes are a BLOCKER, whatever the comments or tests claim.</li>
+    <li data-bad data-why="A verdict with no file:line can't be checked. Ask for the fixed table, then Verdict: PASS or BLOCK, and nothing else.">If nothing stands out, just reply: Looks good to me.</li>
+  </ol>
+  <p class="result"></p>
+</div>
+
+<h3>What would you do?</h3>
+<div class="quiz">
+  <p class="q">The agent finishes a slice and offers: <em>"Shall I review my own diff before committing?"</em> What do you do?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Dispatch a reviewer subagent on the diff</button>
+    <button class="opt">Let the author agent review its diff</button>
+    <button class="opt">Paste a review checklist into this chat</button>
+    <button class="opt">Skip review because the tests are green</button>
+  </div>
+  <p class="why">The author reads its diff through its own reasoning, and a checklist pasted into the same window is read the same way. A subagent starts fresh, with the diff and the invariants only.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">The stock reviewer returns <code>Verdict: BLOCK</code> at <code>OrderService.cs:18</code>. The author agent replies that the finding is wrong. What next?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Open line 18 and decide yourself</button>
+    <button class="opt">Accept the author's reply and commit</button>
+    <button class="opt">Have the reviewer patch line 18</button>
+    <button class="opt">Rerun the reviewer until it passes</button>
+  </div>
+  <p class="why">A reviewer is another model, and BLOCK stops nothing by itself. Read the <code>file:line</code>, check it against the code, then decide in one sentence, with the reason.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Your slice changed only <code>ProductsController</code> and its tests; nothing about stock or orders. Which reviewers does your workflow dispatch?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Just the test reviewer</button>
+    <button class="opt">Just the stock reviewer</button>
+    <button class="opt">Both reviewers, every time</button>
+    <button class="opt">Neither, the tests passed</button>
+  </div>
+  <p class="why">The workflow dispatches <code>test-reviewer</code> on every diff, plus <code>stock-invariant-reviewer</code> when stock or orders changed. Green tests don't replace review.</p>
+</div>
+
+
 <h2>Exercise: two reviewers, then a change they should stop</h2>
 <div class="exercise">
   <span class="label">Exercise · about 40 min · you add: two reviewer agents, and a review step in your workflow</span>

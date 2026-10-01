@@ -246,6 +246,58 @@ git log --format=%B | grep -i 'co-authored-by'             # AI trailers</pre>
   <p class="why">It holds everything that passed through a tool: file contents, command output, even your personal instructions. Editing or summarising turns it into a narrative. If you find a secret, rotate it, and decide whether the transcript belongs in git at all.</p>
 </div>
 
+<h2>Practice first</h2>
+<p>Three quick drills with instant feedback, before you touch the repo.</p>
+
+<div class="spot">
+  <p class="q">A draft REFLECTION.md. The only concurrency test is <code>ConcurrencyTests</code> (12 orders for 3 units), and <code>git log</code> shows PLAN.md arrived in the same commit as the whole API. Click the claims a reviewer can't trust as written.</p>
+  <ol class="lines">
+    <li data-why="Fine: a decision of yours, with a transcript line anyone can open and check.">Declined storing rejected orders (not in the brief): transcript.txt:212</li>
+    <li data-bad data-why="No pointer, and no such test exists. Name the test, or move it to What I could not verify.">The tests also cover two cancels racing on the same order.</li>
+    <li data-bad data-why="Files can't prove order, and git contradicts it: plan and API share one commit. Say what git shows.">I wrote PLAN.md first and reviewed it before any code.</li>
+    <li>Harness caught: stock-invariant-reviewer BLOCK, read-then-write, transcript.txt:340</li>
+    <li data-bad data-why="An edited transcript is a narrative again. Review it for secrets; never edit it to look better.">Transcript lightly edited to drop a few awkward turns.</li>
+    <li data-why="Fine: saying you couldn't confirm something is honest, not a gap in the reflection.">Could not verify: whether test-reviewer ran on the last slice.</li>
+    <li data-why="Fine: that is fixing forward. Fix the setting now and note the old commits; don't rewrite them.">Early commits used a personal email; setting fixed, old ones noted.</li>
+  </ol>
+  <p class="result"></p>
+</div>
+
+<h3>What would you do?</h3>
+
+<div class="quiz">
+  <p class="q">Your reflection has a row "Rejected the agent's caching idea", but you can't find it in the transcript or in <code>git log</code>. What do you do?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Delete the row: no pointer, no row.</button>
+    <button class="opt">Keep it, since you remember it well.</button>
+    <button class="opt">Point it at the nearest commit made.</button>
+    <button class="opt">Move it to What the harness caught.</button>
+  </div>
+  <p class="why">Each row needs a commit or a transcript line. Memory is a claim, and the nearest commit is evidence of something else. Two real rows beat five invented ones.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Before pushing, you tidied your own local commits with a rebase. Now the first hygiene check prints 5 commits sharing one second. What is the honest move?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Say in your reflection that you rebased them.</button>
+    <button class="opt">Reset the dates so they spread out again.</button>
+    <button class="opt">Revert all five and make them over again.</button>
+    <button class="opt">Force-push so all of the remote times reset.</button>
+  </div>
+  <p class="why">Local commits were yours to tidy, and the check flags it anyway. Say so. Faking dates or force-pushing turns the record into a narrative.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">The agent's end-of-session summary says "both reviewers ran". Counting tool calls in the raw <code>.jsonl</code> shows zero <code>Agent</code> calls. Which do you trust?</p>
+  <div class="opts">
+    <button class="opt" data-correct>The count, because the summary is a claim.</button>
+    <button class="opt">The summary, because the agent did the work.</button>
+    <button class="opt">Neither, as the two records are equally weak.</button>
+    <button class="opt">Both, since each one records a different thing.</button>
+  </div>
+  <p class="why">The raw transcript is written by the tool as the session runs; the summary is the agent's own words. If a count is zero for something you believed happened, the belief was a claim.</p>
+</div>
+
 <h2>Exercise: an honest record of your own repo</h2>
 <div class="exercise">
   <span class="label">Exercise · about 40 min · you add: a reviewed transcript, ai-session/REFLECTION.md, and one practised revert</span>

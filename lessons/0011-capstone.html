@@ -329,6 +329,59 @@ WHERE NOT EXISTS (
   <p class="why">Personal beats project. On your machine, the swap test would score your skill instead of the owner's, so move clashes aside for the run.</p>
 </div>
 
+<h2>Practice first</h2>
+<p>Three quick drills with instant feedback, before you touch the repo.</p>
+
+<div class="spot">
+  <p class="q">A swap-test log for RoomBooking. Click the lines that make the scorecard grade something other than the committed harness.</p>
+  <ol class="lines">
+    <li data-why="Fine: git hooks are off in every new clone, so switching them on is the one setup step that's yours.">Setup: fresh clone, then git config core.hooksPath .githooks</li>
+    <li data-why="Fine: until trust, allow rules are ignored and MCP is pending. This is setup, not steering.">Accepted the trust dialog and approved context7 before watching.</li>
+    <li>Pasted "Add PATCH /api/bookings/{id}/reschedule." and nothing else.</li>
+    <li data-bad data-why="That is steering. Never add instructions mid-run, even when it drifts: the drift is the data.">It drifted to check-then-insert, so I typed "one guarded statement".</li>
+    <li data-bad data-why="Personal beats project, so this graded your profile. Move clashes aside before the run.">Q2 Skills ran: Pass (my commit skill in ~/.claude/skills ran)</li>
+    <li>Q3 Reviewer caught: Pass, test-reviewer found 2 gaps, transcript.txt:140</li>
+    <li>Q4 Stopped and asked: Pass, a 1-3-1 on adjacent bookings, transcript.txt:88</li>
+    <li data-bad data-why="A prompt fix steers only you. Make it one committed change to a rules file, skill, reviewer or guard.">Fix for Q1: I'll paste the invariant into my next prompt.</li>
+  </ol>
+  <p class="result"></p>
+</div>
+
+<h3>What would you do?</h3>
+
+<div class="quiz">
+  <p class="q">Minute 27 of the timed run. Rules and skills are committed; no reviewer or guard yet. What do you do?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Add one reviewer and one guard, then plan the rest.</button>
+    <button class="opt">Start the feature code, and add guards when it works.</button>
+    <button class="opt">Skip the proof step so all four blocks get finished.</button>
+    <button class="opt">Commit the lot at the end as one harness commit.</button>
+  </div>
+  <p class="why">Cut breadth, not order. AGENTS.md, one skill, one reviewer and one permission rule or hook is a harness; the rest becomes a slice in the plan.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">In a swap run, both reviewers ran, but the task touched nothing they check, and no guard fired. How do you score question 3?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Partial, noted; no extra check just to earn a pass.</button>
+    <button class="opt">Fail, then write a new reviewer before the next run.</button>
+    <button class="opt">Pass, because both of the reviewers did run on it.</button>
+    <button class="opt">Leave it blank, since this task had nothing to catch.</button>
+  </div>
+  <p class="why">Reviewers that ran with nothing to catch score a partial, and that's fine when the task gave nothing to catch. Note it; don't bolt on a check to earn a pass.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">Swap-testing a colleague's repo, the agent's commit is refused: their pre-commit hook checks their own work email domain. What do you do?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Note it: the guard is doing its job.</button>
+    <button class="opt">Edit the hook so that your domain passes.</button>
+    <button class="opt">Turn the git hooks off for this run.</button>
+    <button class="opt">Score the run a fail and move on.</button>
+  </div>
+  <p class="why">The refusal is the guard working. Editing or disabling it would test a harness you changed, not the one the owner committed.</p>
+</div>
+
 <h2>Exercise: harness first, then swap</h2>
 <div class="exercise">
   <span class="label">Exercise · about 4 h over two sittings · you add: a second repo with a full harness, four scored swap runs, and a 30-minute timed run</span>

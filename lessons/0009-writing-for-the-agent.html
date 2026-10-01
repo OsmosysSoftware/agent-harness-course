@@ -313,6 +313,59 @@ Docs written from memory drift. This skill compares every claim with the code.
   <p class="why">No evidence either way, so it is neither TRUE nor STALE. The honest fix is usually to delete the sentence: it tells the next agent nothing it can act on.</p>
 </div>
 
+<h2>Practice first</h2>
+<p>Three quick drills with instant feedback, before you touch the repo.</p>
+
+<div class="spot">
+  <p class="q">These lines come from one repo whose controllers now have six routes. Click the lines that would mislead a fresh agent, or tell it nothing it can act on.</p>
+  <ol class="lines">
+    <li data-why="Fine: one short line that points at the reason. The ADR holds the why, so it can't go stale here.">// Atomic guarded UPDATE, never read-then-write: see docs/decisions/0001.</li>
+    <li data-bad data-why="It restates what the code already says and none of why. Point at the decision instead.">// Subtract q from Stock where Stock is at least q.</li>
+    <li data-bad data-why="A why with no pointer: the agent can't read or cite the reason. Name the ADR, e.g. docs/decisions/0001.">// Done this way for concurrency reasons. Don't change it.</li>
+    <li>conventions.md: Errors are ProblemDetails: 400, 404, 409.</li>
+    <li data-bad data-why="STALE: the code has six routes. A wrong doc is worse than none, because the agent believes it. Run /update-docs.">README.md: "The API has four endpoints:" followed by four routes.</li>
+    <li data-why="Fine: that is what a Consequences section is for, a cost the team accepted on purpose.">ADR 0001, Consequences: EF InMemory can't be used for order tests.</li>
+    <li>AGENTS.md, More context: Deliberate decisions, with the why: docs/decisions/.</li>
+    <li>new-endpoint: Read ProductsController and its tests first, then copy their shape.</li>
+  </ol>
+  <p class="result"></p>
+</div>
+
+<h3>What would you do?</h3>
+
+<div class="quiz">
+  <p class="q">Your code calls a stored procedure where every other service uses EF Core, on purpose. Fresh agents keep "tidying" it into EF calls. What do you add?</p>
+  <div class="opts">
+    <button class="opt" data-correct>An ADR, plus a one-line comment pointing to it.</button>
+    <button class="opt">A long comment above the call, explaining it all.</button>
+    <button class="opt">A reminder you paste into the chat each session.</button>
+    <button class="opt">A warning in the README, written in bold capitals.</button>
+  </div>
+  <p class="why">The reason lives in one file, and the comment sends the agent there before it edits. A long comment goes stale, nothing loads the README on its own, and a pasted reminder is gone in the next session.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">You want a fresh agent to add <code>GET /api/suppliers</code> in the same style as the rest of the API. Which instruction works best?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Copy the shape of ProductsController and its tests.</button>
+    <button class="opt">Follow a full page describing our ideal endpoint.</button>
+    <button class="opt">Use whatever style the model thinks is cleanest.</button>
+    <button class="opt">Write it first; we'll restyle it during review.</button>
+  </div>
+  <p class="why">Agents are good at imitation. A real file to copy beats a page of description, and that is exactly what the <code>new-endpoint</code> skill says.</p>
+</div>
+
+<div class="quiz">
+  <p class="q"><code>conventions.md</code> says "never return entities", but <code>ProductsController</code>, the shape to copy, returns <code>Product</code>. What is the fix?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Make conventions.md describe what the reference does.</button>
+    <button class="opt">Leave both; the agent resolves conflicts correctly.</button>
+    <button class="opt">Add a second, rule-obeying reference shape too.</button>
+    <button class="opt">Delete conventions.md, so that nothing can conflict.</button>
+  </div>
+  <p class="why">An agent given two conflicting sources picks one, and you can't predict which. Describe what the reference really does, so the rules and the shape agree.</p>
+</div>
+
 <h2>Exercise: give the odd code its reason, then test it</h2>
 <div class="exercise">
   <span class="label">Exercise · about 45 min · you add: an ADR, conventions.md, Directory.Build.props, two skills, pointers to the ADR</span>
