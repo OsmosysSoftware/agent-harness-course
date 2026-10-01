@@ -466,8 +466,8 @@
         box.querySelector("button").addEventListener("click", function () { p.name = ""; saveProfile(p); render(); box.querySelector("input").focus(); });
         return;
       }
-      box.innerHTML = '<form class="ask-name"><label for="who-name">First, what’s your name? It goes on your completion page at the end.</label>' +
-        '<div><input id="who-name" type="text" autocomplete="name" maxlength="60" placeholder="Your name" required>' +
+      box.innerHTML = '<form class="ask-name"><label for="who-name">First, what’s your name? You need it to start; it goes on your completion page at the end.</label>' +
+        '<div><input id="who-name" type="text" autocomplete="name" maxlength="60" placeholder="Your name" required aria-required="true">' +
         '<button class="btn" type="submit">Save</button></div></form>';
       box.querySelector("form").addEventListener("submit", function (e) {
         e.preventDefault();
@@ -477,6 +477,19 @@
       });
     }
     render();
+    // The journey starts only once there is a name: Start saves a typed name, or asks for one.
+    var start = document.getElementById("start-btn");
+    if (start) start.addEventListener("click", function (e) {
+      if (profile().name) return;
+      var inp = box.querySelector("input"), v = inp ? inp.value.trim() : "";
+      if (v) { var q = profile(); q.name = v; saveProfile(q); return; }
+      e.preventDefault();
+      var form = box.querySelector(".ask-name");
+      form.classList.add("need");
+      var hint = form.querySelector(".hint") || form.appendChild(Object.assign(document.createElement("p"), { className: "hint" }));
+      hint.textContent = "Add your name to start. It's saved only in this browser.";
+      inp.focus();
+    });
   }
 
   // ---- Completion page: unlocked by all 11 plaques; save as PNG, print, or share a link ----
