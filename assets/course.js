@@ -52,6 +52,7 @@
     initDiagrams();
     initTrays();
     initToc();
+    initCopy();
   });
 
   // ---- Cabinet: brand, a plaque per lesson, a tape flag where you stopped, progress, theme ----
@@ -345,6 +346,37 @@
         if (n) n.innerHTML = icon(LESSONS[idx][3]);
         if (st) st.textContent = "Plaque: " + LESSONS[idx][2];
       }
+    });
+  }
+
+  // ---- Copy buttons on every code block ----
+  function initCopy() {
+    document.querySelectorAll("pre").forEach(function (pre) {
+      if (pre.closest(".diagram") || pre.querySelector(".copy")) return;
+      var btn = document.createElement("button");
+      btn.className = "copy";
+      btn.type = "button";
+      btn.textContent = "Copy";
+      btn.setAttribute("aria-label", "Copy this code");
+      btn.addEventListener("click", function () {
+        var clone = pre.cloneNode(true), b2 = clone.querySelector(".copy");
+        if (b2) b2.remove();
+        var text = clone.textContent.replace(/\s+$/, "");
+        function done(ok) {
+          btn.textContent = ok ? "Copied" : "Press Ctrl+C";
+          setTimeout(function () { btn.textContent = "Copy"; }, 1600);
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+        } else {
+          var t = document.createElement("textarea");
+          t.value = text; t.style.position = "fixed"; t.style.opacity = "0";
+          document.body.appendChild(t); t.select();
+          var ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+          document.body.removeChild(t); done(ok);
+        }
+      });
+      pre.appendChild(btn);
     });
   }
 })();
