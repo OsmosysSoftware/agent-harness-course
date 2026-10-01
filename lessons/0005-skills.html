@@ -290,6 +290,37 @@ evaluate my commit skill with skill-creator</pre></figure>
 
 <p>A good habit: any multi-step instruction you type a second time is a skill waiting to be written. Ask skill-creator to draft it from what you just did, read the draft like any other diff, and commit it. The skills folder of the open <a href="https://github.com/anthropics/skills">anthropics/skills</a> repo has more examples to learn from. <span class="ver">plugin name verified 2026-10-01</span></p>
 
+<h2>When work has to leave the chat: handoff and fork</h2>
+
+<p>Lesson 1 gave you two ways to free the window: <code>/compact</code> for the same task, a new chat for a new one. Two more cover work that has to <em>move</em>. One is a skill, which is why it waits until now.</p>
+
+<div class="tray" data-tray="lesson5" data-intro="Press <b>Keep working</b> to fill the window, then try each way out. <b>/handoff</b> and <b>/fork</b> are the new ones.">
+  <div class="head"><strong>Context window</strong><div class="fill"><span><i></i></span><b>0% full</b></div></div>
+  <div class="stack"></div>
+  <div class="legend">
+    <span><i style="background:var(--accent-soft);border-color:var(--accent)"></i>rules file (re-read from disk)</span>
+    <span><i style="background:var(--warn-soft);border-color:var(--warn)"></i>rule typed in chat</span>
+    <span><i></i>messages and tool results</span>
+    <span><i style="background:var(--pass-soft);border-color:var(--pass)"></i>handoff file</span>
+  </div>
+  <div class="controls">
+    <p class="say" aria-live="polite"></p>
+    <button class="btn primary" type="button" data-act="work">Keep working</button>
+    <button class="btn" type="button" data-act="compact">/compact</button>
+    <button class="btn" type="button" data-act="clear">New chat (/clear)</button>
+    <button class="btn" type="button" data-act="handoff">/handoff</button>
+    <button class="btn" type="button" data-act="fork">/fork</button>
+  </div>
+</div>
+
+<div class="table-wrap"><table>
+  <tr><th>When</th><th>Do this</th><th>Why</th></tr>
+  <tr><td>The work has to travel: a new chat tomorrow, another tool, another folder, a colleague</td><td><code>/handoff</code>, a skill (below), then a new chat: <em>"Read &lt;path&gt; and continue"</em></td><td>It writes what's in flight, why, and what's next to a file a fresh agent can read. Specs, plans and commits are linked by path, not copied</td></tr>
+  <tr><td>A side task, and you want to keep this chat as it is</td><td><code>/fork</code> (a copy runs in the background) or <code>/branch</code> (you switch into the copy; <code>/resume</code> returns)</td><td>The copy gets your whole context; your own chat stays untouched <span class="ver">verified 2026-10-01</span></td></tr>
+</table></div>
+
+<p><code>/handoff</code> isn't built in. It is a small, popular skill (user-invoked: <code>disable-model-invocation: true</code>, so the agent never runs it on its own) from Matt Pocock's open <a href="https://github.com/mattpocock/skills/tree/main/skills/productivity/handoff">skills repo</a>; he explains when to use it (and when <code>/compact</code> is the better move) in a short video, <a href="https://www.youtube.com/watch?v=dtAJ2dOd3ko">"/handoff is my new favourite skill"</a>. Two cautions from his docs: the file goes to your temp folder, so ask for the path and copy it somewhere durable if the next session isn't soon; and read it before you hand it on, because the next agent treats every claim in it as fact.</p>
+
 <h2>A skill is still a request</h2>
 
 <p>A skill is text the model reads. Specific steps, loaded at the right moment, make the right thing far more likely, but nothing <em>blocks</em> the agent from skipping step 3, or from committing without the skill. Lesson 7 adds what the tool enforces:</p>
@@ -366,17 +397,19 @@ git add -f src/StockApi/obj/project.assets.json</pre>
     <li><strong>Commit the skills through the skill.</strong> With nothing staged, run <code>/commit</code>. It should propose the new files under <code>.agents/skills/</code> and <code>.claude/skills/</code> and ask before staging; say yes. Read the drafted message (such as <code>feat(harness): add commit and quality-gate skills</code>) and approve it. Then:
 <pre>git log -1 --format='%h %ae%n%B'</pre>
       Your work email, a conventional subject, and no <code>Co-Authored-By</code> or "Generated with" line.</li>
+    <li><strong>The handoff.</strong> Install the <code>handoff</code> skill (the <a href="https://github.com/mattpocock/skills#installation-30-second-setup">repo's install steps</a>; take only the skills you want). Right after that commit, run <code>/handoff next: point docs/ai/workflow.md at the two skills</code> (the next step) and ask for the file's path. Read the file: does it state anything as done that wasn't? Start a new chat with <code>/clear</code> and say <em>"Read &lt;path&gt; and continue."</em> Pass: it starts on the workflow edit without asking you to re-explain the repo. Then do that next step in this new chat. (No plugin installs allowed where you are? Ask the agent to write the same kind of handoff file, and skip the install.)</li>
     <li><strong>Point your rules at the skills.</strong> In <code>docs/ai/workflow.md</code>, step 4 becomes "run the <code>quality-gate</code> skill" and step 6 "run the <code>commit</code> skill; it drafts the message and waits for approval. Never push." Step 5 (review) stays manual until lesson 6. In the Definition of done in <code>AGENTS.md</code>, the format/build/test item becomes "the <code>quality-gate</code> skill passes" and the commit item names the <code>commit</code> skill. Commit both through <code>/commit</code>: <code>docs(ai): point workflow at the skills</code>.</li>
   </ol>
   <p class="tools-note"><strong>Codex:</strong> it reads <code>.agents/skills/</code> as they are, so skip the symlinks; type <code>$quality-gate</code> or <code>$commit</code>, and check the first commit message for any attribution line your Codex setup adds. <strong>Antigravity:</strong> the same folder works; type <code>/quality-gate</code> or <code>/commit</code>.</p>
 </div>
 
 <div class="done" data-built="a commit skill that turns away build output, secrets and the wrong identity, a scripted quality gate, and a workflow that names both.">
-  <span class="label">Done when: tick all four to earn the Skill Smith plaque</span>
+  <span class="label">Done when: tick all five to earn the Skill Smith plaque</span>
   <ul class="check" data-key="0005">
     <li><input type="checkbox" aria-label="Skills visible"> <span>Both skills appear when you type <code>/</code></span></li>
     <li><input type="checkbox" aria-label="Gate failed then passed"> <span><code>/quality-gate</code> stopped at <code>GATE FAILED at format</code>, then went green</span></li>
     <li><input type="checkbox" aria-label="Commit refused build output"> <span><code>/commit</code> refused the <code>obj/</code> file and named its path</span></li>
+<li><input type="checkbox" aria-label="Handed off"> <span>A new chat picked up your work from a handoff file you had read first, without you re-explaining it</span></li>
     <li><input type="checkbox" aria-label="Committed through the skill"> <span>The skills and <code>docs(ai)</code> commits went through <code>/commit</code>: work email, no AI trailer</span></li>
   </ul>
 </div>
@@ -384,6 +417,7 @@ git add -f src/StockApi/obj/project.assets.json</pre>
 <div class="kit">
   <span class="label">Worth installing or reading</span>
   <ul>
+    <li><a href="https://github.com/mattpocock/skills">mattpocock/skills</a>: an open set of engineering skills (handoff, grilling, TDD, debugging), each with docs on when to reach for it. Pick the few you need.</li>
     <li><a href="https://github.com/anthropics/claude-plugins-official/tree/main/plugins/skill-creator">skill-creator</a>: Drafts skills with you, tests them and tunes their descriptions.</li>
     <li><a href="https://github.com/anthropics/skills">anthropics/skills</a>: Anthropic's open collection of example skills to read and adapt.</li>
     <li><a href="https://agentskills.io">Agent Skills standard</a>: The SKILL.md format that Claude Code, Codex and Antigravity share.</li>

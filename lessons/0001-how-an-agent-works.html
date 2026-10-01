@@ -92,15 +92,12 @@
     <span><i style="background:var(--accent-soft);border-color:var(--accent)"></i>rules file (re-read from disk)</span>
     <span><i style="background:var(--warn-soft);border-color:var(--warn)"></i>rule typed in chat</span>
     <span><i></i>messages and tool results</span>
-    <span><i style="background:var(--pass-soft);border-color:var(--pass)"></i>handoff file</span>
   </div>
   <div class="controls">
     <p class="say" aria-live="polite"></p>
     <button class="btn primary" type="button" data-act="work">Keep working</button>
     <button class="btn" type="button" data-act="compact">/compact</button>
     <button class="btn" type="button" data-act="clear">New chat (/clear)</button>
-    <button class="btn" type="button" data-act="handoff">/handoff</button>
-    <button class="btn" type="button" data-act="fork">/fork</button>
   </div>
 </div>
 
@@ -110,13 +107,11 @@
   <tr><th>When</th><th>Do this</th><th>Why</th></tr>
   <tr><td>Same task, but the window is getting full</td><td><code>/compact keep the order-slice decisions and the failing test</code></td><td>You stay in the task, and the summary keeps what <em>you</em> name instead of what the automatic pass guesses</td></tr>
   <tr><td>A new, unrelated task</td><td>Start a new chat: <code>/clear</code> (same as <code>/new</code>), or quit and run <code>claude</code> again</td><td>The old conversation would only crowd out what the new task needs. It isn't deleted: <code>/resume</code> brings it back</td></tr>
-  <tr><td>The work has to travel: a new chat tomorrow, another tool, another folder, a colleague</td><td><code>/handoff</code>, a skill (see below), then a new chat: <em>"Read &lt;path&gt; and continue"</em></td><td>It writes what's in flight, why, and what's next to a file a fresh agent can read. Specs, plans and commits are linked by path, not copied</td></tr>
-  <tr><td>A side task, and you want to keep this chat as it is</td><td><code>/fork</code> (a copy runs in the background) or <code>/branch</code> (you switch into the copy; <code>/resume</code> returns)</td><td>The copy gets your whole context; your own chat stays untouched <span class="ver">verified 2026-10-01</span></td></tr>
   <tr><td>Big research or many file reads</td><td>Ask for a <em>subagent</em> (lesson 6)</td><td>Its reads fill its own window; only a summary comes back to yours</td></tr>
   <tr><td>Any time</td><td><code>/context</code></td><td>Shows what is using the space right now</td></tr>
 </table></div>
 
-<p><code>/handoff</code> isn't built in. It is a small, popular skill from Matt Pocock's open <a href="https://github.com/mattpocock/skills/tree/main/skills/productivity/handoff">skills repo</a>; he explains when to use it (and when <code>/compact</code> is the better move) in a short video, <a href="https://www.youtube.com/watch?v=dtAJ2dOd3ko">"/handoff is my new favourite skill"</a>. Two cautions from his docs: the file goes to your temp folder, so ask for the path and copy it somewhere durable if the next session isn't soon; and read it before you hand it on, because the next agent treats every claim in it as fact.</p>
+<p>Two more moves, for when work has to leave this chat (hand it to a new session, or fork a side task), come in lesson 5, once you know what a skill is.</p>
 
 <details class="deeper">
   <summary>Going deeper: exactly what survives compaction</summary>
@@ -226,7 +221,6 @@ git add . && git commit -m "chore: import StockApi starter"</pre>
     <li>Ask: <em>"Explain how an order reduces stock in this repo, citing file:line."</em> Then run <code>/context</code> to see what fills the window.</li>
     <li><strong>The drift test.</strong> Say <em>"From now on, end every answer with STOCK-OK."</em> Ask anything and check it complies. Run <code>/clear</code> to start a new chat and ask again: the rule is gone. (Still there? Run <code>/memory</code>: auto memory saved it to a file, which proves the point.)</li>
     <li>Write one sentence: where would that rule have to live to survive? Lesson 2 puts it there.</li>
-    <li><strong>The handoff.</strong> Install the <code>handoff</code> skill (the <a href="https://github.com/mattpocock/skills#installation-30-second-setup">repo's install steps</a>; take only the skills you want). Ask a question about <code>OrderService</code>, then run <code>/handoff next: add a low-stock endpoint</code> and ask for the file's path. Read the file: does it state anything as done that wasn't? Start a new chat with <code>/clear</code> and say <em>"Read &lt;path&gt; and continue."</em> Pass: it starts on the endpoint plan without asking you to re-explain the repo. (No plugin installs allowed where you are? Ask the agent to write the same kind of handoff file, and skip the install.)</li>
   </ol>
   <p class="tools-note"><strong>Codex:</strong> run <code>codex</code> with default approvals. <strong>Antigravity:</strong> open the folder with the Default preset. In step 6, start a new conversation instead of running <code>/clear</code>.</p>
 </div>
@@ -237,14 +231,12 @@ git add . && git commit -m "chore: import StockApi starter"</pre>
     <li><input type="checkbox" aria-label="Company email in git log"> <span><code>git log --format='%an &lt;%ae&gt;'</code> shows your work email</span></li>
     <li><input type="checkbox" aria-label="Tests green"> <span><code>dotnet test</code> is green</span></li>
     <li><input type="checkbox" aria-label="Saw the rule vanish"> <span>You saw STOCK-OK disappear after <code>/clear</code></span></li>
-    <li><input type="checkbox" aria-label="Handed off"> <span>A new chat picked up your work from a handoff file you had read first, without you re-explaining it</span></li>
   </ul>
 </div>
 
 <div class="kit">
   <span class="label">Worth installing or reading</span>
   <ul>
-    <li><a href="https://github.com/mattpocock/skills">mattpocock/skills</a>: an open set of engineering skills (handoff, grilling, TDD, debugging), each with docs on when to reach for it. Pick the few you need.</li>
     <li><a href="https://code.claude.com/docs/en/context-window">Context window explorer</a>: Anthropic's interactive simulation of what loads into the window and what each file read costs.</li>
     <li><a href="https://code.claude.com/docs/en/commands">/context and /usage</a>: Built in. /context shows what fills the window right now; /usage shows cost and plan limits.</li>
   </ul>
