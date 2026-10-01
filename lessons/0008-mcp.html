@@ -314,7 +314,7 @@ curl -s http://127.0.0.1:5077/api/orders</pre>
   <span class="label">Done when: tick all four to earn the Live Docs plaque</span>
   <ul class="check" data-key="0008">
     <li><input type="checkbox" aria-label="Server committed"> <span><code>.mcp.json</code> is committed with <code>@upstash/context7-mcp@4.1.1</code>, and <code>/mcp</code> shows it connected</span></li>
-    <li><input type="checkbox" aria-label="Two sessions compared"> <span>You saw what session A did without docs, and a <code>mcp__context7__</code> call in session B before its query</span></li>
+    <li><input type="checkbox" aria-label="Two sessions compared"> <span>You saw what session A did without docs, and a context7 call in session B before its query (<code>mcp__context7__…</code>, or <code>mcp__plugin_context7_context7__…</code> if you also have the context7 plugin)</span></li>
     <li><input type="checkbox" aria-label="Read-only probe"> <span>The agent counted orders with <code>sqlite3 -readonly -safe</code>, and its <code>DELETE</code> failed with "attempt to write a readonly database"</span></li>
     <li><input type="checkbox" aria-label="Verdicts and slice committed"> <span><code>PLAN.md</code> holds both vetting verdicts, and <code>feat(orders)</code> is committed with <code>dotnet test</code> green</span></li>
   </ul>

@@ -20,7 +20,7 @@ parts = [
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 500" role="img" aria-label="Two context windows. '
     'Left, the author agent’s window is crowded with its own request, workaround, assumption that row locking makes '
     'it safe, and green tests; asked to review itself, it says looks good. Right, a reviewer subagent starts with a '
-    'clean window holding only the diff and the invariants file. It points at OrderService.cs line 19, the read-then-write '
+    'clean window holding only the diff and the invariants file. It points at OrderService.cs line 18, the read-then-write '
     'decrement, marks it a blocker and returns Verdict: BLOCK to you, and you decide.">',
     '<defs><marker id="l6w-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" '
     'orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker></defs>',
@@ -62,7 +62,7 @@ parts = [
     '<text class="l6-code l6-add l6-strong" x="484" y="181">+ product.Stock -= quantity;</text>'
     '<path class="l6-point" d="M712,177 L822,177 L822,329 L812,329"/>'
     '<rect class="l6-row" x="470" y="312" width="340" height="34" rx="6"/>'
-    '<text class="l6-code l6-strong" x="482" y="334">OrderService.cs:19</text>'
+    '<text class="l6-code l6-strong" x="482" y="334">OrderService.cs:18</text>'
     '<text class="l6-sev" x="702" y="334">BLOCKER</text></g>',
     # s5: verdict to the human, who decides
     '<g class="st s5"><rect class="l6-block" x="560" y="356" width="160" height="32" rx="16"/>'

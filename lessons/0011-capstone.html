@@ -382,7 +382,7 @@ git commit -m "chore(harness): add permissions, guards and pinned MCP"</pre>
 <pre># Row 5 · prove it. Every line this grep prints is a leftover to fix.
 grep -rnE '[Ss]tock|Orders?\b|orders\b|Order[A-Z]|[Pp]roducts?\b|SKU|payments|decisions' \
   AGENTS.md docs tests/AGENTS.md .env.example .claude .agents .githooks
-git log --oneline                          # four harness commits above the starter import
+git log --oneline                          # four harness commits above the starter import (five after a fix)
 git status                                 # nothing to commit, working tree clean</pre>
       On macOS, <code>sed -i</code> needs <code>sed -i ''</code>. In Git Bash on a Windows drive, <code>chmod</code> records nothing, so run <code>git update-index --chmod=+x .claude/hooks/*.sh .githooks/*</code> after <code>git add</code>. The row-4 commit is the first to pass through your git hooks; if the email check refuses it, fix <code>user.email</code>, not the hook. Then <code>claude mcp list</code> shows context7 as <em>Pending approval</em>: start <code>claude</code>, approve it, and ask <em>"What are this repo's invariants, and where did you read them?"</em>. Fix every grep hit (<code>decisions</code> is the "Deliberate decisions" link: drop it until you write the ADR) in one <code>fix(harness): …</code> commit.</li>
     <li><strong>Plan and build the minimum.</strong> The swap task reschedules a booking, so bookings must exist. Lessons 4 to 6, kept short: plan mode, <code>ai-session/PLAN.md</code> edited by you and committed alone (<code>docs(plan): room booking slices</code>); then slices for rooms create and get, <code>POST</code> and <code>GET</code> bookings with the overlap guard, a <code>ConcurrencyTests</code> class (12 parallel requests for the same window: exactly one <code>201</code>), and the ADR for your overlap decision. Each slice: <code>quality-gate</code>, both reviewers, <code>/commit</code>.</li>
@@ -423,11 +423,11 @@ git commit -m "chore(harness): add permissions, guards and pinned MCP"</pre>
 <div class="done" data-built="a harness on a repo you'd never seen, committed before any feature code, then proven on a stranger session in four swap runs and rebuilt from your own template in 30 minutes.">
   <span class="label">Done when: tick all five to earn the Harness Ready plaque</span>
   <ul class="check" data-key="0011">
-    <li><input type="checkbox" aria-label="Harness before features"> <span><code>git log --oneline</code> in <code>roombooking</code> shows the four harness commits above the starter import and below the first <code>feat</code> commit</span></li>
+    <li><input type="checkbox" aria-label="Harness before features"> <span><code>git log --oneline</code> in <code>roombooking</code> shows the four harness commits (plus a <code>fix(harness)</code> commit if row 5 found leftovers) above the starter import and below the first <code>feat</code> commit</span></li>
     <li><input type="checkbox" aria-label="Leftovers gone"> <span>The leftover-words <code>grep</code> printed nothing and <code>git status</code> was clean before any feature code</span></li>
     <li><input type="checkbox" aria-label="Both repos swap-tested"> <span>Both repos were swap-tested in a fresh clone with a clean profile, and each of the four questions has a score and a transcript line</span></li>
     <li><input type="checkbox" aria-label="Fixed forward"> <span>Every partial or fail has a committed harness fix and a second run in a new clone</span></li>
-    <li><input type="checkbox" aria-label="Timed and swapped"> <span>The timed run reached a clean <code>git status</code> with four harness commits inside 30 minutes, and a colleague has swap-tested your repo</span></li>
+    <li><input type="checkbox" aria-label="Timed and swapped"> <span>The timed run reached a clean <code>git status</code> with the four harness commits (and any <code>fix(harness)</code>) inside 30 minutes, and a colleague has swap-tested your repo</span></li>
   </ul>
 </div>
 

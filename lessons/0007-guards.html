@@ -432,7 +432,7 @@ public class FileStockApiFactory : WebApplicationFactory&lt;Program&gt;
     }
 }</pre>
   </figure>
-  <p>The <code>using</code> lines are left out. <code>CreateProductAsync</code> is an extension method on <code>HttpClient</code> in a shared <code>TestHelpers.cs</code>, moved out of <code>ApiTests</code> so both test classes use one helper.</p>
+  <p><code>CreateProductAsync</code> is an extension method on <code>HttpClient</code> in a shared <code>TestHelpers.cs</code>, moved out of <code>ApiTests</code> so both test classes use one helper.</p>
 </details>
 
 <h2>Who each guard binds</h2>
@@ -547,7 +547,7 @@ commit-msg: AI attribution lines are not allowed in this repo. Remove the traile
     <li><strong>Probe 3, a secret.</strong> In <code>src/StockApi/appsettings.json</code>, add a comma after <code>"AllowedHosts": "*"</code> and, below it, <code>"Jwt": { "Key": "SuperSecretAuthenticationKeyForFulfillmentService2026!" }</code>. Stage it and run <code>git commit -m "feat(auth): add jwt key"</code>. Expect (line number may differ):
 <pre>pre-commit: possible secret in staged changes (move it to .env, document it in .env.example):
 3:+  "Jwt": { "Key": "SuperSecretAuthenticationKeyForFulfillmentService2026!" }</pre>
-      With gitleaks, run <code>gitleaks git --pre-commit --staged --no-banner</code> while staged: we got <code>no leaks found</code>. Reset (<code>git restore --staged</code>, then <code>git restore</code>, on the file) and repeat with <code>x7Qp2LmV9sKd3RtYw8ZbN4cHj6FgA1eU</code>: both checks catch it (gitleaks: <code>leaks found: 1</code>). Reset again.</li>
+      With gitleaks, run <code>gitleaks git --pre-commit --staged --no-banner</code> while staged: we got <code>no leaks found</code>. Reset (<code>git restore --staged</code>, then <code>git restore</code>, on the file) and repeat with <code>x7Qp2LmV9sKd3RtYw8ZbN4cHj6FgA1eU</code>: the hook stops at the pattern check, and running the same <code>gitleaks</code> command again shows it catches this one too (<code>leaks found: 1</code>). Reset again.</li>
     <li><strong>Probe 4, the oversell.</strong> <code>git switch -c scratch/oversell</code>, then ask: <em>"Change OrderService.PlaceAsync to load the product, check Stock, decrement it and SaveChanges, and remove the transaction."</em> <code>dotnet test</code> fails: <code>Expected: 3</code>, <code>Actual: 12</code>. Ask it to put the transaction back around the same code: green. Run <code>@agent-stock-invariant-reviewer review git diff main</code>: expect BLOCK anyway. Discard: <code>git restore .</code>, <code>git switch main</code>, <code>git branch -D scratch/oversell</code>.</li>
     <li><strong>Point your docs at the guard.</strong> In lesson 2 you removed or reworded the concurrency-test lines in <code>docs/ai/testing.md</code> and <code>docs/ai/invariants.md</code>. Restore them, naming <code>tests/StockApi.Tests/ConcurrencyTests.cs</code>, and commit: <code>docs(ai): name the concurrency guard test</code>. Last, see the per-clone hole: <code>git clone . ../stockapi-clone</code>, then <code>git -C ../stockapi-clone config core.hooksPath</code> prints nothing. Delete the clone.</li>
   </ol>

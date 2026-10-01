@@ -8,3 +8,4 @@ obj/
 *.user
 tmp/
 .env
+.claude/settings.local.json

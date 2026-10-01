@@ -324,7 +324,7 @@ Docs written from memory drift. This skill compares every claim with the code.
       <ul>
         <li>In <code>src/StockApi/Services/OrderService.cs</code>, replace <code>// Atomic guarded UPDATE: no read-then-write. See docs/decisions (added in lesson 9).</code> with <code>// Atomic guarded UPDATE, never read-then-write: see docs/decisions/0001.</code></li>
         <li>In <code>docs/ai/invariants.md</code>, add a last bullet to invariant 1: <code>- Why: docs/decisions/0001-atomic-guarded-update.md</code> (lesson 2 had you delete it).</li>
-        <li>In <code>.claude/agents/stock-invariant-reviewer.md</code>, change "Read docs/ai/invariants.md first." to "Read docs/ai/invariants.md and docs/decisions/0001-atomic-guarded-update.md first." (lesson 6 left it out).</li>
+        <li>In <code>.claude/agents/stock-invariant-reviewer.md</code>, change "docs/ai/invariants.md first." to "docs/ai/invariants.md and docs/decisions/0001-atomic-guarded-update.md first." (the sentence wraps after "Read") (lesson 6 left it out).</li>
         <li>Under "More context" in <code>AGENTS.md</code>, add <code>- Code layout, errors, the shape to copy: docs/ai/conventions.md</code> and <code>- Deliberate decisions, with the why: docs/decisions/</code>.</li>
       </ul>
       Then check:
@@ -335,7 +335,7 @@ grep -rn "added in lesson 9" src</pre>
 <pre>cp ../agent-harness-course/reference-solution/Directory.Build.props .
 cat Directory.Build.props        # Nullable, ImplicitUsings, TreatWarningsAsErrors</pre>
       Run <code>/quality-gate</code>: expect <em>quality gate: green</em>.</li>
-    <li><strong>Add the two skills.</strong> Write both <code>SKILL.md</code> files from "Going deeper: the two skills in full"; <code>new-endpoint</code> names <code>ProductsTests.cs</code>; change both mentions to <code>ApiTests.cs</code>, the test file your repo has. Then link them as in lesson 5:
+    <li><strong>Add the two skills.</strong> Write both <code>SKILL.md</code> files from "Going deeper: the two skills in full"; <code>new-endpoint</code> names <code>ProductsTests.cs</code>; change that mention to <code>ApiTests.cs</code>, the test file your repo has. Then link them as in lesson 5:
 <pre>mkdir -p .agents/skills/new-endpoint .agents/skills/update-docs
 # write .agents/skills/new-endpoint/SKILL.md and .agents/skills/update-docs/SKILL.md, then:
 ln -s ../../.agents/skills/new-endpoint .claude/skills/new-endpoint
@@ -353,7 +353,7 @@ ls -l .claude/skills</pre>
 <div class="done" data-built="an ADR the agent cites, comments and docs that point to it, one reference shape with matching conventions, and a skill that audits your docs against the code.">
   <span class="label">Done when: tick all four to earn the Agent's Author plaque</span>
   <ul class="check" data-key="0009">
-    <li><input type="checkbox" aria-label="ADR and pointers committed"> <span><code>docs/decisions/0001-…md</code> is committed, and <code>grep -rn "decisions/0001" src docs/ai .claude/agents</code> finds the comment, the <code>Why:</code> line and the reviewer</span></li>
+    <li><input type="checkbox" aria-label="ADR and pointers committed"> <span><code>docs/decisions/0001-…md</code> is committed, and <code>grep -rn "decisions/0001" src docs/ai .claude/agents</code> finds the comment, the <code>Why:</code> line, the reviewer and the example in <code>conventions.md</code></span></li>
     <li><input type="checkbox" aria-label="Conventions and props"> <span><code>docs/ai/conventions.md</code> and <code>Directory.Build.props</code> are committed, and <code>/quality-gate</code> is green</span></li>
     <li><input type="checkbox" aria-label="Audit fixed README"> <span><code>ls -l .claude/skills</code> shows four links, and <code>/update-docs</code> flagged the README endpoints as STALE before your fix</span></li>
     <li><input type="checkbox" aria-label="ADR test passed"> <span>A fresh session asked to simplify <code>OrderService</code> cited the ADR or the invariants and edited nothing</span></li>

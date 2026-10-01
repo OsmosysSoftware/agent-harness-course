@@ -125,7 +125,7 @@ git log --oneline -2
 <details class="deeper">
   <summary>Going deeper: count what your harness actually did, and the other tools</summary>
   <p>Every tool call in the raw file has a <code>name</code>. This line counts them (tested on a real session file):</p>
-  <pre>grep -o '"type":"tool_use","id":"[^"]*","name":"[^"]*"' ai-session/transcript-*.jsonl \
+  <pre>grep -o '"type":"tool_use","id":"[^"]*","name":"[^"]*"' ai-session/transcript.jsonl \
   | sed 's/.*"name":"//;s/"$//' | sort | uniq -c | sort -rn</pre>
   <p>If your skills, reviewers and MCP server ran, you see <code>Skill</code>, <code>Agent</code> and <code>mcp__…</code> lines. If a count is zero for something you believed happened, your belief was a claim.</p>
   <p>Subagent transcripts live next to the session, under <code>&lt;session&gt;/subagents/</code>.</p>
