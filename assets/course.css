@@ -146,7 +146,8 @@ table.tools td:first-child { font-weight: 650; white-space: nowrap; }
   background: var(--tape); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%);
   box-shadow: 0 2px 3px rgba(0, 0, 0, .4);
 }
-.cabinet .meter { white-space: nowrap; color: #e9d8b4; font-weight: 600; padding-bottom: 10px; }
+.cabinet .meter { white-space: nowrap; color: #e9d8b4; font-weight: 600; padding-bottom: 10px; text-decoration: none; }
+.cabinet .meter:hover { text-decoration: underline; }
 .cabinet .meter b { color: var(--brass-1); }
 .theme-toggle {
   font: 600 .78rem/1 var(--sans); color: #e9d8b4; background: transparent;
@@ -859,7 +860,18 @@ pre .copy:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px;
 @media (max-width: 640px) { .layers li { grid-template-columns: 2em 1fr; } .layers li::before { grid-row: 1 / span 3; } .layers .where, .layers .desc { grid-column: 2; } }
 
 
-/* ---------- Completion card (home page) ---------- */
+/* ---------- Name prompt (home page) ---------- */
+.who { flex-basis: 100%; }
+.ask-name { display: grid; gap: 8px; padding: 14px 18px; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--accent-soft); margin-bottom: 4px; }
+.ask-name label { font-weight: 600; }
+.ask-name div { display: flex; gap: 8px; flex-wrap: wrap; }
+.ask-name input { flex: 1 1 220px; font: inherit; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); color: var(--ink); }
+.ask-name input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.hello { margin: 0 0 4px; font-size: 1.05rem; }
+.linkish { background: none; border: 0; padding: 0; font: inherit; font-size: .9rem; color: var(--accent); text-decoration: underline; cursor: pointer; }
+.share-out input { width: 100%; font: .85rem var(--mono); padding: 8px; margin-top: 4px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--bg); color: var(--ink); }
+
+/* ---------- Completion card ---------- */
 .completion { max-width: var(--wide); margin-bottom: 2em; }
 .cfields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px; }
 .cfields label { display: grid; gap: 4px; font-weight: 600; font-size: .9rem; }

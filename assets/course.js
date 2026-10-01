@@ -55,6 +55,7 @@
     initStart();
     initCopy();
     initSpots();
+    initWho();
     initCompletion();
   });
 
@@ -82,7 +83,7 @@
     LESSONS.forEach(function (l, i) {
       html += '<a href="' + b + "lessons/" + l[0] + '"' + (lessonId(i) === current ? ' aria-current="page"' : "") + "></a>";
     });
-    html += '</nav><span class="meter">' + meter(count()) + "</span>";
+    html += '</nav><a class="meter" href="' + b + 'completion.html" title="Your completion page">' + meter(count()) + "</a>";
     bar.innerHTML = html;
     var btn = document.createElement("button");
     btn.className = "theme-toggle";
@@ -193,7 +194,7 @@
           "<h3>" + LESSONS[idx][2] + "</h3>" +
           (panel.getAttribute("data-built") ? '<p class="built">You built: ' + panel.getAttribute("data-built") + "</p>" : "") +
           '<p class="when"></p>' +
-          (next ? '<a class="btn" href="' + next[0] + '">Next: ' + next[1] + " →</a>" : '<a class="btn" href="../index.html#completion">See your completion card →</a>') +
+          (next ? '<a class="btn" href="' + next[0] + '">Next: ' + next[1] + " →</a>" : '<a class="btn" href="../completion.html">Open your completion page →</a>') +
           "</div>";
         panel.appendChild(award);
       }
@@ -451,13 +452,37 @@
     });
   }
 
-  // ---- Completion card: name + repo links, unlocked by all 11 plaques; save as PNG or print ----
+  // ---- Who you are: asked on the home page before you start, shown on the completion card ----
+  function profile() { try { return JSON.parse(get("profile") || "{}"); } catch (e) { return {}; } }
+  function saveProfile(p) { set("profile", JSON.stringify(p)); }
+  function esc(t) { return String(t || "").replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function initWho() {
+    var box = document.querySelector("[data-who]");
+    if (!box) return;
+    function render() {
+      var p = profile();
+      if (p.name) {
+        box.innerHTML = '<p class="hello">Welcome, <b>' + esc(p.name) + '</b>. <button class="linkish" type="button">Change name</button></p>';
+        box.querySelector("button").addEventListener("click", function () { p.name = ""; saveProfile(p); render(); box.querySelector("input").focus(); });
+        return;
+      }
+      box.innerHTML = '<form class="ask-name"><label for="who-name">First, what’s your name? It goes on your completion page at the end.</label>' +
+        '<div><input id="who-name" type="text" autocomplete="name" maxlength="60" placeholder="Your name" required>' +
+        '<button class="btn" type="submit">Save</button></div></form>';
+      box.querySelector("form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var v = box.querySelector("input").value.trim();
+        if (!v) return;
+        var q = profile(); q.name = v; saveProfile(q); render();
+      });
+    }
+    render();
+  }
+
+  // ---- Completion page: unlocked by all 11 plaques; save as PNG, print, or share a link ----
   function initCompletion() {
     var box = document.querySelector("[data-completion]");
     if (!box) return;
-    var prof = {};
-    try { prof = JSON.parse(get("profile") || "{}"); } catch (e) {}
-    function esc(t) { return String(t || "").replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
     function url(u) { return /^https?:\/\/\S+$/i.test(u || "") ? u : ""; }
     function finished() {
       var d = ""; LESSONS.forEach(function (l, i) { var w = get("when:" + lessonId(i)) || ""; if (w > d) d = w; });
@@ -467,17 +492,45 @@
       "Gate work behind a reviewed plan, one slice per commit", "Turn repeated procedures into skills",
       "Get independent review from subagents", "Block risky actions with permission rules, hooks and tests",
       "Prove a harness on a fresh clone with the swap test"];
+    function card(d, shared) {
+      var links = [["Practice repo", url(d.repo)], ["Capstone repo", url(d.cap)]].filter(function (x) { return x[1]; });
+      return '<article class="cert">' +
+        '<span class="kick">Agent Harness · course completed</span>' +
+        "<h3>" + esc(d.name || "Your name") + "</h3>" +
+        '<p class="cdate">completed all 11 lessons on ' + esc(d.date) + "</p>" +
+        '<div class="cplaques">' + LESSONS.map(function (l) { return '<span title="' + esc(l[2]) + '">' + icon(l[3]) + "<i>" + esc(l[2]) + "</i></span>"; }).join("") + "</div>" +
+        '<p class="ccan"><b>Can now:</b> ' + CAN.map(esc).join(" · ") + "</p>" +
+        (links.length ? '<p class="clinks">' + links.map(function (x) { return x[0] + ': <a href="' + esc(x[1]) + '">' + esc(x[1]) + "</a>"; }).join("<br>") + "</p>" : "") +
+        '<p class="chonest">' + (shared ? "Shared completion card. " : "") + "Self-reported: each lesson was marked done by the learner. The repositories are the evidence: their git history shows the harness commits, the plans and the reviews.</p>" +
+        "</article>";
+    }
+    // A shared link (#c=…) shows the card read-only, in anyone's browser.
+    var m = location.hash.match(/^#c=(.+)$/);
+    if (m) {
+      var d = {};
+      try { d = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(m[1]))))); } catch (e) { d = null; }
+      if (d && d.name) {
+        var h1 = document.querySelector("h1"), lede = document.querySelector(".lede");
+        if (h1) h1.textContent = d.name + " completed the Agent Harness course";
+        if (lede) lede.textContent = "A free, hands-on tutorial on configuring AI coding agents: rules files, plans, skills, reviewers, guards and the swap test. Progress is self-reported; the linked repositories are the evidence.";
+        document.title = d.name + " · Agent Harness completion";
+      }
+      box.innerHTML = d && d.name ? card(d, true) + '<p class="small">Want your own? <a href="index.html">Start the course</a>.</p>'
+                                  : '<div class="clocked">This share link is incomplete or damaged. Ask for it again.</div>';
+      return;
+    }
+    var prof = profile();
     box.innerHTML =
       '<div class="cfields">' +
       '<label>Your name<input type="text" data-f="name" autocomplete="name" maxlength="60"></label>' +
-      '<label>Practice repo URL <small>(optional)</small><input type="url" data-f="repo" placeholder="https://github.com/you/stockapi" maxlength="200"></label>' +
+      '<label>Practice repo URL <small>(optional, the proof)</small><input type="url" data-f="repo" placeholder="https://github.com/you/stockapi" maxlength="200"></label>' +
       '<label>Capstone repo URL <small>(optional)</small><input type="url" data-f="cap" placeholder="https://github.com/you/roombooking" maxlength="200"></label>' +
       '</div><div class="cout"></div>';
     var out = box.querySelector(".cout");
     box.querySelectorAll("input[data-f]").forEach(function (inp) {
       var f = inp.getAttribute("data-f");
       inp.value = prof[f] || "";
-      inp.addEventListener("input", function () { prof[f] = inp.value.trim(); set("profile", JSON.stringify(prof)); render(); });
+      inp.addEventListener("input", function () { prof[f] = inp.value.trim(); saveProfile(prof); render(); });
     });
     function render() {
       var n = count();
@@ -487,28 +540,29 @@
         out.innerHTML = '<div class="clocked"><b>' + n + " of 11 plaques.</b> The card unlocks when every lesson's “Done when” list is ticked. Still to do: " + miss.join(" · ") + "</div>";
         return;
       }
-      var name = prof.name || "Your name";
-      var links = [["Practice repo", url(prof.repo)], ["Capstone repo", url(prof.cap)]].filter(function (x) { return x[1]; });
-      out.innerHTML =
-        '<article class="cert">' +
-        '<span class="kick">Agent Harness · course completed</span>' +
-        "<h3>" + esc(name) + "</h3>" +
-        '<p class="cdate">completed all 11 lessons on ' + finished() + "</p>" +
-        '<div class="cplaques">' + LESSONS.map(function (l) { return '<span title="' + esc(l[2]) + '">' + icon(l[3]) + "<i>" + esc(l[2]) + "</i></span>"; }).join("") + "</div>" +
-        '<p class="ccan"><b>Can now:</b> ' + CAN.map(esc).join(" · ") + "</p>" +
-        (links.length ? '<p class="clinks">' + links.map(function (x) { return x[0] + ': <a href="' + esc(x[1]) + '">' + esc(x[1]) + "</a>"; }).join("<br>") + "</p>" : "") +
-        '<p class="chonest">Self-reported: each lesson was marked done by the learner. The repositories are the evidence: their git history shows the harness commits, the plans and the reviews.</p>' +
-        "</article>" +
+      var d = { name: prof.name, date: finished(), repo: url(prof.repo), cap: url(prof.cap) };
+      var share = location.href.split("#")[0] + "#c=" + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(d)))));
+      out.innerHTML = card(d, false) +
         '<div class="cbtns"><button class="btn primary" type="button" data-act="png">Save as image</button>' +
-        '<button class="btn" type="button" data-act="print">Print</button></div>';
+        '<button class="btn" type="button" data-act="print">Print or save as PDF</button>' +
+        '<button class="btn" type="button" data-act="share">Copy share link</button></div>' +
+        '<p class="small share-out" hidden>Send this link: <input type="text" readonly></p>';
       out.querySelector('[data-act="print"]').addEventListener("click", function () {
         document.body.classList.add("print-cert"); window.print();
         setTimeout(function () { document.body.classList.remove("print-cert"); }, 500);
       });
-      out.querySelector('[data-act="png"]').addEventListener("click", function () { savePng(name, finished(), links); });
+      out.querySelector('[data-act="png"]').addEventListener("click", function () { savePng(d); });
+      out.querySelector('[data-act="share"]').addEventListener("click", function () {
+        var btn = this, box2 = out.querySelector(".share-out"), inp = box2.querySelector("input");
+        inp.value = share; box2.hidden = false; inp.select();
+        function done(ok) { btn.textContent = ok ? "Link copied" : "Copy it below"; setTimeout(function () { btn.textContent = "Copy share link"; }, 1800); }
+        if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(share).then(function () { done(true); }, function () { done(false); });
+        else { var ok = false; try { ok = document.execCommand("copy"); } catch (e) {} done(ok); }
+      });
     }
-    function savePng(name, date, links) {
-      var W = 1200, H = 800, x = function (t) { return esc(t); };
+    function savePng(d) {
+      var W = 1200, H = 800, x = esc;
+      var links = [["Practice repo", d.repo], ["Capstone repo", d.cap]].filter(function (l) { return l[1]; });
       var plaques = LESSONS.map(function (l, i) {
         var cx = i < 6 ? 150 + i * 180 : 240 + (i - 6) * 180, cy = i < 6 ? 320 : 430;
         return '<g transform="translate(' + (cx - 24) + "," + (cy - 40) + ') scale(2)" fill="none" stroke="#f3d27a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + ICON[l[3]] + "</g>" +
@@ -517,8 +571,8 @@
       var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" font-family="Georgia, serif">' +
         '<rect width="100%" height="100%" fill="#2b1f14"/><rect x="24" y="24" width="' + (W - 48) + '" height="' + (H - 48) + '" rx="18" fill="none" stroke="#c99a3c" stroke-width="3"/>' +
         '<text x="600" y="100" font-size="20" letter-spacing="4" fill="#c99a3c" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">AGENT HARNESS · COURSE COMPLETED</text>' +
-        '<text x="600" y="175" font-size="58" fill="#fff3d6" text-anchor="middle">' + x(name) + "</text>" +
-        '<text x="600" y="220" font-size="22" fill="#e9d8b4" text-anchor="middle">completed all 11 lessons on ' + x(date) + "</text>" + plaques +
+        '<text x="600" y="175" font-size="58" fill="#fff3d6" text-anchor="middle">' + x(d.name || "Your name") + "</text>" +
+        '<text x="600" y="220" font-size="22" fill="#e9d8b4" text-anchor="middle">completed all 11 lessons on ' + x(d.date) + "</text>" + plaques +
         '<text x="600" y="540" font-size="18" fill="#e9d8b4" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Rules files · 1-3-1 hand-overs · gated plans · skills · reviewers · guards · MCP · ADRs · evidence · the swap test</text>' +
         links.map(function (l, i) { return '<text x="600" y="' + (595 + i * 34) + '" font-size="20" fill="#f3d27a" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">' + x(l[0] + ": " + l[1]) + "</text>"; }).join("") +
         '<text x="600" y="' + (H - 70) + '" font-size="16" fill="#bfae8c" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Self-reported. The repositories are the evidence: their git history shows the work.</text></svg>';
