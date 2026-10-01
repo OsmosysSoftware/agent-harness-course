@@ -294,6 +294,7 @@
       var stack = tray.querySelector(".stack"), fill = tray.querySelector(".fill i"), pct = tray.querySelector(".fill b");
       var say = tray.querySelector(".say"), bWork = tray.querySelector('[data-act="work"]');
       var bCompact = tray.querySelector('[data-act="compact"]'), bClear = tray.querySelector('[data-act="clear"]');
+      var bHand = tray.querySelector('[data-act="handoff"]'), bFork = tray.querySelector('[data-act="fork"]');
       var cards = [], w = 0;
       function render(flash) {
         stack.innerHTML = "";
@@ -308,6 +309,7 @@
         fill.className = used >= 90 ? "hot" : "";
         pct.textContent = used + "% full";
         bCompact.disabled = cards.length <= START.length + 1;
+        if (bHand) bHand.disabled = bFork.disabled = cards.length <= START.length;
       }
       function reset(msg) {
         cards = START.map(function (c) { return c; }); w = 0;
@@ -335,7 +337,17 @@
       });
       bClear.addEventListener("click", function () {
         bWork.disabled = false;
-        reset("<b>Cleared.</b> A fresh window: only the startup cards. Your rules file loads again; nothing from the chat survives. Use <code>/clear</code> between unrelated tasks.");
+        reset("<b>New chat.</b> A fresh window: only the startup cards. Your rules file loads again; nothing from the old chat comes along, and STOCK-OK is gone. The old chat isn't deleted: <code>/resume</code> opens it again. Use this between unrelated tasks.");
+      });
+      if (bHand) bHand.addEventListener("click", function () {
+        var h = ["hand", "handoff.md", "in flight, why, next step; plans linked by path"];
+        cards = START.concat([h]); w = 0; bWork.disabled = false;
+        say.innerHTML = "<b>Handed off.</b> The agent wrote a short file (to your temp folder), you started a new chat and said <i>read it and continue</i>. Fresh window, plus one small card that carries the work. STOCK-OK survives only if the file wrote it down; a rule still belongs in AGENTS.md.";
+        render([h]);
+      });
+      if (bFork) bFork.addEventListener("click", function () {
+        say.innerHTML = "<b>Forked.</b> Nothing changed here: this window is exactly as it was. A full copy of it now runs as a separate background session on the side task, in its own worktree. (<code>/branch</code> makes the same copy but switches you into it.)";
+        stack.classList.remove("forked"); void stack.offsetWidth; stack.classList.add("forked");
       });
       reset(tray.getAttribute("data-intro") || "This is a fresh session. Press <b>Keep working</b>.");
     });
