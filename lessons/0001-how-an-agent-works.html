@@ -35,9 +35,9 @@
 <div class="incident">
   <div class="happened">
     <h4>Failed run</h4>
-    <p>Trainee A kept every rule in a 17,000-character chat prompt across a 356-turn session. The rules file (<code>CLAUDE.md</code>) was written at the very end, so it steered nothing.</p>
-    <p>Mid-session the agent committed without being asked. Trainee A: <em>"i did not want u to commit anything until I say so"</em>.</p>
-    <p class="who">Trainee A · Claude Code · best of the six, still below the bar</p>
+    <p>A developer kept every rule in a 17,000-character chat prompt across a 356-turn session. The rules file (<code>CLAUDE.md</code>) was written at the very end, so it steered nothing.</p>
+    <p>Mid-session the agent committed without being asked. The developer: <em>"i did not want u to commit anything until I say so"</em>.</p>
+    <p class="who">A real session, anonymised · Claude Code</p>
   </div>
   <div class="harness">
     <h4>With the harness</h4>
@@ -49,9 +49,9 @@
 
 <h2>The loop</h2>
 
-<p>An <dfn>agent</dfn> is a model in a loop with <dfn>tools</dfn>: functions it may call, like read a file, edit a file or run a command (<a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code works</a>). Step through one turn:</p>
+<p>An <dfn>agent</dfn> is a model in a loop with <dfn>tools</dfn>: functions it may call, like read a file, edit a file or run a command (<a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code works</a>). Watch one turn:</p>
 
-<figure class="diagram" data-intro="Press <b>Step through</b> to follow one turn of the loop." data-steps='[
+<figure class="diagram" data-intro="One turn of the loop. It plays by itself; use <b>Back</b> and <b>Next</b> to go at your own pace." data-steps='[
   {"cls":"s1","text":"You send a message. It is added to the <b>context window</b>, the model&apos;s only working memory."},
   {"cls":"s2","text":"The model reads the <b>whole</b> window: system instructions, your rules files, the chat so far and every tool result."},
   {"cls":"s3","text":"It picks one action, for example <code>dotnet test</code>, and asks for that tool call."},
@@ -141,7 +141,7 @@
 <details class="deeper">
   <summary>Going deeper: deny rules, ask rules, and a clicked-together allow list</summary>
   <p>Two things hold in every mode. A <em>deny rule</em> in your settings always blocks, and an <em>ask rule</em> still prompts "even in auto mode" (<a href="https://code.claude.com/docs/en/permissions">Permissions</a>). Lesson 7 writes both.</p>
-  <p>Clicking "Yes, and don't ask again" saves an <em>allow rule</em> to your personal <code>.claude/settings.local.json</code>. Trainee B copied a pile of those into the shared <code>.claude/settings.json</code>, including rules that let the agent rewrite git history, and it was credited as "AI configuration". An allow list you clicked together isn't a policy.</p>
+  <p>Clicking "Yes, and don't ask again" saves an <em>allow rule</em> to your personal <code>.claude/settings.local.json</code>. One developer copied a pile of those into the shared <code>.claude/settings.json</code>, including rules that let the agent rewrite git history, and called it their "AI configuration". An allow list you clicked together isn't a policy.</p>
   <div class="table-wrap"><table class="tools">
     <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
     <tr><td>Approval</td><td>Permission modes</td><td><code>approval_policy</code>: <code>on-request</code>, <code>never</code>, <code>auto_review</code> <span class="ver">verified 2026-09-30</span></td><td>Presets: Default, Request Review, Turbo</td></tr>
@@ -188,7 +188,7 @@
 </div>
 
 <div class="quiz">
-  <p class="q">A trainee commits <code>.claude/settings.local.json</code> full of approvals they clicked. What is it?</p>
+  <p class="q">A developer commits <code>.claude/settings.local.json</code> full of approvals they clicked. What is it?</p>
   <div class="opts">
     <button class="opt">A reviewed permission policy for the team.</button>
     <button class="opt">A hook script that blocks risky commands.</button>
@@ -200,7 +200,7 @@
 
 <h2>Exercise: set up the repo, then watch a chat rule vanish</h2>
 <div class="exercise">
-  <span class="label">Exercise · about 30 min · you add: a git repo with your company identity</span>
+  <span class="label">Exercise · about 30 min · you add: a git repo with your work identity</span>
   <ol>
     <li>Get the two repos into one folder. <strong>Windows:</strong> use WSL2 or Git Bash (<a href="../index.html#before-you-start">setup</a>).
 <pre>mkdir -p ~/projects && cd ~/projects
@@ -208,10 +208,10 @@ git clone https://github.com/OsmosysSoftware/agent-harness-course.git
 git clone https://github.com/OsmosysSoftware/agent-harness-practice.git stockapi
 cd stockapi && rm -rf .git</pre>
       The last line drops the template's history, so your repo starts clean.</li>
-    <li>Start your own history under your <strong>company</strong> identity:
+    <li>Start your own history under your <strong>work</strong> identity:
 <pre>git init -b main
 git config user.name "Your Name"
-git config user.email you@osmosys.co
+git config user.email you@yourcompany.com
 git add . && git commit -m "chore: import StockApi starter"</pre>
       Commit messages in this course use <a href="https://www.conventionalcommits.org/en/v1.0.0/">Conventional Commits</a>: <code>type(scope): summary</code>, where type is <code>feat</code>, <code>fix</code>, <code>docs</code>, <code>test</code>, <code>refactor</code> or <code>chore</code>.</li>
     <li>Check it builds: <code>dotnet build</code>, then <code>dotnet test</code> (4 tests, green).</li>
@@ -223,10 +223,10 @@ git add . && git commit -m "chore: import StockApi starter"</pre>
   <p class="tools-note"><strong>Codex:</strong> run <code>codex</code> with default approvals. <strong>Antigravity:</strong> open the folder with the Default preset. For steps 5 to 7, start a new conversation instead of <code>/clear</code>.</p>
 </div>
 
-<div class="done" data-built="a practice repo under your company identity, and proof that a chat-only rule disappears.">
+<div class="done" data-built="a practice repo under your work identity, and proof that a chat-only rule disappears.">
   <span class="label">Done when: tick all three to earn the Loop Reader plaque</span>
   <ul class="check" data-key="0001">
-    <li><input type="checkbox" aria-label="Company email in git log"> <span><code>git log --format='%an &lt;%ae&gt;'</code> shows your company email and no AI co-author line</span></li>
+    <li><input type="checkbox" aria-label="Company email in git log"> <span><code>git log --format='%an &lt;%ae&gt;'</code> shows your work email and no AI co-author line</span></li>
     <li><input type="checkbox" aria-label="Tests green"> <span><code>dotnet test</code> is green</span></li>
     <li><input type="checkbox" aria-label="Saw the rule vanish"> <span>You saw STOCK-OK disappear after <code>/clear</code></span></li>
   </ul>

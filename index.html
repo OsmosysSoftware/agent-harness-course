@@ -10,13 +10,13 @@
 <body>
 <main>
 
-<p class="kicker">Osmosys · .NET trainee programme · verified against tool docs on 2026-09-30</p>
+<p class="kicker">A free, hands-on tutorial · .NET examples · checked against tool docs on 2026-09-30</p>
 <h1>The Agent Harness</h1>
 <p class="lede">Configuring AI coding agents on real projects: the <a href="reference/glossary.html">harness</a>, not just the prompt. A harness is the set of files committed in your repo (rules, skills, reviewers and guards) that steer <em>any</em> agent working in it. You'll go from typing into a chat to building one.</p>
 
 <div class="note">
-  <span class="label">Why this course exists</span>
-  <p>In the last agentic assessment, none of the six reviewed repos had a harness. No rules file steered the work, no custom skill, independent reviewer, hook or permission rule ran, and agents made the human's decisions: they downgraded the framework, rewrote an atomic stock update so a test tool could run it, and committed without being asked. The next assessment grades the harness <strong>in the first 30 minutes</strong>, then runs a <a href="reference/glossary.html">swap test</a> on it. Every lesson starts from one of those real incidents.</p>
+  <span class="label">Why this tutorial exists</span>
+  <p>Most developers use a coding agent as a chat: type a request, accept the result. Then the agent quietly makes calls that were yours to make. Real sessions we studied show it downgrading the framework when an SDK was missing, rewriting a safe stock update so a test tool could run it (and overselling), and committing without being asked. Every lesson starts from one of those real, anonymised moments and shows the piece of harness that prevents it.</p>
 </div>
 
 <h2>How it works</h2>
@@ -69,11 +69,11 @@
   <li data-lesson="0008"><span class="n">08</span><span class="t"><a href="lessons/0008-mcp.html">MCP: live docs and real data</a><small>context7 for current library docs, and read-only database access</small></span><span class="st"></span></li>
   <li data-lesson="0009"><span class="n">09</span><span class="t"><a href="lessons/0009-writing-for-the-agent.html">Writing code and docs for the agent</a><small>ADRs, one reference shape, docs audited against code</small></span><span class="st"></span></li>
   <li data-lesson="0010"><span class="n">10</span><span class="t"><a href="lessons/0010-evidence-and-honesty.html">Evidence and honesty</a><small>Raw transcripts, a reflection on what you rejected, never rewriting history</small></span><span class="st"></span></li>
-  <li data-lesson="0011"><span class="n">11</span><span class="t"><a href="lessons/0011-capstone.html">Capstone: harness in 30 minutes, then the swap test</a><small>Checkpoint 1 of the next assessment, on a repo you haven't seen</small></span><span class="st"></span></li>
+  <li data-lesson="0011"><span class="n">11</span><span class="t"><a href="lessons/0011-capstone.html">Capstone: harness in 30 minutes, then the swap test</a><small>Build a full harness on a fresh repo, then see if it steers a brand-new agent session</small></span><span class="st"></span></li>
 </ol>
 
 <h2>Reference sheets</h2>
-<p>Print these. They are the compressed version of the lessons, and you'll use them in the assessment.</p>
+<p>Print these or keep them open while you work. They are the compressed version of the lessons.</p>
 <div class="table-wrap"><table>
   <tr><th>Sheet</th><th>Use it when</th></tr>
   <tr><td><a href="reference/agents-md.html">AGENTS.md structure</a></td><td>Writing or reviewing a rules file</td></tr>
@@ -84,10 +84,10 @@
   <tr><td><a href="reference/glossary.html">Glossary</a></td><td>A term is unclear, or you want the exact name for something</td></tr>
 </table></div>
 
-<h2>What "done" looks like</h2>
-<p>The stage scale from the assessment review. The bar is <strong>Harness</strong>. Everything below it is prompt-only use of an agent.</p>
+<h2>Where are you now?</h2>
+<p>Five stages from chatting with an agent to steering it. Stages 1 to 3 are all prompt-only; this tutorial gets you to 4 and 5.</p>
 <div class="table-wrap"><table>
-  <tr><th>Stage</th><th>What the repo and transcript show</th></tr>
+  <tr><th>Stage</th><th>What it looks like</th></tr>
   <tr><td>1 · Delegated</td><td>The build is handed over in one or two prompts; the human doesn't steer</td></tr>
   <tr><td>2 · Chat</td><td>One long chat with some scope steering; the agent reviews itself</td></tr>
   <tr><td>3 · Gated chat</td><td>The human reviews a plan before code, commits are sliced, and AI output is really challenged, but it's still prompt-only</td></tr>
@@ -96,7 +96,7 @@
 </table></div>
 
 <h2>Where to get wisdom</h2>
-<p>A harness proves itself on someone else's agent. After the capstone, swap repos with another trainee and run each other's swap test. For tool questions, the <a href="https://github.com/anthropics/claude-code">Claude Code repo</a>, the <a href="https://community.openai.com/">OpenAI developer community</a> and the <a href="https://discuss.ai.google.dev/">Google AI developers forum</a> are the maintained places to ask. Sources for every claim are listed in <a href="RESOURCES.md">RESOURCES.md</a>.</p>
+<p>A harness proves itself on someone else's agent. After the capstone, swap repos with a colleague and run each other's swap test. For tool questions, the <a href="https://github.com/anthropics/claude-code">Claude Code repo</a>, the <a href="https://community.openai.com/">OpenAI developer community</a> and the <a href="https://discuss.ai.google.dev/">Google AI developers forum</a> are the maintained places to ask. Sources for every claim are listed in <a href="RESOURCES.md">RESOURCES.md</a>.</p>
 
 </main>
 </body>

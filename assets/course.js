@@ -228,8 +228,9 @@
       var svg = fig.querySelector("svg");
       var bar = document.createElement("div");
       bar.className = "bar";
-      bar.innerHTML = '<button class="btn" type="button" data-act="prev">Back</button>' +
-        '<button class="btn primary" type="button" data-act="next">Step through</button>' +
+      bar.innerHTML = '<button class="btn" type="button" data-act="play">Pause</button>' +
+        '<button class="btn" type="button" data-act="prev">Back</button>' +
+        '<button class="btn primary" type="button" data-act="next">Next</button>' +
         '<div class="caption" aria-live="polite"></div><div class="dots"></div>';
       fig.appendChild(bar);
       var cap = bar.querySelector(".caption"), dots = bar.querySelector(".dots");
@@ -243,11 +244,29 @@
         cap.innerHTML = at >= 0 ? "<b>Step " + (at + 1) + " of " + steps.length + ".</b> " + steps[at].text : intro;
         dots.querySelectorAll("span").forEach(function (d, i) { d.classList.toggle("on", i === at); });
         prev.disabled = at <= 0;
-        next.textContent = at < 0 ? "Step through" : at === steps.length - 1 ? "Start again" : "Next";
+        next.textContent = at === steps.length - 1 ? "Start again" : "Next";
       }
-      next.addEventListener("click", function () { at = at === steps.length - 1 ? -1 : at + 1; show(); });
-      prev.addEventListener("click", function () { if (at > 0) { at--; show(); } });
+      // Autoplay: advance every few seconds while visible; any manual control stops it.
+      var play = bar.querySelector('[data-act="play"]'), timer = null, visible = false;
+      var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var auto = !reduce && fig.getAttribute("data-autoplay") !== "off";
+      function tick() { at = at >= steps.length - 1 ? 0 : at + 1; show(); }
+      function start() { if (!timer && auto && visible) { if (at < 0) tick(); timer = setInterval(tick, 3800); } play.textContent = "Pause"; }
+      function stop() { clearInterval(timer); timer = null; play.textContent = "Play"; }
+      function manual() { auto = false; stop(); }
+      play.addEventListener("click", function () { if (timer) manual(); else { auto = true; start(); } });
+      next.addEventListener("click", function () { manual(); at = at === steps.length - 1 ? -1 : at + 1; show(); });
+      prev.addEventListener("click", function () { manual(); if (at > 0) { at--; show(); } });
+      fig.addEventListener("mouseenter", function () { if (timer) { clearInterval(timer); timer = null; } });
+      fig.addEventListener("mouseleave", function () { if (auto) start(); });
       show();
+      if (!auto) play.textContent = "Play";
+      if ("IntersectionObserver" in window) {
+        new IntersectionObserver(function (es) {
+          visible = es[0].isIntersecting;
+          if (visible) start(); else if (timer) { clearInterval(timer); timer = null; }
+        }, { threshold: 0.5 }).observe(fig);
+      }
     });
   }
 
