@@ -111,6 +111,49 @@
   <tr><td>Any time</td><td><code>/context</code></td><td>Shows what is using the space right now</td></tr>
 </table></div>
 
+<h3>What would you do?</h3>
+<p>Four situations from a normal day. Pick the move before you look at the answer.</p>
+<div class="quiz">
+  <p class="q">Two hours into the low-stock endpoint, the agent re-reads files it already read and forgets the threshold you agreed. The task isn't done.</p>
+  <div class="opts">
+    <button class="opt">Just keep going</button>
+    <button class="opt" data-correct>/compact with focus</button>
+    <button class="opt">Start new chat</button>
+    <button class="opt">Check /context first</button>
+  </div>
+  <p class="why">Same task, a crowded window: <code>/compact keep the threshold decision and the failing test</code>. You name what the summary must keep, instead of letting the automatic pass guess.</p>
+</div>
+<div class="quiz">
+  <p class="q">The endpoint is done and committed. Next you want to fix an unrelated typo in the README.</p>
+  <div class="opts">
+    <button class="opt">Just keep going</button>
+    <button class="opt">/compact with focus</button>
+    <button class="opt" data-correct>Start new chat</button>
+    <button class="opt">Check /context first</button>
+  </div>
+  <p class="why">Nothing in the old chat helps with the README, and it would only crowd the window. A new chat starts clean; <code>/resume</code> still has the old one.</p>
+</div>
+<div class="quiz">
+  <p class="q">Twenty minutes in, the agent is on track and following your rules. The window is less than half full.</p>
+  <div class="opts">
+    <button class="opt" data-correct>Just keep going</button>
+    <button class="opt">/compact with focus</button>
+    <button class="opt">Start new chat</button>
+    <button class="opt">Check /context first</button>
+  </div>
+  <p class="why">Nothing is wrong, so change nothing. Every summary or fresh start loses some detail; carrying on is the only move that keeps the conversation exactly as it happened.</p>
+</div>
+<div class="quiz">
+  <p class="q">Answers are getting vague after a long session. Before you choose anything, you want to see whether old test output is what's taking up the space.</p>
+  <div class="opts">
+    <button class="opt">Just keep going</button>
+    <button class="opt">/compact with focus</button>
+    <button class="opt">Start new chat</button>
+    <button class="opt" data-correct>Check /context first</button>
+  </div>
+  <p class="why"><code>/context</code> shows what fills the window right now. Look first, then pick: compact if it's the same task, a new chat if it isn't.</p>
+</div>
+
 <p>Two more moves, for when work has to leave this chat (hand it to a new session, or fork a side task), come in lesson 5, once you know what a skill is.</p>
 
 <details class="deeper">

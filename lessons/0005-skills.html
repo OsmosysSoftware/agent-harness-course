@@ -321,6 +321,59 @@ evaluate my commit skill with skill-creator</pre></figure>
 
 <p><code>/handoff</code> isn't built in. It is a small, popular skill (user-invoked: <code>disable-model-invocation: true</code>, so the agent never runs it on its own) from Matt Pocock's open <a href="https://github.com/mattpocock/skills/tree/main/skills/productivity/handoff">skills repo</a>; he explains when to use it (and when <code>/compact</code> is the better move) in a short video, <a href="https://www.youtube.com/watch?v=dtAJ2dOd3ko">"/handoff is my new favourite skill"</a>. Two cautions from his docs: the file goes to your temp folder, so ask for the path and copy it somewhere durable if the next session isn't soon; and read it before you hand it on, because the next agent treats every claim in it as fact.</p>
 
+<h3>What would you do?</h3>
+<p>Now with all five moves. The deciding question is usually: does anything have to <em>travel</em>?</p>
+<div class="quiz">
+  <p class="q">You stop for the day halfway through a slice. Tomorrow you'll carry on in Codex instead of Claude Code.</p>
+  <div class="opts">
+    <button class="opt">/compact with focus</button>
+    <button class="opt">Start new chat</button>
+    <button class="opt" data-correct>Write a /handoff</button>
+    <button class="opt">/fork a copy</button>
+  </div>
+  <p class="why">The work has to travel to another tool, which can't see this chat. A handoff file can travel; read it before you hand it over.</p>
+</div>
+<div class="quiz">
+  <p class="q">Mid-way through a plan, you want to test a different DTO shape on the side, without disturbing this chat.</p>
+  <div class="opts">
+    <button class="opt">/compact with focus</button>
+    <button class="opt">Start new chat</button>
+    <button class="opt">Write a /handoff</button>
+    <button class="opt" data-correct>/fork a copy</button>
+  </div>
+  <p class="why"><code>/fork</code> copies the whole conversation into a background session that works in its own worktree. Your chat stays exactly as it was.</p>
+</div>
+<div class="quiz">
+  <p class="q">Same tool, same folder, same slice, and you're carrying on now. The window is 85% full.</p>
+  <div class="opts">
+    <button class="opt" data-correct>/compact with focus</button>
+    <button class="opt">Start new chat</button>
+    <button class="opt">Write a /handoff</button>
+    <button class="opt">/fork a copy</button>
+  </div>
+  <p class="why">Nothing has to travel, so a file adds nothing. <code>/compact</code> with a focus keeps you in the task; most days this is the right move.</p>
+</div>
+<div class="quiz">
+  <p class="q">A colleague will finish your half-done slice on their machine this afternoon.</p>
+  <div class="opts">
+    <button class="opt">/compact with focus</button>
+    <button class="opt">Start new chat</button>
+    <button class="opt" data-correct>Write a /handoff</button>
+    <button class="opt">/fork a copy</button>
+  </div>
+  <p class="why">They need something they can read cold. Run <code>/handoff</code>, read the file, downgrade anything you only assumed, then send it. Plans and commits are linked by path, not copied.</p>
+</div>
+<div class="quiz">
+  <p class="q">The slice is committed and green. Your next task is an unrelated bug in another controller.</p>
+  <div class="opts">
+    <button class="opt">/compact with focus</button>
+    <button class="opt" data-correct>Start new chat</button>
+    <button class="opt">Write a /handoff</button>
+    <button class="opt">/fork a copy</button>
+  </div>
+  <p class="why">Nothing here needs to move, and nothing in it helps the next task. Start a new chat; <code>/resume</code> keeps the old one if you need it.</p>
+</div>
+
 <h2>A skill is still a request</h2>
 
 <p>A skill is text the model reads. Specific steps, loaded at the right moment, make the right thing far more likely, but nothing <em>blocks</em> the agent from skipping step 3, or from committing without the skill. Lesson 7 adds what the tool enforces:</p>
