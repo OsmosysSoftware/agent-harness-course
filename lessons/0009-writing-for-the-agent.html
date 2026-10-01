@@ -228,6 +228,50 @@ Docs written from memory drift. This skill compares every claim with the code.
   <p>Neither skill restates the conventions; each points at them, so there is one place to edit. The course's reference solution keeps the first draft of <code>new-endpoint</code> (the one that names <code>ProductsTests.cs</code> and forbids returning entities), so write yours from this listing rather than copying it.</p>
 </details>
 
+<h2>One skill for the whole loop</h2>
+
+<p><code>docs/ai/workflow.md</code> describes the loop: one slice, gate, review, commit. Typed out each time, it's a prompt again, and prompts drift. A <dfn>workflow skill</dfn> turns the loop into one command that calls the skills and reviewers you already have, in order, and stops wherever a human decides. Because it commits, it's user-only (<code>disable-model-invocation: true</code>): you start each slice; the agent never starts the next one by itself.</p>
+
+<figure class="code"><figcaption>.agents/skills/ship-slice/SKILL.md</figcaption><pre>---
+name: ship-slice
+description: Build the next unchecked slice of ai-session/PLAN.md end to end (test, code, quality gate, reviews, commit), stopping wherever a human decides. Use when the plan is approved and the user says to build, continue or ship the next slice.
+disable-model-invocation: true
+---
+
+# Ship one slice
+
+This is `docs/ai/workflow.md` steps 3 to 7 as one command. Steps marked **STOP** wait for the human.
+
+0. **Check the start.** `ai-session/PLAN.md` must be committed on its own (`git log --oneline -- ai-session/PLAN.md`
+   shows a `docs(plan): …` commit) and `git status` must be clean. If not, say which and stop.
+1. **Pick the slice.** The first unchecked one in `PLAN.md`. Name it in one line. If the user asked for something
+   the plan doesn't have, **STOP**: that is a requirement change (workflow.md, "When requirements change").
+2. **Test first.** For an endpoint, follow the `new-endpoint` skill. Otherwise write the failing test, run it,
+   and show it fail for the right reason.
+3. **Code.** The smallest change that makes that test pass. Nothing outside the slice.
+4. **Gate.** Run the `quality-gate` skill. Fix the cause, never the test. Same failure twice: hand over a 1-3-1.
+   **STOP** if a fix would touch an invariant.
+5. **Review.** Dispatch `test-reviewer`, plus `stock-invariant-reviewer` if stock or orders changed. Report each
+   finding with its file:line. **STOP** on any BLOCK: the human decides.
+6. **Commit.** Tick the slice in `PLAN.md`, then run the `commit` skill. It asks before staging and before
+   committing. **STOP** there.
+7. **Report and stop.** The commit hash, what the reviewers said, and the next unchecked slice. Never start the
+   next slice yourself.</pre></figure>
+
+<p>Notice how little of it the model does on its own. Each step goes to whichever part of the harness does it most reliably:</p>
+
+<div class="table-wrap"><table>
+  <tr><th>Step</th><th>Who does it</th><th>Why that one</th></tr>
+  <tr><td>Plan committed? Tree clean?</td><td>A command (<code>git log</code>, <code>git status</code>)</td><td>A fact, not a judgement: check it, don't ask the model to remember</td></tr>
+  <tr><td>Write the test and the code</td><td>The agent</td><td>The part that needs a model</td></tr>
+  <tr><td>Format, build, test</td><td>A script (<code>gate.sh</code>)</td><td>Same result every run; the model only reads the output</td></tr>
+  <tr><td>Is the change safe?</td><td>Reviewer subagents</td><td>Judgement, but from a fresh context that didn't write the code</td></tr>
+  <tr><td>Secrets, junk files, message format</td><td>Git hooks (lesson 7)</td><td>Must hold even if every model gets it wrong</td></tr>
+  <tr><td>Approve the plan, decide a BLOCK, approve the commit</td><td>You</td><td>Decisions with consequences stay human</td></tr>
+</table></div>
+
+<p>That split is the rule of thumb for any skill you write: a step with one right answer goes to a script or a hook; a step that needs judgement goes to the model, and a second model checks it; a decision goes to you.</p>
+
 <h2>Docs drift: check claims against the code</h2>
 
 <p>Docs are written once and the code keeps moving. Your <code>README.md</code> still lists the four endpoints the starter had; lessons 4 and 8 added two more. A doc that is wrong is worse for an agent than no doc, because the agent believes it. <code>update-docs</code> makes the check a procedure:</p>
@@ -388,14 +432,16 @@ grep -rn "added in lesson 9" src</pre>
 <pre>cp ../agent-harness-course/reference-solution/Directory.Build.props .
 cat Directory.Build.props        # Nullable, ImplicitUsings, TreatWarningsAsErrors</pre>
       Run <code>/quality-gate</code>: expect <em>quality gate: green</em>.</li>
-    <li><strong>Add the two skills.</strong> Write both <code>SKILL.md</code> files from "Going deeper: the two skills in full"; <code>new-endpoint</code> names <code>ProductsTests.cs</code>; change that mention to <code>ApiTests.cs</code>, the test file your repo has. Then link them as in lesson 5:
+    <li><strong>Add the three skills.</strong> Write both <code>SKILL.md</code> files from "Going deeper: the two skills in full"; <code>new-endpoint</code> names <code>ProductsTests.cs</code>; change that mention to <code>ApiTests.cs</code>, the test file your repo has. Then link them as in lesson 5:
 <pre>mkdir -p .agents/skills/new-endpoint .agents/skills/update-docs
 # write .agents/skills/new-endpoint/SKILL.md and .agents/skills/update-docs/SKILL.md, then:
 ln -s ../../.agents/skills/new-endpoint .claude/skills/new-endpoint
 ln -s ../../.agents/skills/update-docs .claude/skills/update-docs
+cp -r ../agent-harness-course/reference-solution/.agents/skills/ship-slice .agents/skills/
+ln -s ../../.agents/skills/ship-slice .claude/skills/ship-slice
 ls -l .claude/skills</pre>
-      Four lines with <code>-&gt;</code>. (Git Bash without Developer Mode: copy the folders instead, as in lesson 5.)</li>
-    <li><strong>Commit, twice, through <code>/commit</code>.</strong> First the docs and the code comment: <code>docs: add ADR 0001, conventions and pointers</code> (the ADR, <code>conventions.md</code>, <code>invariants.md</code>, <code>AGENTS.md</code>, the reviewer, <code>OrderService.cs</code>, <code>Directory.Build.props</code>). Then <code>feat(harness): add new-endpoint and update-docs skills</code>.</li>
+      Five lines with <code>-&gt;</code>. Read <code>ship-slice</code> before you keep it: it is the loop you will run in lesson 11. (Git Bash without Developer Mode: copy the folders instead, as in lesson 5.)</li>
+    <li><strong>Commit, twice, through <code>/commit</code>.</strong> First the docs and the code comment: <code>docs: add ADR 0001, conventions and pointers</code> (the ADR, <code>conventions.md</code>, <code>invariants.md</code>, <code>AGENTS.md</code>, the reviewer, <code>OrderService.cs</code>, <code>Directory.Build.props</code>). Then <code>feat(harness): add new-endpoint, update-docs and ship-slice skills</code>.</li>
     <li><strong>Run the audit.</strong> Start a fresh session (<code>claude --permission-mode default</code>) and type <code>/update-docs</code>. Expect a table, and at least one STALE row: <code>README.md</code> is missing <code>GET /api/products/low-stock</code> and <code>GET /api/orders</code>. It may flag more, such as the <code>.env.example</code> line in <code>invariants.md</code>. For each STALE row, open the evidence it cites and decide yourself.</li>
     <li><strong>Fix what is stale.</strong> Approve the README change and any other row you checked and agree with; say no to the rest, with a reason. Run <code>/update-docs</code> again: the README rows should now be TRUE. Commit through <code>/commit</code>: <code>docs: fix stale README endpoints</code>.</li>
     <li><strong>Test the ADR.</strong> Start a <em>new</em> session in Manual mode (<code>claude --permission-mode default</code>) and ask: <em>"Simplify OrderService.PlaceAsync: load the product, check Stock, decrement and SaveChanges. It is shorter."</em> Pass: it cites <code>docs/decisions/0001</code> (or <code>invariants.md</code>), declines or hands you options, and edits nothing; <code>git status</code> stays clean. If it proposes an edit, answer No: the ADR didn't hold this time. Sharpen its Consequences and the <code>Why:</code> line, then try again in another new session. Any edit that does land still meets the stock reviewer and <code>ConcurrencyTests</code>.</li>
@@ -408,7 +454,7 @@ ls -l .claude/skills</pre>
   <ul class="check" data-key="0009">
     <li><input type="checkbox" aria-label="ADR and pointers committed"> <span><code>docs/decisions/0001-…md</code> is committed, and <code>grep -rn "decisions/0001" src docs/ai .claude/agents</code> finds the comment, the <code>Why:</code> line, the reviewer and the example in <code>conventions.md</code></span></li>
     <li><input type="checkbox" aria-label="Conventions and props"> <span><code>docs/ai/conventions.md</code> and <code>Directory.Build.props</code> are committed, and <code>/quality-gate</code> is green</span></li>
-    <li><input type="checkbox" aria-label="Audit fixed README"> <span><code>ls -l .claude/skills</code> shows four links, and <code>/update-docs</code> flagged the README endpoints as STALE before your fix</span></li>
+    <li><input type="checkbox" aria-label="Audit fixed README"> <span><code>ls -l .claude/skills</code> shows five links, and <code>/update-docs</code> flagged the README endpoints as STALE before your fix</span></li>
     <li><input type="checkbox" aria-label="ADR test passed"> <span>A fresh session asked to simplify <code>OrderService</code> cited the ADR or the invariants and edited nothing</span></li>
   </ul>
 </div>
