@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" role="img" aria-label="The 30-minute runbook as a clock face. Minutes 0 to 10: rules, committed as chore(harness): add agent rules. Minutes 10 to 15: the commit and quality-gate skills, committed. Minutes 15 to 22: the test and booking-overlap reviewers, committed. Minutes 22 to 27: permissions, guards and the pinned MCP server, committed. Minutes 27 to 30: prove it, with a fresh session, the leftover-words grep and a clean git status. The git log beside the clock grows by one harness commit per segment, all above the starter import and before any feature code.">
+<circle class="l11-face" cx="268" cy="238" r="190"/>
+<path class="l11-tick major" d="M268.0,58.0 L268.0,49.0"/>
+<path class="l11-tick" d="M305.4,61.9 L306.3,58.0"/>
+<path class="l11-tick" d="M341.2,73.6 L342.8,69.9"/>
+<path class="l11-tick" d="M373.8,92.4 L376.2,89.1"/>
+<path class="l11-tick" d="M401.8,117.6 L404.7,114.9"/>
+<path class="l11-tick major" d="M423.9,148.0 L431.7,143.5"/>
+<path class="l11-tick" d="M439.2,182.4 L443.0,181.1"/>
+<path class="l11-tick" d="M447.0,219.2 L451.0,218.8"/>
+<path class="l11-tick" d="M447.0,256.8 L451.0,257.2"/>
+<path class="l11-tick" d="M439.2,293.6 L443.0,294.9"/>
+<path class="l11-tick major" d="M423.9,328.0 L431.7,332.5"/>
+<path class="l11-tick" d="M401.8,358.4 L404.7,361.1"/>
+<path class="l11-tick" d="M373.8,383.6 L376.2,386.9"/>
+<path class="l11-tick" d="M341.2,402.4 L342.8,406.1"/>
+<path class="l11-tick" d="M305.4,414.1 L306.3,418.0"/>
+<path class="l11-tick major" d="M268.0,418.0 L268.0,427.0"/>
+<path class="l11-tick" d="M230.6,414.1 L229.7,418.0"/>
+<path class="l11-tick" d="M194.8,402.4 L193.2,406.1"/>
+<path class="l11-tick" d="M162.2,383.6 L159.8,386.9"/>
+<path class="l11-tick" d="M134.2,358.4 L131.3,361.1"/>
+<path class="l11-tick major" d="M112.1,328.0 L104.3,332.5"/>
+<path class="l11-tick" d="M96.8,293.6 L93.0,294.9"/>
+<path class="l11-tick" d="M89.0,256.8 L85.0,257.2"/>
+<path class="l11-tick" d="M89.0,219.2 L85.0,218.8"/>
+<path class="l11-tick" d="M96.8,182.4 L93.0,181.1"/>
+<path class="l11-tick major" d="M112.1,148.0 L104.3,143.5"/>
+<path class="l11-tick" d="M134.2,117.6 L131.3,114.9"/>
+<path class="l11-tick" d="M162.2,92.4 L159.8,89.1"/>
+<path class="l11-tick" d="M194.8,73.6 L193.2,69.9"/>
+<path class="l11-tick" d="M230.6,61.9 L229.7,58.0"/>
+<text class="l11-min" x="268.0" y="137.0">0</text>
+<text class="l11-min" x="359.8" y="190.0">5</text>
+<text class="l11-min" x="359.8" y="296.0">10</text>
+<text class="l11-min" x="268.0" y="349.0">15</text>
+<text class="l11-min" x="176.2" y="296.0">20</text>
+<text class="l11-min" x="176.2" y="190.0">25</text>
+<g class="st s1"><path class="l11-seg" d="M274.6,62.1 A176,176 0 0 1 423.6,320.2 L375.9,295.0 A122,122 0 0 0 272.6,116.1 Z"/><g class="ico" transform="translate(386.0,152.5) scale(0.9167)"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/></g><text class="l11-seglbl" x="451.6" y="137.0" style="text-anchor:start">Rules</text><text class="l11-segmin" x="451.6" y="154.0" style="text-anchor:start">0–10 min</text></g>
+<g class="st s2"><path class="l11-seg" d="M417.0,331.7 A176,176 0 0 1 274.6,413.9 L272.6,359.9 A122,122 0 0 0 371.3,302.9 Z"/><g class="ico" transform="translate(331.5,356.0) scale(0.9167)"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.2L4 17l3 3 5.3-5.2a4 4 0 0 0 5.2-5.3l-2.6 2.6-2.4-.6-.6-2.4z"/></g><text class="l11-seglbl" x="374.0" y="426.6" style="text-anchor:start">Skills</text><text class="l11-segmin" x="374.0" y="443.6" style="text-anchor:start">10–15 min</text></g>
+<g class="st s3"><path class="l11-seg" d="M261.4,413.9 A176,176 0 0 1 93.8,263.0 L147.2,255.3 A122,122 0 0 0 263.4,359.9 Z"/><g class="ico" transform="translate(157.3,337.7) scale(0.9167)"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></g><text class="l11-seglbl" x="126.1" y="400.5" style="text-anchor:end">Reviewers</text><text class="l11-segmin" x="126.1" y="417.5" style="text-anchor:end">15–22 min</text></g>
+<g class="st s4"><path class="l11-seg" d="M92.4,249.8 A176,176 0 0 1 159.3,99.6 L192.6,142.1 A122,122 0 0 0 146.3,246.2 Z"/><g class="ico" transform="translate(120.9,166.4) scale(0.9167)"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></g><text class="l11-seglbl" x="74.3" y="156.8" style="text-anchor:end">Guards</text><text class="l11-segmin" x="74.3" y="173.8" style="text-anchor:end">22–27 min</text></g>
+<g class="st s5"><path class="l11-seg" d="M170.0,91.8 A176,176 0 0 1 261.4,62.1 L263.4,116.1 A122,122 0 0 0 200.1,136.7 Z"/><g class="ico" transform="translate(211.0,85.3) scale(0.9167)"><path d="M5 12l4 4 10-10"/></g><text class="l11-seglbl" x="202.5" y="41.4" style="text-anchor:end">Prove it</text><text class="l11-segmin" x="202.5" y="58.4" style="text-anchor:end">27–30 min</text></g>
+<g class="st s1 l11-hand"><path class="l11-handline" d="M268,238 L344.2,282.0"/><circle class="l11-hub" cx="268" cy="238" r="9"/><text class="l11-time" x="268" y="282">0:10</text></g>
+<g class="st s2 l11-hand"><path class="l11-handline" d="M268,238 L268.0,326.0"/><circle class="l11-hub" cx="268" cy="238" r="9"/><text class="l11-time" x="268" y="208">0:15</text></g>
+<g class="st s3 l11-hand"><path class="l11-handline" d="M268,238 L180.5,247.2"/><circle class="l11-hub" cx="268" cy="238" r="9"/><text class="l11-time" x="268" y="282">0:22</text></g>
+<g class="st s4 l11-hand"><path class="l11-handline" d="M268,238 L216.3,166.8"/><circle class="l11-hub" cx="268" cy="238" r="9"/><text class="l11-time" x="268" y="282">0:27</text></g>
+<g class="st s5 l11-hand"><path class="l11-handline" d="M268,238 L268.0,150.0"/><circle class="l11-hub" cx="268" cy="238" r="9"/><text class="l11-time" x="268" y="282">0:30</text></g>
+<rect class="l11-term" x="518" y="24" width="428" height="400" rx="12"/>
+<rect class="l11-termbar" x="518" y="24" width="428" height="34" rx="12"/><rect class="l11-termbar" x="518" y="44" width="428" height="14"/>
+<text class="l11-termtitle" x="536" y="47">git log --oneline</text>
+<path class="l11-rail" d="M544,97 L544,305"/>
+<g class="st s1 s2 s3 s4 s5"><circle class="l11-dot" cx="544" cy="253" r="6"/><text class="l11-commit" x="560" y="258">chore(harness): add agent rules</text></g>
+<g class="st s2 s3 s4 s5"><circle class="l11-dot" cx="544" cy="201" r="6"/><text class="l11-commit" x="560" y="206">chore(harness): add commit and quality-gate skills</text></g>
+<g class="st s3 s4 s5"><circle class="l11-dot" cx="544" cy="149" r="6"/><text class="l11-commit" x="560" y="154">chore(harness): add test and booking-overlap reviewers</text></g>
+<g class="st s4 s5"><circle class="l11-dot" cx="544" cy="97" r="6"/><text class="l11-commit" x="560" y="102">chore(harness): add permissions, guards and pinned MCP</text></g>
+<circle class="l11-dot base" cx="544" cy="305" r="6"/><text class="l11-commit base" x="560" y="310">chore: import RoomBooking starter</text>
+<g class="st s5"><path class="l11-sep" d="M536,332 h392"/><text class="l11-proof" x="538" y="358">✓ new session names the overlap invariant</text><text class="l11-proof" x="538" y="382">✓ leftover-words grep prints nothing</text><text class="l11-proof" x="538" y="406">✓ git status: nothing to commit</text></g>
+<text class="l11-note" x="732.0" y="462">no feature code until all four are in</text>
+</svg>

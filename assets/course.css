@@ -598,6 +598,197 @@ nav.lesson-nav a:hover { border-color: var(--accent); }
 .diagram svg .st.on .l7-col { stroke: var(--accent); }
 .diagram svg .st.l7-slip.on .arc { stroke: var(--warn); }
 
+/* l0008 */
+/* Lesson 8 diagrams (l0008-memory-vs-docs, l0008-sockets). Scoped to .diagram svg; tokens come from course.css,
+   so both themes follow. Reuses .panel, .mono, .chip, .chiptxt, .arc, .head, .lbl, .sub from course.css. */
+.diagram svg .l8-lane { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.diagram svg .l8-lane.l8-lane-bad { fill: none; stroke: var(--line-strong); stroke-dasharray: 6 5; }
+.diagram svg .l8-lanetitle { font: 800 13px var(--sans); letter-spacing: .08em; }
+.diagram svg .l8-lanesub { font: italic 600 14px var(--serif); fill: var(--ink-3); }
+.diagram svg .l8-badtxt { fill: var(--fail); }
+.diagram svg .l8-goodtxt { fill: var(--pass); }
+.diagram svg .l8-code { font: 13px var(--mono); fill: var(--ink-2); white-space: pre; }
+.diagram svg .l8-comment { font: italic 12.5px var(--mono); fill: var(--ink-3); }
+.diagram svg .l8-mono-sm { font: 600 12px var(--mono); fill: var(--ink-2); }
+.diagram svg .l8-big { font: 800 34px var(--sans); }
+.diagram svg .l8-fail { fill: var(--fail-soft); stroke: var(--fail); stroke-width: 2; }
+.diagram svg .l8-ok { fill: var(--pass-soft); stroke: var(--pass); stroke-width: 2; }
+.diagram svg .l8-term { fill: var(--code-bg); stroke: var(--fail); stroke-width: 1.5; }
+.diagram svg .l8-termhead { font: 800 11.5px var(--mono); letter-spacing: .06em; fill: var(--ink-3); }
+.diagram svg .l8-termtxt { font: 12.5px var(--mono); fill: var(--fail); }
+.diagram svg .l8-tool { fill: var(--accent); }
+.diagram svg .l8-tooltxt { font: 700 12.5px var(--mono); fill: var(--accent-ink); text-anchor: middle; }
+.diagram svg .l8-q { font: 600 13.5px var(--sans); fill: var(--ink-2); }
+.diagram svg .l8-quote { font: italic 15px var(--serif); fill: var(--ink); }
+.diagram svg .l8-src { font: 12px var(--sans); fill: var(--ink-3); }
+.diagram svg .l8-note { font: 13px var(--sans); fill: var(--ink-3); }
+.diagram svg .l8-plain { font: 600 14px var(--sans); fill: var(--ink); }
+.diagram svg .l8-key { font: 800 11.5px var(--mono); letter-spacing: .05em; fill: var(--ink-3); }
+.diagram svg .l8-harness { fill: var(--surface); stroke: var(--line-strong); stroke-width: 2; }
+.diagram svg .l8-row { fill: var(--bg); stroke: var(--line); stroke-width: 1.2; }
+.diagram svg .l8-row.l8-new { fill: var(--accent-soft); stroke: var(--accent); }
+.diagram svg .l8-row.l8-alt { fill: var(--pass-soft); stroke: var(--pass); }
+.diagram svg .l8-socket { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l8-pin { fill: var(--ink-3); }
+.diagram svg .l8-plug { fill: var(--ink-2); }
+.diagram svg .l8-prong { fill: none; stroke: var(--ink-2); stroke-width: 3; stroke-linecap: round; }
+.diagram svg .l8-cable { fill: none; stroke: var(--ink-3); stroke-width: 4; stroke-linecap: round; }
+.diagram svg .l8-cable.l8-loose { stroke-dasharray: 2 7; }
+.diagram svg .l8-server { fill: var(--bg); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l8-server.l8-cand { stroke-dasharray: 6 5; }
+.diagram svg .l8-srvname { font: 700 16px var(--sans); fill: var(--ink); }
+.diagram svg .l8-srvsub { font: 13px var(--sans); fill: var(--ink-3); }
+.diagram svg .l8-lockbg { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 2; }
+.diagram svg .l8-lock { fill: none; stroke: var(--warn); stroke-width: 2; stroke-linejoin: round; }
+.diagram svg .l8-badge { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 1.5; }
+.diagram svg .l8-badgetxt { font: 700 13.5px var(--sans); fill: var(--warn); text-anchor: middle; }
+.diagram svg .l8-stamp { fill: var(--fail-soft); stroke: var(--fail); stroke-width: 2.5; }
+.diagram svg .l8-stamptxt { font: 800 15px var(--sans); letter-spacing: .1em; fill: var(--fail); text-anchor: middle; }
+.diagram svg .st.on .l8-server { stroke: var(--accent); }
+.diagram svg .st.on .l8-cable { stroke: var(--accent); }
+.diagram svg .st.on .l8-cable.l8-loose { stroke: var(--ink-3); }
+.diagram svg .st.on .l8-server.l8-cand { stroke: var(--fail); }
+.diagram svg path.l8-arrbad, .diagram svg .st.on path.l8-arrbad { stroke: var(--fail); stroke-dasharray: 7 6; }
+/* l0009 */
+/* Lesson 9 diagrams (l0009-odd-code, l0009-docs-drift). Every selector starts with .diagram svg. */
+.diagram svg .l9-lane { font: 700 14px var(--sans); fill: var(--ink-2); letter-spacing: .02em; }
+.diagram svg .l9-divider { stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.diagram svg .l9-colhead { font: 700 15px var(--sans); fill: var(--ink); }
+.diagram svg .l9-card { fill: var(--bg); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l9-card.l9-badcard { fill: var(--fail-soft); stroke: var(--fail); }
+.diagram svg .l9-card.l9-doc { fill: var(--pass-soft); stroke: var(--pass); }
+.diagram svg .l9-card.l9-empty { fill: none; stroke-dasharray: 6 5; }
+.diagram svg .l9-cardhead { font: 700 12.5px var(--mono); fill: var(--ink-3); }
+.diagram svg .l9-claim { font: 14px var(--sans); fill: var(--ink); }
+.diagram svg .l9-claim.l9-faint { font-style: italic; fill: var(--ink-3); }
+.diagram svg .l9-code { font: 13px var(--mono); fill: var(--ink-2); }
+.diagram svg .l9-mono { font-family: var(--mono); }
+.diagram svg .l9-code.l9-bad { fill: var(--fail); }
+.diagram svg .l9-code.l9-comment { font-weight: 700; fill: var(--accent); }
+.diagram svg .l9-code.l9-docline { fill: var(--ink); }
+.diagram svg .l9-code.l9-addline { fill: var(--pass); }
+.diagram svg .l9-hl { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.diagram svg .l9-note { font: italic 13.5px var(--sans); fill: var(--ink-3); }
+.diagram svg .l9-small { font: 12.5px var(--sans); fill: var(--ink-3); text-anchor: middle; }
+.diagram svg .l9-prompt { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; }
+.diagram svg .l9-prompttxt { font: 600 13.5px var(--sans); fill: var(--ink-2); text-anchor: middle; }
+.diagram svg .l9-verdict { font: 700 14px var(--sans); text-anchor: middle; }
+.diagram svg .l9-badtxt { fill: var(--fail); }
+.diagram svg .l9-reply { fill: var(--pass-soft); stroke: var(--pass); stroke-width: 1.5; }
+.diagram svg .l9-replytxt { font: 700 13.5px var(--sans); fill: var(--pass); }
+.diagram svg .l9-replysub { font: 13px var(--sans); fill: var(--ink-2); }
+.diagram svg .l9-caption { font: italic 14px var(--sans); fill: var(--ink-2); text-anchor: middle; }
+.diagram svg .l9-link { stroke-width: 2.5; }
+.diagram svg .l9-link.l9-true { stroke: var(--pass); }
+.diagram svg .l9-link.l9-stale { stroke: var(--fail); }
+.diagram svg .l9-link.l9-unver { stroke: var(--ink-3); stroke-dasharray: 5 5; }
+.diagram svg .l9-tag.l9-true { fill: var(--pass-soft); stroke: var(--pass); stroke-width: 1.5; }
+.diagram svg .l9-tag.l9-stale { fill: var(--fail-soft); stroke: var(--fail); stroke-width: 1.5; }
+.diagram svg .l9-tag.l9-unver { fill: var(--surface); stroke: var(--ink-3); stroke-width: 1.5; }
+.diagram svg .l9-tagtxt { font: 800 12px var(--sans); letter-spacing: .06em; text-anchor: middle; }
+.diagram svg .l9-tagtxt.l9-true { fill: var(--pass); }
+.diagram svg .l9-tagtxt.l9-stale { fill: var(--fail); }
+.diagram svg .l9-tagtxt.l9-unver { fill: var(--ink-3); }
+.diagram svg .l9-diff { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l9-difftxt { font: 700 13.5px var(--sans); fill: var(--ink); }
+/* l0010 */
+/* Lesson 10 diagrams: l0010-evidence-ladder, l0010-honest-history */
+.diagram svg .l10-rail { fill: none; stroke: var(--line-strong); stroke-width: 3; }
+.diagram svg .l10-railtxt { font: 700 12px var(--sans); letter-spacing: .08em; fill: var(--ink-3); text-anchor: middle; text-transform: uppercase; }
+.diagram svg .l10-rung { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l10-rung.l10-claim, .diagram svg .l10-card.l10-claim { stroke-dasharray: 6 4; }
+.diagram svg .l10-num { fill: var(--bg); stroke: var(--line-strong); stroke-width: 2; }
+.diagram svg .l10-numtxt { font: 800 15px var(--sans); fill: var(--ink-2); text-anchor: middle; }
+.diagram svg .l10-title { font: 700 15.5px var(--sans); fill: var(--ink); }
+.diagram svg .l10-proves { font: 14px var(--sans); fill: var(--pass); }
+.diagram svg .l10-cant { font: 14px var(--sans); fill: var(--ink-3); }
+.diagram svg .l10-head { font: 700 15px var(--sans); fill: var(--ink); }
+.diagram svg .l10-card { fill: var(--bg); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l10-cardname { font: 600 12.5px var(--sans); fill: var(--ink-3); }
+.diagram svg .l10-quote { font: italic 600 15px var(--sans); fill: var(--ink); }
+.diagram svg .l10-mono { font: 13px var(--mono); fill: var(--ink-2); }
+.diagram svg .l10-small { font: 13px var(--sans); fill: var(--ink-3); }
+.diagram svg .l10-link { fill: none; stroke: var(--line-strong); stroke-width: 1.5; stroke-dasharray: 3 4; }
+.diagram svg .l10-verdict { fill: var(--fail-soft); stroke: var(--fail); stroke-width: 2; }
+.diagram svg .l10-verdicttxt { font: 700 14.5px var(--sans); fill: var(--fail); text-anchor: middle; }
+.diagram svg .l10-axis { stroke: var(--line-strong); stroke-width: 2; }
+.diagram svg .l10-tick { stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l10-hour { font: 12px var(--mono); fill: var(--ink-3); text-anchor: middle; }
+.diagram svg .l10-row { font: 700 15px var(--sans); fill: var(--ink); }
+.diagram svg .l10-rowsub { font: 12.5px var(--sans); fill: var(--ink-3); }
+.diagram svg .l10-dot { fill: var(--pass); stroke: var(--bg); stroke-width: 2; }
+.diagram svg .l10-burst { fill: var(--fail); opacity: .85; }
+.diagram svg .l10-burstlbl { font: 700 13.5px var(--sans); fill: var(--fail); }
+.diagram svg .l10-lead { fill: none; stroke: var(--fail); stroke-width: 1.5; }
+.diagram svg .l10-term { fill: var(--code-bg); stroke: var(--line); stroke-width: 1; }
+.diagram svg .l10-badtxt { fill: var(--fail); font-weight: 700; }
+.diagram svg .l10-badtxt.l10-plain { font: 600 14px var(--sans); }
+.diagram svg .l10-good { font: 600 14px var(--sans); fill: var(--pass); }
+.diagram svg .l10-divider { stroke: var(--line); stroke-width: 1.5; }
+.diagram svg .l10-sidehead { font: 700 14px var(--sans); fill: var(--ink-2); }
+.diagram svg .l10-chain { stroke: var(--line-strong); stroke-width: 3; }
+.diagram svg .l10-commit { fill: var(--bg); stroke: var(--ink-3); stroke-width: 2.5; }
+.diagram svg .l10-commit.l10-x { fill: var(--fail-soft); stroke: var(--fail); }
+.diagram svg .l10-commit.l10-r { fill: var(--pass-soft); stroke: var(--pass); }
+.diagram svg .l10-ctxt { font: 800 14px var(--mono); fill: var(--ink-2); text-anchor: middle; }
+.diagram svg .l10-ctxt.l10-x { fill: var(--fail); }
+.diagram svg .l10-ctxt.l10-r { fill: var(--pass); }
+.diagram svg .l10-ghost { fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-dasharray: 4 4; }
+.diagram svg .l10-ctxt.l10-gtxt { fill: var(--ink-3); }
+.diagram svg .l10-strike { stroke: var(--fail); stroke-width: 2.5; stroke-linecap: round; }
+.diagram svg .l10-refuse { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 1.5; }
+.diagram svg .l10-refusetxt { font: 600 11.5px var(--sans); fill: var(--warn); text-anchor: middle; }
+.diagram svg .st.on .l10-rung { stroke: var(--accent); stroke-width: 2.5; fill: var(--accent-soft); }
+.diagram svg .st.on .l10-num { stroke: var(--accent); }
+.diagram svg .st.on .l10-numtxt { fill: var(--accent); }
+.diagram svg .st.on .l10-card.l10-claim { stroke: var(--accent); }
+/* l0011 */
+/* ---------- Lesson 11: the runbook clock and the swap test ---------- */
+.diagram svg .l11-face { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.diagram svg .l11-tick { stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l11-tick.major { stroke: var(--ink-3); stroke-width: 2.5; }
+.diagram svg .l11-min { font: 700 13px var(--sans); fill: var(--ink-3); text-anchor: middle; }
+.diagram svg .l11-seg { fill: var(--bg); stroke: var(--line-strong); stroke-width: 2; }
+.diagram svg .l11-seglbl { font: 700 16px var(--sans); fill: var(--ink); }
+.diagram svg .l11-segmin { font: 13px var(--sans); fill: var(--ink-3); }
+.diagram svg .st.on .l11-seg { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 3; }
+.diagram svg .st.on .l11-seglbl { fill: var(--accent); }
+.diagram svg g.l11-hand.st:not(.on) { opacity: 0; }
+.diagram svg .l11-handline { stroke: var(--accent); stroke-width: 5; stroke-linecap: round; }
+.diagram svg .l11-hub { fill: var(--accent); }
+.diagram svg .l11-time { font: 800 18px var(--mono); fill: var(--accent); text-anchor: middle; }
+.diagram svg .l11-term { fill: var(--bg); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l11-termbar { fill: var(--surface-2); }
+.diagram svg .l11-termtitle { font: 700 13px var(--mono); fill: var(--ink-2); }
+.diagram svg .l11-rail { stroke: var(--line-strong); stroke-width: 2; }
+.diagram svg .l11-dot { fill: var(--bg); stroke: var(--ink-3); stroke-width: 2; }
+.diagram svg .l11-dot.base { fill: var(--line-strong); stroke: var(--line-strong); }
+.diagram svg .l11-commit { font: 12px var(--mono); fill: var(--ink); }
+.diagram svg .l11-commit.base { fill: var(--ink-3); }
+.diagram svg .st.on .l11-dot { fill: var(--pass); stroke: var(--pass); }
+.diagram svg .st.on .l11-commit { font-weight: 700; }
+.diagram svg .l11-sep { stroke: var(--line); stroke-width: 1.5; }
+.diagram svg .l11-proof { font: 600 13.5px var(--sans); fill: var(--pass); }
+.diagram svg .l11-note { font: italic 14px var(--serif); fill: var(--ink-3); text-anchor: middle; }
+.diagram svg .l11-quote { font: 600 14px var(--mono); fill: var(--ink-2); text-anchor: middle; }
+.diagram svg .l11-card { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l11-cardhead { font: 700 17px var(--serif); fill: var(--ink); }
+.diagram svg .l11-colhead { font: 800 12px var(--sans); letter-spacing: .05em; fill: var(--ink-3); text-anchor: middle; text-transform: uppercase; }
+.diagram svg .l11-row { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+.diagram svg .l11-q { font: 600 15px var(--sans); fill: var(--ink); }
+.diagram svg .l11-pill { fill: none; stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l11-pill.pass { stroke: var(--pass); }
+.diagram svg .l11-pill.partial { stroke: var(--warn); }
+.diagram svg .l11-pill.fail { stroke: var(--fail); }
+.diagram svg .l11-pill.picked { fill: var(--pass-soft); stroke-width: 2.5; }
+.diagram svg .l11-check { fill: none; stroke: var(--pass); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.diagram svg .l11-ev { font: 13px var(--sans); fill: var(--ink-3); text-anchor: end; }
+.diagram svg .st.on .l11-row { stroke: var(--accent); fill: var(--accent-soft); }
+.diagram svg .st.on .l11-ev { fill: var(--ink); font-weight: 600; }
+.diagram svg .l11-loop { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 7 5; }
+.diagram svg .l11-fixbox { fill: var(--bg); stroke: var(--accent); stroke-width: 1.5; }
+.diagram svg .l11-fix { font: 700 14px var(--sans); fill: var(--accent); text-anchor: middle; }
+
 /* ---------- Print ---------- */
 @media print {
   :root, :root[data-theme="dark"] {

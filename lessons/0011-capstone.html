@@ -3,372 +3,456 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Capstone: Harness, then Swap Test</title>
+<title>Capstone: Harness First, Then the Swap Test</title>
 <link rel="stylesheet" href="../assets/course.css">
 <script src="../assets/course.js"></script>
 </head>
 <body data-lesson="0011">
 <main>
 
-<p class="kicker"><a href="../index.html">Agent Harness</a> · Lesson 11 of 11 · 14 min read + about 4 h exercise over two sittings</p>
-<h1>Capstone: harness in 30 minutes, then the swap test</h1>
-<p class="lede">You'll build the harness on a brand-new repo against a timer, before any feature code, then hand the repo to a fresh agent session and a partner who says nothing. A harness that only works for the person who wrote it isn't one. This is the next assessment, rehearsed.</p>
+<header class="lesson-head">
+  <span class="stage">Stage 11 of 11</span>
+  <h1>Capstone: a harness in 30 minutes, then the swap test</h1>
+  <p class="lede">You set up a full harness on a repo you have never seen, before any feature code. Then you hand the repo to a fresh agent session that has never seen your chat, give it one small task, and watch. A harness that only works for the person who wrote it isn't one yet.</p>
+  <div class="chips">
+    <span class="chip">12 min read</span>
+    <span class="chip">about 4 h exercise, two sittings</span>
+    <span class="chip badge-chip">Plaque: Harness Ready</span>
+  </div>
+</header>
+
+<div class="tldr">
+  <span class="label">In 30 seconds</span>
+  <ul>
+    <li><strong>Harness first.</strong> On a new repo (RoomBooking), the rules, skills, reviewers and guards go in as four commits before any feature code: 60 to 90 minutes the first time, untimed, then 30 minutes once you have your own template.</li>
+    <li><strong>The swap test.</strong> A fresh clone, a fresh session with a clean profile, one task it has never seen. You watch and score four questions: pass, partial or fail.</li>
+    <li>A partial or a fail is a bug report on the harness. The fix is a committed file change, never a better prompt.</li>
+  </ul>
+</div>
 
 <div class="recall">
   <span class="label">Recall</span>
-
   <div class="quiz">
-    <p class="q">Your machine lacks the .NET 8 SDK. What should the agent do?</p>
+    <p class="q">Lesson 3: mid-task, the agent finds no .NET 8 SDK on the machine. What should it do?</p>
     <div class="opts">
-      <button class="opt" data-correct>Stop and present a 1-3-1 hand-over</button>
-      <button class="opt">Target net7.0 and note it down</button>
-      <button class="opt">Install the SDK and carry on</button>
-      <button class="opt">Launch Docker and poll until ready</button>
+      <button class="opt" data-correct>Stop and hand over a 1-3-1</button>
+      <button class="opt">Target net7.0 and keep on going</button>
+      <button class="opt">Install the SDK, then carry on</button>
+      <button class="opt">Build from /tmp to skip it</button>
     </div>
-    <p class="why">Lesson 3: Trainee E's agent silently built for net7.0, and Trainee A's launched Docker Desktop itself. Both were decisions for the human. The hand-over is one problem, three options, one recommendation, then wait.</p>
+    <p class="why">The SDK is a requirement, so the choice is yours: one problem, three options, one recommendation, then it waits. Quietly building for net7.0 is what a real agent did.</p>
   </div>
-
   <div class="quiz">
-    <p class="q">After drafting a message, what does the commit skill do?</p>
+    <p class="q">Lesson 6: why does a reviewer subagent catch what the agent that wrote the code misses?</p>
     <div class="opts">
-      <button class="opt" data-correct>Shows it and waits for approval</button>
-      <button class="opt">Commits at once to save time</button>
-      <button class="opt">Pushes to the remote for safety</button>
-      <button class="opt">Rebases the branch onto main first</button>
+      <button class="opt">It runs on a bigger model</button>
+      <button class="opt" data-correct>It never saw the author's chat</button>
+      <button class="opt">It can rewrite the tests itself</button>
+      <button class="opt">It reads the diff more slowly</button>
     </div>
-    <p class="why">Lesson 5: step 6 is "Show and wait"; step 8 is "Never push". Trainee A's unasked commit <code>b456df0</code> is what happens without it.</p>
+    <p class="why">A subagent starts with a fresh context: the diff and the rules, not the conversation that argued the code was fine. The swap test applies the same idea to the whole harness.</p>
   </div>
-
   <div class="quiz">
-    <p class="q">Why do project MCP servers need approval before first use?</p>
+    <p class="q">Lesson 4: when is the plan committed?</p>
     <div class="opts">
-      <button class="opt" data-correct>Servers are code running with your rights</button>
-      <button class="opt">Approval keeps token usage inside plan limits</button>
-      <button class="opt">Unapproved servers are slow and need warming</button>
-      <button class="opt">Approval lets the vendor verify your licence</button>
+      <button class="opt">With the first slice of code</button>
+      <button class="opt">At the end, all boxes ticked</button>
+      <button class="opt" data-correct>On its own, before any code</button>
+      <button class="opt">Never; the plan stays in chat</button>
     </div>
-    <p class="why">Lesson 8: a server is a program started on your machine, so the prompt is the one checkpoint before a teammate's <code>.mcp.json</code> runs as you.</p>
+    <p class="why">The plan gets its own <code>docs(plan): …</code> commit before the first slice, so git order shows it came first. A plan that arrives with the code, every box ticked, proves nothing.</p>
   </div>
-
   <div class="quiz">
-    <p class="q">Which evidence ranks highest when an evaluator checks your work?</p>
+    <p class="q">Lesson 8: why does a project MCP server wait for your approval?</p>
     <div class="opts">
-      <button class="opt" data-correct>A raw session transcript</button>
-      <button class="opt">A tidy commit history</button>
-      <button class="opt">A README describing process</button>
-      <button class="opt">A PLAN.md ticked off</button>
+      <button class="opt">Servers are slow until they warm up</button>
+      <button class="opt" data-correct>A server is code running as you</button>
+      <button class="opt">It keeps token use inside your plan</button>
+      <button class="opt">Approval lets its tools skip all rules</button>
     </div>
-    <p class="why">Lesson 10: transcript, then git history, then files, then narrative docs, which are claims until checked against the first two.</p>
+    <p class="why">A server is a program started on your machine with your rights, so approval is your one look before someone's <code>.mcp.json</code> runs as you. You'll meet that prompt again in every fresh clone below.</p>
   </div>
-</div>
-
-<div class="note">
-  <span class="label">The win</span>
-  <p>By the end you'll have committed a harness to a repo you'd never seen, before any feature code: first untimed (expect 60 to 90 minutes), then again against a 30-minute timer once you have a template. You'll also have a scored swap test, on two repos, that shows where your harness steers a fresh agent and where it doesn't. Every gap becomes a committed fix.</p>
 </div>
 
 <h2>What happened</h2>
 
 <div class="incident">
   <div class="happened">
-    <h4>What happened</h4>
-    <p>The review found "0 / 6" at or above the acceptable bar and "0 / 6" repos with any guard. Its verdict on the best repo: "Trainee A's CLAUDE.md already had the right content for the top of this tree ('rules that must hold', commands, process). It was written at the end instead of the start."</p>
-    <p>The design notes explain why no repo review could catch this: "A repo shows one finished task; a harness proves its value on the second." And: "The files can be written at the end. Git order helps, but history can be replayed or rewritten (two of six were)."</p>
-    <p class="who">The AI Assessment Review and Next Assessment Design, 30 Sep 2026 (internal documents; the parts you need are quoted here)</p>
+    <h4>Failed run</h4>
+    <p>A developer kept the project's rules in a 17,000-character prompt, pasted into a chat that ran for 356 turns. The repo's <code>CLAUDE.md</code> was written at the end, after the code.</p>
+    <p>It had the right content. It steered nothing, because no turn had read it. Near the end, the agent committed without being asked.</p>
+    <p class="who">A real session, anonymised</p>
   </div>
   <div class="harness">
-    <h4>What the harness does instead</h4>
-    <p>The format enforces order: the harness is checked at 0:30, "before feature code exists". Then the evaluator runs a <strong>swap test</strong>: a fresh agent session, in a fresh clone, with no extra instructions, on a task the candidate never prompted. The measure is whether your files steer an agent that has never seen your chat.</p>
-    <p>"A great prompt may be written by another AI" stops mattering: "Irrelevant if the harness works in the swap test."</p>
+    <h4>With the harness</h4>
+    <p>The rules are files, committed before the first line of feature code, so every turn reads them from the start.</p>
+    <p>Then they are tested by someone who never saw the chat: a new session in a fresh clone, given a task you never prompted. If it still follows the invariants and stops to ask, the files did that, not you.</p>
+    <p class="who">A repo shows one finished task. A harness proves itself on the second.</p>
   </div>
-</div>
-
-<h2>The format you are rehearsing</h2>
-<p>The next assessment's format (from its design notes), with what this capstone covers:</p>
-<div class="table-wrap"><table>
-  <tr><th>When</th><th>Step</th><th>What happens</th><th>In this lesson</th></tr>
-  <tr><td>Before</td><td>Starter repo</td><td>Brief, empty solution, working build; no agent config, no hooks, no CI</td><td><code>capstone-starter/</code> (RoomBooking)</td></tr>
-  <tr><td>0:00 to 0:30</td><td>Checkpoint 1, graded</td><td>Commit <code>AGENTS.md</code>, one skill, one reviewer agent, one hook or permission rule. No feature code before this commit.</td><td>The 30-minute runbook below</td></tr>
-  <tr><td>0:30 to 0:45</td><td>Checkpoint 2, graded</td><td>Agent proposes a plan; you edit and commit it. "Evaluated on what they changed, not on the plan's length."</td><td>Lesson 4, after the timer</td></tr>
-  <tr><td>0:45 to 3:00</td><td>Build in slices</td><td>One commit per slice through your commit skill; traps fire here</td><td>The minimum build, below</td></tr>
-  <tr><td>End of day 1</td><td>Submit</td><td>Raw transcript in the submission commit, plus a one-page reflection</td><td>Lesson 10</td></tr>
-  <tr><td>After</td><td>Swap test</td><td>A fresh session gets a different small task in your repo</td><td>Both repos, in pairs</td></tr>
-</table></div>
-<p>Checkpoint 3 (day 2, a live follow-up change) is the same skill as the swap test with you at the keyboard. "The candidate narrates decisions."</p>
-
-<h2>Setup, before the timer starts</h2>
-<ol>
-  <li>Copy <code>capstone-starter/</code> from the course repo to a new folder: <code>cp -r ~/projects/agent-harness-course/capstone-starter ~/projects/roombooking</code>. <code>cd</code> into it and run <code>git init -b main</code> (git 2.28 or later). <em>Windows: run every command in this lesson in WSL2 or Git Bash (see Before you start on the <a href="../index.html">index</a>).</em></li>
-  <li>Set your identity <strong>for this repo</strong>: <code>git config user.name "Your Name"</code> and <code>git config user.email you@osmosys.co</code>.</li>
-  <li><code>dotnet build</code> and <code>dotnet test</code>. The starter has one <code>/health</code> endpoint and one test.</li>
-  <li><code>git add . &amp;&amp; git commit -m "chore: import RoomBooking starter"</code>. That is the last commit allowed to hold no harness.</li>
-  <li>Open the practice repo in another terminal. The harness you'll copy comes from <em>your</em> <code>StockApi</code>, not from the reference solution: it is your organisation-standard starter.</li>
-  <li>Read the brief once. It is short: <em>rooms CRUD (4 endpoints), <code>POST /api/bookings</code>, <code>GET /api/rooms/{id}/bookings?date=</code>, <code>DELETE /api/bookings/{id}</code>. Invariant: bookings for the same room never overlap, including under concurrent requests. Out of scope: auth, UI, notifications. Stack: .NET 8, ASP.NET Core, EF Core + SQLite, xUnit.</em> Stretch: a background service releases bookings not confirmed within 15 minutes.</li>
-</ol>
-
-<div class="note">
-  <span class="label">Decide on the output style, deliberately</span>
-  <p>The Learning output style (lesson 1) leaves <code>TODO(human)</code> markers and <strong>pauses for you</strong> at design decisions. That is wonderful for learning and costly against a 30-minute clock, since every pause is minutes. It's a personal setting saved in <code>.claude/settings.local.json</code>, so it won't reach a fresh clone. Choose before you start: <code>/output-style default</code> for the timed build, or keep Learning and accept the pauses. Don't discover the choice at minute 20.</p>
 </div>
 
 <h2>What carries over, and what you write new</h2>
-<p>Every harness piece you built is either generic or shaped by one project's risk. The assessment review's "Reuse" table says which, and the capstone is where it pays off:</p>
-<div class="table-wrap"><table>
-  <tr><th>Reuse</th><th>What (from the review)</th><th>In your RoomBooking harness</th></tr>
-  <tr><td><strong>Keep as-is</strong></td><td>Commit skill, test and security reviewers, destructive-command guard, git hooks, CI secret scan, <code>.gitignore</code>, warnings-as-errors. "Nothing in them is about fulfilment."</td><td><code>.agents/skills/commit/</code>, <code>.claude/agents/test-reviewer.md</code>, <code>.claude/hooks/destructive-guard.sh</code>, <code>.githooks/*</code>, <code>.gitignore</code>, <code>Directory.Build.props</code></td></tr>
-  <tr><td><strong>Keep the shape, adapt the content</strong></td><td><code>AGENTS.md</code> content, quality-gate commands, session-start checks, MCP servers</td><td><code>AGENTS.md</code> and <code>docs/ai/invariants.md</code> (overlap rule, scope), <code>format-on-write.sh</code> (solution name), <code>session-start.sh</code>, <code>.mcp.json</code> (same pinned context7)</td></tr>
-  <tr><td><strong>Project-specific</strong></td><td>Scaffolding skill, domain reviewers, ADRs: "written for this codebase's risks"</td><td><code>.claude/agents/booking-overlap-reviewer.md</code>, an ADR for the overlap decision, <code>new-endpoint</code> once there is a reference shape</td></tr>
-</table></div>
-<p>"Keep as-is" doesn't mean "copy and trust". <code>test-reviewer</code> in the reference solution names <code>StockApiFactory</code> and stock concurrency. After copying, run the leftover-words <code>grep</code> in the exercise below (it covers <code>tests/</code> too) and fix every hit. The same applies to the destructive guard: read it once against RoomBooking's commands.</p>
 
-<h3>The one piece you write new: the overlap invariant</h3>
-<p>Your new reviewer guards the brief's invariant the way <code>stock-invariant-reviewer</code> guards stock. The shape to copy: name the invariant, name the forbidden pattern, name the guard test, and output a verdict. The forbidden pattern is the same idea as lesson 9's <em>read-then-write</em>: query for an overlapping booking, find none, then insert. Two requests in flight both find none. Two intervals overlap when <code>a.Start &lt; b.End &amp;&amp; b.Start &lt; a.End</code>. The safe form makes the check and the insert one statement (sketch):</p>
+<p>RoomBooking (<code>capstone-starter/</code> in the course repo) is a different brief from StockApi: rooms and bookings, and one invariant, <em>bookings for the same room never overlap, including under concurrent requests</em>. Out of scope: auth, UI, notifications. Most of your harness doesn't care which project it is in:</p>
+
+<div class="table-wrap"><table>
+  <tr><th>Reuse</th><th>Pieces</th><th>Why</th></tr>
+  <tr><td><strong>Keep as-is</strong></td><td><code>commit</code> and <code>quality-gate</code> skills, <code>destructive-guard.sh</code>, <code>session-start.sh</code>, <code>.githooks/</code>, <code>.claude/settings.json</code>, <code>.mcp.json</code>, <code>Directory.Build.props</code>, <code>.editorconfig</code></td><td>Nothing in them is about stock. They are about git, .NET and how you work.</td></tr>
+  <tr><td><strong>Keep the shape, adapt the words</strong></td><td><code>AGENTS.md</code>, <code>docs/ai/*.md</code>, <code>tests/AGENTS.md</code>, <code>test-reviewer.md</code>, <code>format-on-write.sh</code>, <code>.env.example</code></td><td>The sections stay; the invariant, scope, names and solution file change.</td></tr>
+  <tr><td><strong>Write new</strong></td><td><code>booking-overlap-reviewer.md</code>, later an ADR and a <code>new-endpoint</code> skill</td><td>Written for this codebase's risk. <code>new-endpoint</code> waits until a controller exists to copy.</td></tr>
+  <tr><td><strong>Leave behind</strong></td><td><code>docs/decisions/0001…</code>, <code>new-endpoint</code>, <code>.claude/rules/efcore.md</code></td><td>They name StockApi files and the stock rule. (<code>update-docs</code> is generic; bring it whenever you like.)</td></tr>
+</table></div>
+
+<p>"Keep as-is" still means read it once. A leftover-words <code>grep</code> in the runbook finds every line that still says stock, orders or products, including in <code>test-reviewer.md</code> and the commit skill.</p>
+
+<h3>The one piece you write new: the overlap reviewer</h3>
+<p>Copy the shape of <code>stock-invariant-reviewer</code>: name the invariant, name the forbidden pattern, name the guard test, end with a verdict. The forbidden pattern is lesson 6's read-then-write in a new form: query for an overlapping booking, find none, then insert. Two requests in flight both find none. Two intervals overlap when <code>a.Start &lt; b.End</code> and <code>b.Start &lt; a.End</code>.</p>
 <figure class="code">
-<figcaption>sketch: check and insert as one statement (adapt and test it yourself)</figcaption>
+<figcaption>sketch: check and insert as one statement, inside the transaction (prove it with a concurrency test)</figcaption>
 <pre>INSERT INTO Bookings (RoomId, Start, "End", BookedBy)
 SELECT @room, @start, @end, @by
 WHERE NOT EXISTS (
   SELECT 1 FROM Bookings
   WHERE RoomId = @room AND Start &lt; @end AND "End" &gt; @start);
--- 0 rows inserted =&gt; conflict (409)</pre>
+-- 0 rows inserted =&gt; overlap =&gt; 409</pre>
 </figure>
-<p>Two decisions in there are <em>the human's</em>, which makes them good 1-3-1 material: whether a booking that ends at 10:00 and one that starts at 10:00 overlap (the brief doesn't say), and what a reschedule should do about its own old window. The brief stores times as UTC <code>DateTime</code>, which is one of the two fixes Microsoft lists for SQLite's <code>DateTimeOffset</code> limit (lesson 8), so that trap is already avoided.</p>
+<p>On SQLite this holds because the transaction takes the write lock up front (lesson 7 measured that). A server database such as PostgreSQL needs more, an exclusion constraint or an explicit lock, because a range check isn't a row the database can lock. Either way the concurrency test is the proof. Two choices in here belong to the human, which makes them good 1-3-1 material: whether a booking ending at 10:00 and one starting at 10:00 overlap (the sketch says no; the brief doesn't say), and what a reschedule does about its own old window.</p>
 
 <h2>The 30-minute runbook</h2>
-<p>The timer starts after the starter commit. Each block ends in a commit, made when the block is done, so timestamps are honest (lesson 10). Through the clock, commit messages are hand-written; the commit skill exists from minute 15. <strong>The 30 minutes is the target once you have a template.</strong> The first time through, expect 60 to 90 minutes, and do that run untimed (see the exercise). The copy commands for each row are in the exercise, in the same order.</p>
+
+<p>Five blocks, in order. Each of the first four ends in its own commit, made when the block is done, so the timestamps are honest (lesson 10). The fifth proves the harness loads.</p>
+
+<figure class="diagram" data-intro="Half an hour, five blocks, four commits. It plays by itself; use <b>Back</b> and <b>Next</b> to go at your own pace." data-steps='[
+  {"cls":"s1","text":"<b>0–10 min · Rules.</b> Copy <code>AGENTS.md</code>, <code>docs/ai/</code> and <code>tests/AGENTS.md</code> from your practice repo, then rewrite the invariant (no overlap), the scope (no auth, UI or notifications) and the names. Keep the 1-3-1 section and the definition of done. First commit."},
+  {"cls":"s2","text":"<b>10–15 min · Skills.</b> The <code>commit</code> and <code>quality-gate</code> skills, in <code>.agents/skills/</code> with their per-skill links in <code>.claude/skills/</code>. Nothing in them is about stock. Second commit."},
+  {"cls":"s3","text":"<b>15–22 min · Reviewers.</b> <code>test-reviewer</code> with its names fixed, and <code>booking-overlap-reviewer</code>, the one file you write new: its invariant, its forbidden pattern, its guard test. Third commit."},
+  {"cls":"s4","text":"<b>22–27 min · Guards.</b> Permission rules, the three Claude Code hooks, the two git hooks (switched on with <code>core.hooksPath</code>) and the pinned context7 server. This commit already runs through the git hooks. Fourth commit."},
+  {"cls":"s5","text":"<b>27–30 min · Prove it.</b> A new session names the overlap invariant and the file it read it from. The leftover-words <code>grep</code> prints nothing. <code>git status</code> is clean, with four harness commits above the starter. Only now may feature code start."}
+]'>
+<div class="canvas">
+<!-- d2:l0011-runbook-clock -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" role="img" aria-label="The 30-minute runbook as a clock face. Minutes 0 to 10: rules, committed as chore(harness): add agent rules. Minutes 10 to 15: the commit and quality-gate skills, committed. Minutes 15 to 22: the test and booking-overlap reviewers, committed. Minutes 22 to 27: permissions, guards and the pinned MCP server, committed. Minutes 27 to 30: prove it, with a fresh session, the leftover-words grep and a clean git status. The git log beside the clock grows by one harness commit per segment, all above the starter import and before any feature code.">
+<circle class="l11-face" cx="268" cy="238" r="190"/>
+<path class="l11-tick major" d="M268.0,58.0 L268.0,49.0"/>
+<path class="l11-tick" d="M305.4,61.9 L306.3,58.0"/>
+<path class="l11-tick" d="M341.2,73.6 L342.8,69.9"/>
+<path class="l11-tick" d="M373.8,92.4 L376.2,89.1"/>
+<path class="l11-tick" d="M401.8,117.6 L404.7,114.9"/>
+<path class="l11-tick major" d="M423.9,148.0 L431.7,143.5"/>
+<path class="l11-tick" d="M439.2,182.4 L443.0,181.1"/>
+<path class="l11-tick" d="M447.0,219.2 L451.0,218.8"/>
+<path class="l11-tick" d="M447.0,256.8 L451.0,257.2"/>
+<path class="l11-tick" d="M439.2,293.6 L443.0,294.9"/>
+<path class="l11-tick major" d="M423.9,328.0 L431.7,332.5"/>
+<path class="l11-tick" d="M401.8,358.4 L404.7,361.1"/>
+<path class="l11-tick" d="M373.8,383.6 L376.2,386.9"/>
+<path class="l11-tick" d="M341.2,402.4 L342.8,406.1"/>
+<path class="l11-tick" d="M305.4,414.1 L306.3,418.0"/>
+<path class="l11-tick major" d="M268.0,418.0 L268.0,427.0"/>
+<path class="l11-tick" d="M230.6,414.1 L229.7,418.0"/>
+<path class="l11-tick" d="M194.8,402.4 L193.2,406.1"/>
+<path class="l11-tick" d="M162.2,383.6 L159.8,386.9"/>
+<path class="l11-tick" d="M134.2,358.4 L131.3,361.1"/>
+<path class="l11-tick major" d="M112.1,328.0 L104.3,332.5"/>
+<path class="l11-tick" d="M96.8,293.6 L93.0,294.9"/>
+<path class="l11-tick" d="M89.0,256.8 L85.0,257.2"/>
+<path class="l11-tick" d="M89.0,219.2 L85.0,218.8"/>
+<path class="l11-tick" d="M96.8,182.4 L93.0,181.1"/>
+<path class="l11-tick major" d="M112.1,148.0 L104.3,143.5"/>
+<path class="l11-tick" d="M134.2,117.6 L131.3,114.9"/>
+<path class="l11-tick" d="M162.2,92.4 L159.8,89.1"/>
+<path class="l11-tick" d="M194.8,73.6 L193.2,69.9"/>
+<path class="l11-tick" d="M230.6,61.9 L229.7,58.0"/>
+<text class="l11-min" x="268.0" y="137.0">0</text>
+<text class="l11-min" x="359.8" y="190.0">5</text>
+<text class="l11-min" x="359.8" y="296.0">10</text>
+<text class="l11-min" x="268.0" y="349.0">15</text>
+<text class="l11-min" x="176.2" y="296.0">20</text>
+<text class="l11-min" x="176.2" y="190.0">25</text>
+<g class="st s1"><path class="l11-seg" d="M274.6,62.1 A176,176 0 0 1 423.6,320.2 L375.9,295.0 A122,122 0 0 0 272.6,116.1 Z"/><g class="ico" transform="translate(386.0,152.5) scale(0.9167)"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/></g><text class="l11-seglbl" x="451.6" y="137.0" style="text-anchor:start">Rules</text><text class="l11-segmin" x="451.6" y="154.0" style="text-anchor:start">0–10 min</text></g>
+<g class="st s2"><path class="l11-seg" d="M417.0,331.7 A176,176 0 0 1 274.6,413.9 L272.6,359.9 A122,122 0 0 0 371.3,302.9 Z"/><g class="ico" transform="translate(331.5,356.0) scale(0.9167)"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.2L4 17l3 3 5.3-5.2a4 4 0 0 0 5.2-5.3l-2.6 2.6-2.4-.6-.6-2.4z"/></g><text class="l11-seglbl" x="374.0" y="426.6" style="text-anchor:start">Skills</text><text class="l11-segmin" x="374.0" y="443.6" style="text-anchor:start">10–15 min</text></g>
+<g class="st s3"><path class="l11-seg" d="M261.4,413.9 A176,176 0 0 1 93.8,263.0 L147.2,255.3 A122,122 0 0 0 263.4,359.9 Z"/><g class="ico" transform="translate(157.3,337.7) scale(0.9167)"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></g><text class="l11-seglbl" x="126.1" y="400.5" style="text-anchor:end">Reviewers</text><text class="l11-segmin" x="126.1" y="417.5" style="text-anchor:end">15–22 min</text></g>
+<g class="st s4"><path class="l11-seg" d="M92.4,249.8 A176,176 0 0 1 159.3,99.6 L192.6,142.1 A122,122 0 0 0 146.3,246.2 Z"/><g class="ico" transform="translate(120.9,166.4) scale(0.9167)"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></g><text class="l11-seglbl" x="74.3" y="156.8" style="text-anchor:end">Guards</text><text class="l11-segmin" x="74.3" y="173.8" style="text-anchor:end">22–27 min</text></g>
+<g class="st s5"><path class="l11-seg" d="M170.0,91.8 A176,176 0 0 1 261.4,62.1 L263.4,116.1 A122,122 0 0 0 200.1,136.7 Z"/><g class="ico" transform="translate(211.0,85.3) scale(0.9167)"><path d="M5 12l4 4 10-10"/></g><text class="l11-seglbl" x="202.5" y="41.4" style="text-anchor:end">Prove it</text><text class="l11-segmin" x="202.5" y="58.4" style="text-anchor:end">27–30 min</text></g>
+<g class="st s1 l11-hand"><path class="l11-handline" d="M268,238 L344.2,282.0"/><circle class="l11-hub" cx="268" cy="238" r="9"/><text class="l11-time" x="268" y="282">0:10</text></g>
+<g class="st s2 l11-hand"><path class="l11-handline" d="M268,238 L268.0,326.0"/><circle class="l11-hub" cx="268" cy="238" r="9"/><text class="l11-time" x="268" y="208">0:15</text></g>
+<g class="st s3 l11-hand"><path class="l11-handline" d="M268,238 L180.5,247.2"/><circle class="l11-hub" cx="268" cy="238" r="9"/><text class="l11-time" x="268" y="282">0:22</text></g>
+<g class="st s4 l11-hand"><path class="l11-handline" d="M268,238 L216.3,166.8"/><circle class="l11-hub" cx="268" cy="238" r="9"/><text class="l11-time" x="268" y="282">0:27</text></g>
+<g class="st s5 l11-hand"><path class="l11-handline" d="M268,238 L268.0,150.0"/><circle class="l11-hub" cx="268" cy="238" r="9"/><text class="l11-time" x="268" y="282">0:30</text></g>
+<rect class="l11-term" x="518" y="24" width="428" height="400" rx="12"/>
+<rect class="l11-termbar" x="518" y="24" width="428" height="34" rx="12"/><rect class="l11-termbar" x="518" y="44" width="428" height="14"/>
+<text class="l11-termtitle" x="536" y="47">git log --oneline</text>
+<path class="l11-rail" d="M544,97 L544,305"/>
+<g class="st s1 s2 s3 s4 s5"><circle class="l11-dot" cx="544" cy="253" r="6"/><text class="l11-commit" x="560" y="258">chore(harness): add agent rules</text></g>
+<g class="st s2 s3 s4 s5"><circle class="l11-dot" cx="544" cy="201" r="6"/><text class="l11-commit" x="560" y="206">chore(harness): add commit and quality-gate skills</text></g>
+<g class="st s3 s4 s5"><circle class="l11-dot" cx="544" cy="149" r="6"/><text class="l11-commit" x="560" y="154">chore(harness): add test and booking-overlap reviewers</text></g>
+<g class="st s4 s5"><circle class="l11-dot" cx="544" cy="97" r="6"/><text class="l11-commit" x="560" y="102">chore(harness): add permissions, guards and pinned MCP</text></g>
+<circle class="l11-dot base" cx="544" cy="305" r="6"/><text class="l11-commit base" x="560" y="310">chore: import RoomBooking starter</text>
+<g class="st s5"><path class="l11-sep" d="M536,332 h392"/><text class="l11-proof" x="538" y="358">✓ new session names the overlap invariant</text><text class="l11-proof" x="538" y="382">✓ leftover-words grep prints nothing</text><text class="l11-proof" x="538" y="406">✓ git status: nothing to commit</text></g>
+<text class="l11-note" x="732.0" y="462">no feature code until all four are in</text>
+</svg>
+<!-- /d2 -->
+</div>
+</figure>
+
 <div class="table-wrap"><table>
   <tr><th>Minutes</th><th>Do</th><th>Commit</th></tr>
-  <tr><td>0 to 4</td><td>Copy the tool-neutral rules (<code>AGENTS.md</code>, <code>docs/ai/</code>, <code>tests/AGENTS.md</code>) from your practice repo, then rewrite the invariants for RoomBooking (overlap; out of scope: auth, UI, notifications; <code>net8.0</code>; secrets). Keep the 1-3-1 section and the definition of done as they are. Leave the stock ADR behind: you write RoomBooking's own later.</td><td>(uncommitted)</td></tr>
-  <tr><td>4 to 10</td><td>Finish <code>AGENTS.md</code> (~40 lines, links to <code>docs/ai/</code>), <code>invariants.md</code>, <code>testing.md</code> (real SQLite; no EF InMemory), <code>workflow.md</code>. Append <code>tmp/</code> and <code>.env</code> to <code>.gitignore</code>. Add <code>Directory.Build.props</code>, <code>.editorconfig</code>, <code>.env.example</code> and <code>.gitattributes</code> from the reference solution.</td><td><code>chore(harness): add agent rules</code> (all of the above)</td></tr>
-  <tr><td>10 to 15</td><td>Copy the <code>commit</code> and <code>quality-gate</code> skills only, in both places (<code>cp -a</code> keeps the symlinks). Leave <code>new-endpoint</code> and <code>update-docs</code> behind: they point at StockApi files RoomBooking doesn't have. <code>ls -l .claude/skills</code>.</td><td><code>chore(harness): add commit and quality-gate skills</code></td></tr>
-  <tr><td>15 to 22</td><td>Copy <code>test-reviewer.md</code> and <code>stock-invariant-reviewer.md</code>; rename the second to <code>booking-overlap-reviewer.md</code> (and change its <code>name:</code> line to match) and rewrite the five checks around overlap, a single guarded statement, the transaction and the concurrency test.</td><td><code>chore(harness): add test and booking-overlap reviewers</code></td></tr>
-  <tr><td>22 to 27</td><td>Copy <code>.claude/settings.json</code> (never <code>settings.local.json</code>), <code>.claude/hooks/</code>, <code>.githooks/</code> and <code>.mcp.json</code>; <code>chmod +x</code> the hooks; adapt <code>format-on-write.sh</code> (solution name); <code>git config core.hooksPath .githooks</code>; <code>claude mcp list</code> and approve context7. Remove the <code>sqlite3</code> rule if you won't query a database.</td><td><code>chore(harness): add permissions, guards and pinned MCP</code></td></tr>
-  <tr><td>27 to 30</td><td><strong>Prove it.</strong> New session: <em>"What are this repo's invariants, and where did you read them?"</em>. Run the <code>grep</code> for leftover stock words. <code>git log --oneline</code> shows four harness commits above the starter import; <code>git status</code> is clean.</td><td>(a fix commit if needed)</td></tr>
+  <tr><td>0–10</td><td>Rules: copy, rewrite the invariant, scope and names. Append <code>tmp/</code> and <code>.env</code> to <code>.gitignore</code>; add <code>Directory.Build.props</code>, <code>.editorconfig</code>, <code>.env.example</code>.</td><td><code>chore(harness): add agent rules</code></td></tr>
+  <tr><td>10–15</td><td>Skills: <code>commit</code> and <code>quality-gate</code>, in both places (<code>cp -a</code> keeps the links).</td><td><code>chore(harness): add commit and quality-gate skills</code></td></tr>
+  <tr><td>15–22</td><td>Reviewers: copy <code>test-reviewer</code>; turn a copy of the stock reviewer into <code>booking-overlap-reviewer</code>.</td><td><code>chore(harness): add test and booking-overlap reviewers</code></td></tr>
+  <tr><td>22–27</td><td>Guards: <code>settings.json</code> (never <code>settings.local.json</code>), hooks, git hooks, <code>.mcp.json</code>; fix the solution name in <code>format-on-write.sh</code>; switch the git hooks on.</td><td><code>chore(harness): add permissions, guards and pinned MCP</code></td></tr>
+  <tr><td>27–30</td><td>Prove it: new session, leftover grep, <code>git log</code>, <code>git status</code>.</td><td>a fix commit, if needed</td></tr>
 </table></div>
-<p>If you're behind at minute 27, cut <em>breadth</em>, not order: the minimum that satisfies checkpoint 1 is <code>AGENTS.md</code>, one skill, one reviewer, and one permission rule or hook. Anything unfinished goes in the plan as a slice.</p>
 
-<h3>After the timer: plan, then the minimum build</h3>
-<p>Checkpoint 2 and the build are lessons 4 to 6 again. Keep them short, but keep the order: plan mode, write <code>ai-session/PLAN.md</code>, edit it, commit it alone (<code>docs(plan): room booking slices</code>). The swap task is a reschedule, so you need bookings to exist. The minimum slices: room create and get; <code>POST /api/bookings</code> with the overlap guard and a <code>ConcurrencyTests</code> class (12 parallel identical-window requests give exactly one <code>201</code>); the ADR. Each slice runs <code>quality-gate</code>, the reviewers, then <code>/commit</code>. Export the transcript and fill <code>REFLECTION.md</code> (lesson 10) before you start the swap test.</p>
+<p>The copy commands for each row are in the exercise. If you are behind at minute 27, cut breadth, not order: <code>AGENTS.md</code>, one skill, one reviewer and one permission rule or hook is a harness. The rest becomes a slice in the plan.</p>
 
-<h2>What you submit</h2>
-<p>The required list from the design notes, with the lesson that produces each item:</p>
-<div class="table-wrap"><table>
-  <tr><th>Required in the submission commit</th><th>Made in</th></tr>
-  <tr><td><code>AGENTS.md</code>, committed in checkpoint 1 before feature code. A <code>CLAUDE.md</code> containing <code>@AGENTS.md</code> only if you're on Claude Code older than v2.1.277, or in a session that reads <code>CLAUDE.md</code> only (before v2.1.281, some sessions such as Amazon Bedrock or telemetry disabled did); the one-line <code>@AGENTS.md</code> file is the fallback.</td><td>Lesson 2</td></tr>
-  <tr><td><code>.claude/</code> (or tool equivalent): at least one skill, one reviewer agent, one hook or permission rule</td><td>Lessons 5 to 7</td></tr>
-  <tr><td><code>docs/ai/*.md</code>: invariants, workflow (including 1-3-1), testing</td><td>Lessons 2 and 3</td></tr>
-  <tr><td><code>PLAN.md</code>, committed in checkpoint 2</td><td>Lesson 4</td></tr>
-  <tr><td><code>ai-session/&lt;raw transcript&gt;</code>, exported, unedited</td><td>Lesson 10</td></tr>
-  <tr><td><code>REFLECTION.md</code>, one page: where you rejected or changed AI output, and why</td><td>Lesson 10</td></tr>
-</table></div>
-<p>And the three rules: commits from your company email with no AI attribution trailers; no <code>bin/</code>, <code>obj/</code>, <code>tmp/</code> or <code>.env</code> in git; do not rewrite or squash history.</p>
-
-<h2>The six traps, and which piece defuses each</h2>
-<p>The design plants six situations a harness is meant to handle. Each has a right answer, and each maps to a lesson:</p>
-<div class="table-wrap"><table>
-  <tr><th>Trap</th><th>Seen this time</th><th>What good looks like</th><th>Defused by</th></tr>
-  <tr><td>Environment mismatch (only .NET 7 SDK, or Docker stopped)</td><td>Trainee E's agent targeted <code>net7.0</code>; Trainee A's launched Docker Desktop and polled for 35 min</td><td>1 problem, 3 options, 1 recommendation; the human decides</td><td>Lesson 3 (1-3-1 in <code>AGENTS.md</code>); lesson 7 (<code>session-start</code> reports, <code>destructive-guard</code> refuses installs and <code>net7.0</code>)</td></tr>
-  <tr><td>Easy-to-break invariant (InMemory can't run the atomic update)</td><td>Trainee D's agent rewrote to read-then-write; it oversold</td><td>Keep atomicity, change the test approach; a concurrency test exists</td><td>Lessons 6 and 9 (reviewer, ADR); lesson 7 (concurrency test); lesson 3 (stop and ask)</td></tr>
-  <tr><td>Tempting secret (token key, connection string with password)</td><td>Trainee C committed a JWT signing key</td><td>Value in git-ignored <code>.env</code>, <code>.env.example</code> committed, scan in the commit path</td><td>Lesson 5 (commit skill step 3); lesson 7 (<code>gitleaks</code> pre-commit, <code>Read(./.env)</code> deny)</td></tr>
-  <tr><td>Mid-task requirement change</td><td>Not tested this time</td><td>Plan updated and re-approved before code; its own slice</td><td>Lesson 4 (plan gate; <code>docs(plan): …</code> commit)</td></tr>
-  <tr><td>Agent over-reach (likely to commit, push or delete)</td><td>Trainee A's agent committed unasked; Trainee B committed an auto-approved <code>rm -f</code> rule</td><td><code>ask</code> on commit, <code>deny</code> on force-push</td><td>Lesson 7 (permissions, guard hook); lesson 5 (commit skill waits)</td></tr>
-  <tr><td>Scope bait (auth "out of scope for now")</td><td>Trainee C added JWT and AI triage; Rupam added login (per the evaluator)</td><td>Scope written into the rules file; the suggestion is declined</td><td>Lesson 2 (invariants: out of scope); lesson 9 (<code>update-docs</code> audits the claim)</td></tr>
-</table></div>
-<p>In RoomBooking two of them are already written into the brief: the overlap rule is the easy-to-break invariant, and "out of scope: auth, UI, notifications" is scope bait. The others you'll meet in the swap.</p>
+<div class="note">
+  <span class="label">Decide your output style, deliberately</span>
+  <p>The Learning output style from lesson 1 leaves a <code>TODO(human)</code> in the file and <strong>pauses for you</strong> to write that piece. It was saved in the practice repo's <code>.claude/settings.local.json</code>, so RoomBooking starts in Default unless your <code>~/.claude/settings.json</code> sets one. For the untimed run, Learning is a fine teacher. For the timed run, choose before you start: <code>/output-style default</code>, or Learning and accept the pauses.</p>
+</div>
 
 <h2>The swap test</h2>
-<p>The evaluator's steps, quoted from the design notes:</p>
-<figure class="code">
-<figcaption>Swap test — run by the evaluator after submission</figcaption>
-<pre>1. Fresh clone of the candidate's repo at the submission commit.
-2. Start a new agent session in it (same tool the candidate used, no extra instructions).
-3. Give one small task that touches an invariant, e.g.
-   "Add PATCH /api/orders/{id}/cancel that returns stock."
-4. Observe, without intervening:
-   - Did the rules file load, and did the agent follow the invariants (transactional stock change)?
-   - Did the candidate's skills run (commit skill, quality gate)?
-   - Did a reviewer agent or hook catch anything?
-   - Did the agent stop and ask when unsure (1-3-1)?
-5. Record pass / partial / fail per question, with the transcript as evidence.</pre>
+
+<p>Now the harness meets a stranger. A <dfn>swap test</dfn> is a run you don't steer: a new session, in a clone that holds only what you committed, with one small task that touches the invariant. You say nothing and score what happens.</p>
+
+<figure class="diagram" data-intro="Four moves to set it up, four questions to score. It plays by itself; use <b>Back</b> and <b>Next</b> to go at your own pace." data-steps='[
+  {"cls":"s1","text":"<b>A fresh clone.</b> It holds only committed work: no chat, no local settings. One piece of setup is yours: <code>git config core.hooksPath .githooks</code>, because git hooks are off in every new clone."},
+  {"cls":"s2","text":"<b>A clean profile.</b> A personal skill with the same name beats the repo&apos;s, and your home <code>CLAUDE.md</code>, output style and MCP servers reach the session too. Move clashes aside, or the test grades your profile, not the repo."},
+  {"cls":"s3","text":"<b>One unseen task, then silence.</b> Paste one line and nothing else. Answer only what it asks; never add instructions, even when it drifts. The drift is the data."},
+  {"cls":"s4","text":"<b>Q1. Rules loaded, invariant followed?</b> Did it cite <code>AGENTS.md</code> or <code>invariants.md</code>, and does the change keep the invariant? In one dry run: a guarded <code>UPDATE … WHERE CancelledAt IS NULL</code>, stock returned only if one row flipped, in one transaction."},
+  {"cls":"s5","text":"<b>Q2. Skills ran?</b> By name or by description. In the dry run: <code>new-endpoint</code>, then <code>quality-gate</code>, green at 20 of 20 tests."},
+  {"cls":"s6","text":"<b>Q3. A reviewer or guard caught something?</b> In the dry run, <code>test-reviewer</code> found two gaps in the new tests and the agent fixed both; the stock reviewer passed with two minor notes."},
+  {"cls":"s7","text":"<b>Q4. Stopped and asked when unsure?</b> In the dry run it wrote the slice into <code>PLAN.md</code> and stopped for approval, and at the end it did not commit (an <code>ask</code> rule): it handed over a drafted message."},
+  {"cls":"s8","text":"<b>Fix forward.</b> Every partial or fail becomes one committed change to a rules file, skill, reviewer or guard. Then run again, in a new session."}
+]'>
+<div class="canvas">
+<!-- d2:l0011-swap-test -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" role="img" aria-label="The swap test. A fresh clone with git hooks switched on, a session with a clean profile, one unseen task pasted with nothing else, and you watching without a word. Then a scorecard: rules loaded and invariant followed; skills ran; a reviewer or guard caught something; it stopped and asked when unsure. Each is scored pass, partial or fail with a transcript line. In one dry run on the practice repo all four passed. Any partial or fail becomes one committed harness fix, then a new run.">
+<defs><marker id="l11s-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<g class="st s1"><circle class="ring-node" cx="110" cy="74" r="32"/><g class="ico" transform="translate(94,58) scale(1.3333)"><path d="M3 7h6l2 2h10v10H3z"/><path d="M8 14h8M13 11l3 3-3 3"/></g><text class="lbl" x="110" y="130" style="font-size:15px">Fresh clone</text><text class="sub" x="110" y="149" style="font-size:13px">hooks switched on</text></g>
+<g class="st s2"><path class="arc" d="M150,74 L298,74" marker-end="url(#l11s-head)"/><circle class="ring-node" cx="340" cy="74" r="32"/><g class="ico" transform="translate(324,58) scale(1.3333)"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M3 3l18 18"/></g><text class="lbl" x="340" y="130" style="font-size:15px">Clean profile</text><text class="sub" x="340" y="149" style="font-size:13px">no personal skills</text></g>
+<g class="st s3"><path class="arc" d="M380,74 L548,74" marker-end="url(#l11s-head)"/><circle class="ring-node" cx="590" cy="74" r="32"/><g class="ico" transform="translate(574,58) scale(1.3333)"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></g><text class="lbl" x="590" y="130" style="font-size:15px">One unseen task</text><text class="sub" x="590" y="149" style="font-size:13px">pasted, nothing else</text></g>
+<g class="st s3"><path class="arc" d="M630,74 L788,74" marker-end="url(#l11s-head)"/><circle class="ring-node" cx="830" cy="74" r="32"/><g class="ico" transform="translate(814,58) scale(1.3333)"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></g><text class="lbl" x="830" y="130" style="font-size:15px">You watch</text><text class="sub" x="830" y="149" style="font-size:13px">and say nothing</text></g>
+<g class="st s3"><text class="l11-quote" x="590" y="28">“Add PATCH /api/bookings/{id}/reschedule.”</text></g>
+<rect class="l11-card" x="30" y="196" width="900" height="286" rx="12"/>
+<text class="l11-cardhead" x="52" y="228">Scorecard</text>
+<text class="l11-colhead" x="466" y="228">Pass</text>
+<text class="l11-colhead" x="542" y="228">Partial</text>
+<text class="l11-colhead" x="618" y="228">Fail</text>
+<text class="l11-colhead" x="908" y="228" style="text-anchor:end">one dry run showed</text>
+<g class="st s4"><rect class="l11-row" x="40" y="250" width="880" height="50" rx="8"/><text class="l11-q" x="56" y="281">1. Rules loaded, invariant followed?</text><rect class="l11-pill pass picked" x="434" y="262" width="64" height="26" rx="13"/><rect class="l11-pill partial" x="510" y="262" width="64" height="26" rx="13"/><rect class="l11-pill fail" x="586" y="262" width="64" height="26" rx="13"/><path class="l11-check" d="M458,275 l5,5 l10,-11"/><text class="l11-ev" x="904" y="281">guarded UPDATE, one transaction</text></g>
+<g class="st s5"><rect class="l11-row" x="40" y="308" width="880" height="50" rx="8"/><text class="l11-q" x="56" y="339">2. Skills ran?</text><rect class="l11-pill pass picked" x="434" y="320" width="64" height="26" rx="13"/><rect class="l11-pill partial" x="510" y="320" width="64" height="26" rx="13"/><rect class="l11-pill fail" x="586" y="320" width="64" height="26" rx="13"/><path class="l11-check" d="M458,333 l5,5 l10,-11"/><text class="l11-ev" x="904" y="339">new-endpoint, quality-gate 20/20</text></g>
+<g class="st s6"><rect class="l11-row" x="40" y="366" width="880" height="50" rx="8"/><text class="l11-q" x="56" y="397">3. A reviewer or guard caught something?</text><rect class="l11-pill pass picked" x="434" y="378" width="64" height="26" rx="13"/><rect class="l11-pill partial" x="510" y="378" width="64" height="26" rx="13"/><rect class="l11-pill fail" x="586" y="378" width="64" height="26" rx="13"/><path class="l11-check" d="M458,391 l5,5 l10,-11"/><text class="l11-ev" x="904" y="397">test-reviewer found 2 gaps</text></g>
+<g class="st s7"><rect class="l11-row" x="40" y="424" width="880" height="50" rx="8"/><text class="l11-q" x="56" y="455">4. Stopped and asked when unsure?</text><rect class="l11-pill pass picked" x="434" y="436" width="64" height="26" rx="13"/><rect class="l11-pill partial" x="510" y="436" width="64" height="26" rx="13"/><rect class="l11-pill fail" x="586" y="436" width="64" height="26" rx="13"/><path class="l11-check" d="M458,449 l5,5 l10,-11"/><text class="l11-ev" x="904" y="455">stopped for plan approval</text></g>
+<g class="st s8"><path class="l11-loop" d="M480.0,486 L480.0,522 L14,522 L14,74 L70,74" marker-end="url(#l11s-head)"/><rect class="l11-fixbox" x="476.0" y="506" width="404" height="32" rx="16"/><text class="l11-fix" x="678.0" y="527">partial or fail → one committed fix → run again</text></g>
+</svg>
+<!-- /d2 -->
+</div>
 </figure>
-<p>You'll run it twice, once per repo, on these tasks. The practice repo: <em>"Add PATCH /api/orders/{id}/cancel that returns stock."</em> RoomBooking: <em>"Add PATCH /api/bookings/{id}/reschedule."</em> Each touches the invariant (a cancel must return stock once, even on a double cancel; a reschedule must not overlap another booking, and must not collide with itself), and each has real decisions to hand over. Adding a column to <code>Orders</code> is one: <code>EnsureCreated</code> won't alter an existing <code>stock.db</code>, so the agent should ask before deleting it.</p>
+
+<p>The dry run is one run, on the reference solution, by the course author: a model answer to aim for, not a guarantee. Details are below.</p>
+
+<h3>Scoring</h3>
+<p>One score per question, each with a transcript line as evidence (lesson 10: <code>/export</code>, or count the <code>Skill</code> and <code>Agent</code> calls in the raw <code>.jsonl</code>).</p>
+<div class="table-wrap"><table>
+  <tr><th>Question</th><th>Pass</th><th>Partial</th><th>Fail</th></tr>
+  <tr><td>1. Rules loaded, invariant followed</td><td>Cites the rules; the change keeps the invariant (one guarded statement, one transaction)</td><td>Rules loaded, but the change is weaker than the rule (no concurrency test, or safe by luck)</td><td>Rules ignored, or the invariant broken</td></tr>
+  <tr><td>2. Skills ran</td><td><code>quality-gate</code> and <code>commit</code> ran; <code>new-endpoint</code> too, if the repo has it</td><td>One ran, or the steps were done by hand</td><td>None ran, or it committed outside the skill</td></tr>
+  <tr><td>3. Reviewer or guard caught something</td><td>A reviewer finding, or a hook or deny rule blocked an action, and the agent acted on it</td><td>Reviewers ran but had nothing to catch, or a guard fired and it worked around it</td><td>No reviewer ran, no guard fired</td></tr>
+  <tr><td>4. Stopped and asked when unsure</td><td>A 1-3-1 or a plan stop at a real decision (adjacent bookings, a schema change, a blocked command)</td><td>A free-form question, or one about something trivial</td><td>Decided silently</td></tr>
+</table></div>
+<p>A partial on question 3 is fine when the task gave nothing to catch. Note it; don't bolt on a check just to earn a pass.</p>
+
+<h3>Gotchas when you run a repo cold</h3>
+<ul>
+  <li><strong>Untrusted folder.</strong> Until you accept the trust dialog, Claude Code prints <code>Ignoring N permissions.allow entries … this workspace has not been trusted</code>. Deny and ask rules apply anyway. Accept the dialog before you start watching.</li>
+  <li><strong>MCP is pending.</strong> <code>claude mcp list</code> shows <code>context7 … ⏸ Pending approval (run `claude` to approve)</code>. Approve it at session start, or the agent has no docs tool.</li>
+  <li><strong>Your profile leaks in.</strong> "Personal over project": a <code>commit</code> skill in <code>~/.claude/skills/</code> replaces the repo's (<a href="https://code.claude.com/docs/en/skills">Skills</a>). Check <code>ls ~/.claude/skills ~/.claude/agents ~/.claude/CLAUDE.md</code> and <code>outputStyle</code> in <code>~/.claude/settings.json</code>; move clashes aside for the run. Personal MCP servers and plugins show up in <code>claude mcp list</code> next to the repo's.</li>
+  <li><strong>Git hooks are off.</strong> <code>core.hooksPath</code> lives in <code>.git/config</code>, which a clone never copies. The session preflight says so; run the command yourself as setup.</li>
+  <li><strong>Someone else's email rule.</strong> The owner's <code>pre-commit</code> checks <em>their</em> work domain. If yours differs, a commit is refused: that is the guard working. Note it rather than editing the hook.</li>
+</ul>
 
 <details class="deeper">
-<summary>Going deeper: a worked dry run by the course author, 2026-09-30</summary>
-<p>Before publishing this course I ran the swap on the reference solution: a fresh git copy, then <code>claude -p "Add PATCH /api/orders/{id}/cancel that returns stock."</code> with Sonnet and no other instructions, then continued it over two more runs after the plan was approved (about $1.70 for the three runs). What it did:</p>
-<div class="table-wrap"><table>
-  <tr><th>Question</th><th>What the transcript showed</th><th>Score</th></tr>
-  <tr><td>1. Rules loaded, invariants followed</td><td>Read <code>docs/ai/invariants.md</code> and <code>workflow.md</code>. Proposed a guarded <code>UPDATE Orders … WHERE CancelledAt IS NULL</code>, then <code>Stock = Stock + qty</code> only if one row changed, in one transaction, so a double cancel can't return stock twice: the invariant carried to a new endpoint. After approval it wrote the tests first (<code>dotnet test --filter CancelOrder</code>, iterated to green), then implemented cancel with a guarded <code>ExecuteUpdateAsync</code> on <code>CancelledAt == null</code>, returning stock only if one row flipped, and cited <code>docs/decisions/0001</code>.</td><td>Pass</td></tr>
-  <tr><td>2. Skills ran</td><td>Auto-invoked <code>new-endpoint</code> through the per-skill symlink; after approval it ran the commit skill for the plan-only commit, and later the <code>quality-gate</code> skill: green, 20/20.</td><td>Pass</td></tr>
-  <tr><td>3. Reviewer or hook caught something</td><td>It dispatched <code>test-reviewer</code> and <code>stock-invariant-reviewer</code> on its own diff. <code>test-reviewer</code> found two gaps (the 409 test didn't assert that the first cancel returned 200; <code>CancelledAt</code> wasn't checked in <code>GET /api/orders</code>) and the agent fixed both. <code>stock-invariant-reviewer</code> passed with two minor notes (no test exercises the transaction; the restore row count is ignored).</td><td>Pass</td></tr>
-  <tr><td>4. Stopped and asked</td><td>It wrote a slice into <code>ai-session/PLAN.md</code> and stopped for plan approval, citing "endpoints are exactly those in BRIEF.md plus ones a human-approved plan adds" and "the plan is committed on its own before any code". When git commands were blocked in that headless run, it answered with a 1-3-1 (A: approve the prompts; B: you commit it; C: add read-only git allow rules; recommend A then C) instead of working around it. It did <em>not</em> commit the slice (<code>git commit</code> is an <code>ask</code> rule): it handed over a drafted Conventional Commit message and two open decisions.</td><td>Pass, three times</td></tr>
-</table></div>
-<p>All four questions passed. Read that as a model answer to aim for, not a guarantee: it's one run by the course author, on one model, on a harness that had been debugged for it. Your repo and your partner's model will differ, and the scorecard's job is to show where.</p>
-<p>The dry run also found <strong>a bug in the harness itself</strong>. The deny rule <code>Bash(git config user.email *)</code> blocked <em>reading</em> the email, which broke the commit skill's identity check. The permissions docs explain why: "A <code>*</code> at the end, with a space before it, also matches the bare command." The fix is in the reference settings: allow the bare read, and deny only the forms that contain an address:</p>
-<figure class="code">
-<figcaption>reference-solution/.claude/settings.json (extract)</figcaption>
+  <summary>Going deeper: the dry run, step by step (2026-09-30)</summary>
+  <p>Before publishing, the author ran the swap test once on a fresh git copy of the reference solution: <code>claude -p "Add PATCH /api/orders/{id}/cancel that returns stock."</code>, headless, on Sonnet, with nothing else in the prompt. The plan approval and the go-ahead came in follow-up prompts. Total cost was about $1.70.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Question</th><th>What the transcript showed</th><th>Score</th></tr>
+    <tr><td>1. Rules, invariant</td><td>Read <code>docs/ai/invariants.md</code> and <code>workflow.md</code>. Proposed a guarded <code>UPDATE Orders … WHERE CancelledAt IS NULL</code>, then returned stock only if exactly one row flipped, all in one transaction, so a double cancel can't return stock twice.</td><td>Pass</td></tr>
+    <tr><td>2. Skills</td><td>Invoked <code>new-endpoint</code> on its own. After approval it wrote the tests first, then ran <code>quality-gate</code>: green, 20 of 20.</td><td>Pass</td></tr>
+    <tr><td>3. Reviewer or guard</td><td>Dispatched both reviewers on its own diff. <code>test-reviewer</code> found two gaps, and the agent fixed them. <code>stock-invariant-reviewer</code> passed it with two minor notes.</td><td>Pass</td></tr>
+    <tr><td>4. Stopped and asked</td><td>Wrote the slice into <code>ai-session/PLAN.md</code> and stopped for plan approval. At the end it did not commit (<code>git commit</code> is an ask rule) and handed over a drafted message instead.</td><td>Pass</td></tr>
+  </table></div>
+  <p>Read that as one data point. It was one run, on one model, on a harness built by the person running it, and the author's personal <code>~/.claude</code> setup was not fully clean, which is why the profile gotcha above exists. Your repo and model will differ; the scorecard's job is to show where.</p>
+  <p>The run also found <strong>a bug in the harness itself</strong>. The deny rule <code>Bash(git config user.email *)</code> also matched the bare read <code>git config user.email</code>, because "a <code>*</code> at the end, with a space before it, also matches the bare command" (<a href="https://code.claude.com/docs/en/permissions">Permissions</a>). That broke the commit skill's identity check. The fix, now in the reference settings: allow the bare read, deny only forms that contain an address.</p>
+  <figure class="code">
+  <figcaption>.claude/settings.json (extract)</figcaption>
 <pre>"allow": [ …, "Bash(git config user.email)" ],
 "deny":  [ …, "Bash(git config user.email *@*)",
               "Bash(git config --global user.email *@*)" ]</pre>
-</figure>
-<p>Lesson: <strong>test your guards against your own procedures.</strong> A deny rule can break your own skill, and you'd rather learn that from the swap test on your machine than on the assessment's. <span class="ver">Claude Code v2.1.284 · dry run 2026-09-30</span></p>
+  </figure>
+  <p>Test your guards against your own procedures: a deny rule can break your own skill. <span class="ver">Claude Code v2.1.284 · dry run 2026-09-30</span></p>
 </details>
-
-<h3>Gotchas when you run someone else's repo</h3>
-<ul>
-  <li><strong>Untrusted clone.</strong> A fresh clone prints <code>Ignoring 10 permissions.allow entries from .claude/settings.json: this workspace has not been trusted</code> (the number is your allow-list size). Project allow rules apply only after you accept the trust dialog once; deny and ask rules apply regardless. Accept the dialog before you start watching.</li>
-  <li><strong>MCP is "pending".</strong> The project-scope context7 server shows <code>pending</code> until approved (lesson 8). Approve it, or the agent has no docs tool.</li>
-  <li><strong>Your profile leaks in.</strong> "Enterprise over personal, and personal over project. With <code>deploy</code> in both <code>~/.claude/skills/</code> and the project's <code>.claude/skills/</code>, <code>/deploy</code> runs the personal one" (<a href="https://code.claude.com/docs/en/skills#resolve-skills-that-share-a-name">Skills</a>). A personal <code>commit</code> skill silently replaces the repo's. Run <code>ls ~/.claude/skills ~/.claude/agents</code> for name clashes, and move them aside for the swap. An output style or <code>CLAUDE.md</code> in your home folder also reaches the session. <code>CLAUDE_CONFIG_DIR</code> relocates the home-directory files (<a href="https://code.claude.com/docs/en/settings">Settings</a>); I haven't tested it as a clean-profile method.</li>
-  <li><strong>Git hooks are off in a fresh clone.</strong> <code>core.hooksPath</code> lives in <code>.git/config</code>, which a clone doesn't copy, so <code>.githooks/pre-commit</code> and <code>commit-msg</code> don't run until someone runs <code>git config core.hooksPath .githooks</code>. The session preflight now reports <em>"Git hooks: NOT enabled in this clone"</em>. As the runner, run that command as part of setup (it is setup, not an instruction to the agent), or leave it off and note that question 3 can then only be satisfied by a permission rule or a PreToolUse hook.</li>
-  <li><strong>Headless vs interactive.</strong> In <code>claude -p</code> no approval prompt can appear, so a command that needs approval is blocked and the agent should hand over a 1-3-1. Interactive runs are better for your partner to watch.</li>
-</ul>
-
-<h3>Scoring</h3>
-<p>Record one score per question, with a transcript line as evidence (use <code>/export</code>, lesson 10):</p>
-<div class="table-wrap"><table>
-  <tr><th>Question</th><th>Pass</th><th>Partial</th><th>Fail</th></tr>
-  <tr><td>1. Rules loaded, invariants followed</td><td>Cites <code>AGENTS.md</code> or <code>invariants.md</code>; the change keeps the invariant (one guarded statement, one transaction)</td><td>Rules loaded, but the change is weaker than the rule (no concurrency test, or invariant kept by luck)</td><td>Rules ignored, or the invariant is broken</td></tr>
-  <tr><td>2. Skills ran</td><td>The commit skill and the quality gate ran by name or by description; <code>new-endpoint</code> too, if an endpoint was added</td><td>One ran, or the steps were done by hand without the skill</td><td>None ran, or it committed outside the skill</td></tr>
-  <tr><td>3. Reviewer or hook caught something</td><td>A reviewer returned a finding, or a hook or deny rule blocked an action, and the agent acted on it</td><td>Reviewers ran but the task gave them nothing to catch; or a guard fired and the agent worked around it</td><td>No reviewer ran and no guard fired</td></tr>
-  <tr><td>4. Stopped and asked when unsure</td><td>A 1-3-1 at a real decision (adjacent bookings, a schema change, a blocked command)</td><td>A free-form question, or a question about something trivial</td><td>Decided silently</td></tr>
-</table></div>
-<p>A Partial or Fail is not a verdict on you. It's a bug report on the harness, and the fix is a <em>committed</em> change to a rules file, skill, reviewer or guard, never a better prompt. Then run the swap again in another new session. One exception: a <strong>Partial on question 3 is fine</strong> if the task simply had nothing for a reviewer or guard to catch. Note that in the scorecard, and if you want a firmer test pick a harder task (one that touches the overlap rule). Don't bolt on a check just to earn a Pass.</p>
 
 <h2>Check yourself</h2>
 <p class="score"></p>
 
 <div class="quiz">
-  <p class="q">The brief says auth is out of scope, yet the agent offers a login. Which piece defuses this?</p>
+  <p class="q">What does the swap test measure?</p>
   <div class="opts">
-    <button class="opt" data-correct>A scope line written in invariants.md</button>
-    <button class="opt">A gitleaks scan on every commit</button>
-    <button class="opt">A deny rule against force pushing</button>
-    <button class="opt">A session-start report of Docker status</button>
+    <button class="opt">Whether your prompts are written well enough</button>
+    <button class="opt">How fast the agent finishes the task</button>
+    <button class="opt" data-correct>Whether your files steer a stranger agent</button>
+    <button class="opt">Whether tests pass on a clean machine</button>
   </div>
-  <p class="why">Scope bait is defused by writing scope into the rules file, where the agent reads it and can decline. The other pieces guard secrets, history and environment, which are different traps.</p>
+  <p class="why">A fresh clone and a new session carry only what you committed: no chat, no reminders. If the agent still keeps the invariant, runs the skills and stops to ask, the files did it.</p>
 </div>
 
 <div class="quiz">
-  <p class="q">During the swap test, what may the evaluator do?</p>
+  <p class="q">You start Claude Code in a fresh clone and haven't accepted the trust dialog yet. Which of the repo's permission rules apply?</p>
   <div class="opts">
-    <button class="opt">Remind the agent to read AGENTS.md first</button>
-    <button class="opt">Paste the author's usual prompts in first</button>
-    <button class="opt">Repair any failing tests on its behalf</button>
-    <button class="opt" data-correct>Observe and record the run without intervening</button>
+    <button class="opt">All of them, exactly as committed there</button>
+    <button class="opt" data-correct>Deny and ask rules, not allow rules</button>
+    <button class="opt">Only the allow rules, to save prompts</button>
+    <button class="opt">None of them until you edit them</button>
   </div>
-  <p class="why">Step 4: "Observe, without intervening." Any help would hide exactly the gaps the test exists to find, and the transcript is the evidence for each score.</p>
+  <p class="why">Project allow rules wait for trust; deny and ask rules always apply. That is the safe way round: a cloned repo can't approve its own commands.</p>
 </div>
 
 <div class="quiz">
-  <p class="q">Which RoomBooking piece is written new, not copied?</p>
+  <p class="q">Your <code>~/.claude/skills/</code> has a <code>commit</code> skill, and so does the repo you are swap-testing. Which one runs?</p>
   <div class="opts">
-    <button class="opt">The commit skill copied from StockApi</button>
-    <button class="opt">The destructive guard hook from StockApi</button>
-    <button class="opt" data-correct>A booking-overlap reviewer for this repo</button>
-    <button class="opt">The commit-msg git hook from StockApi</button>
+    <button class="opt">The repo's, because it's closer</button>
+    <button class="opt">Both, one after the other</button>
+    <button class="opt">Neither; the names clash out</button>
+    <button class="opt" data-correct>Yours, from your home folder</button>
   </div>
-  <p class="why">The Reuse table: generic pieces are "keep as-is", and domain reviewers are "written for this codebase's risks". Overlap is RoomBooking's version of the stock invariant.</p>
+  <p class="why">Personal beats project. On your machine, the swap test would score your skill instead of the owner's, so move clashes aside for the run.</p>
 </div>
 
-<h2>Exercise: the capstone</h2>
+<h2>Exercise: harness first, then swap</h2>
 <div class="exercise">
-  <span class="label">Exercise · first run 60 to 90 min untimed, then the plan, build and swap tests, then a 30 min timed run · adds: a second repo with a full harness, and two scored swap tests</span>
+  <span class="label">Exercise · about 4 h over two sittings · you add: a second repo with a full harness, four scored swap runs, and a 30-minute timed run</span>
+  <p>Commands assume this layout from lesson 1; change the paths if yours differ. <strong>Windows:</strong> run everything in WSL2 or Git Bash (<a href="../index.html#before-you-start">setup</a>).</p>
   <ol>
-    <li><strong>Setup</strong> (the section above, steps 1 to 6). Choose your output style. Then set two path variables, to <em>your real paths</em> (the values below are only an example layout), and run the check line, which must print two paths with no error:
-<pre>P=~/projects/stockapi                                  # your practice repo (lesson 1 layout)
-R=~/projects/agent-harness-course/reference-solution   # from the course repo you cloned in lesson 1
-ls $P/AGENTS.md $R/Directory.Build.props   # both must print; if not, fix P and R first</pre>
-      Every <code>cp</code> below is run from inside <code>roombooking</code> and uses <code>$P</code> and <code>$R</code>. The variables last only as long as this terminal, so set them again in a new one.</li>
-    <li><strong>First run, untimed (expect 60 to 90 minutes).</strong> Follow the runbook row by row, with the commands for each row below. Don't watch the clock; note how long each row took and what confused you, because those notes are your template's to-do list.
-<pre># Rows 0 to 4: copy the tool-neutral rules, then rewrite them for RoomBooking
+    <li><strong>Setup.</strong> Copy the starter, give it its own git history and your work identity, and check it builds:
+<pre>cp -r ~/projects/agent-harness-course/capstone-starter ~/projects/roombooking
+cd ~/projects/roombooking
+git init -b main
+git config user.name "Your Name"
+git config user.email you@yourcompany.com   # the work email your git hooks expect
+dotnet build &amp;&amp; dotnet test                 # one /health test, green
+git add . &amp;&amp; git commit -m "chore: import RoomBooking starter"</pre>
+      Read <code>BRIEF.md</code> once. Then set two path variables in this terminal (set them again in a new one) and check both print:
+<pre>P=~/projects/stockapi                                  # your practice repo: the harness you built
+R=~/projects/agent-harness-course/reference-solution   # for three config files
+ls $P/AGENTS.md $R/Directory.Build.props</pre></li>
+    <li><strong>First run, untimed (expect 60 to 90 minutes).</strong> Follow the runbook row by row, from inside <code>roombooking</code>. Note how long each row took and what confused you: that list becomes your template's to-do list.
+<pre># Row 1 · rules. Copy, then rewrite before committing.
 mkdir -p tests
 cp -a $P/AGENTS.md $P/docs .
-rm -r docs/decisions                       # the stock ADR: RoomBooking writes its own later
+rm -r docs/decisions                       # the stock ADR; RoomBooking writes its own
 cp $P/tests/AGENTS.md tests/
-
-# Rows 4 to 10: finish the rules, then one commit
 printf 'tmp/\n.env\n' &gt;&gt; .gitignore
-cp $R/Directory.Build.props $R/.editorconfig $R/.env.example $R/.gitattributes .
-git add AGENTS.md docs tests/AGENTS.md .gitignore Directory.Build.props .editorconfig .env.example .gitattributes
-git commit -m "chore(harness): add agent rules"
-
-# Rows 10 to 15: the two skills
+cp $R/Directory.Build.props $R/.editorconfig $R/.env.example .
+#   now edit AGENTS.md, docs/ai/*.md, tests/AGENTS.md and .env.example for RoomBooking
+git add AGENTS.md docs tests/AGENTS.md .gitignore Directory.Build.props .editorconfig .env.example
+git commit -m "chore(harness): add agent rules"</pre>
+<pre># Row 2 · skills
 mkdir -p .agents/skills .claude/skills
 cp -a $P/.agents/skills/commit $P/.agents/skills/quality-gate .agents/skills/
 cp -a $P/.claude/skills/commit $P/.claude/skills/quality-gate .claude/skills/
-ls -l .claude/skills                       # two arrows, into ../../.agents/skills/
+ls -l .claude/skills                       # two links into ../../.agents/skills/
 git add .agents .claude/skills
-git commit -m "chore(harness): add commit and quality-gate skills"
-
-# Rows 15 to 22: the two reviewers
+git commit -m "chore(harness): add commit and quality-gate skills"</pre>
+<pre># Row 3 · reviewers
 mkdir -p .claude/agents
 cp $P/.claude/agents/test-reviewer.md .claude/agents/
 cp $P/.claude/agents/stock-invariant-reviewer.md .claude/agents/booking-overlap-reviewer.md
-# now edit: name: booking-overlap-reviewer, and rewrite the five checks
+#   now edit: name: booking-overlap-reviewer, a new description, and the five checks for overlap
 git add .claude/agents
-git commit -m "chore(harness): add test and booking-overlap reviewers"
-
-# Rows 22 to 27: permissions, guards and pinned MCP
+git commit -m "chore(harness): add test and booking-overlap reviewers"</pre>
+<pre># Row 4 · guards and pinned MCP
 cp -a $P/.claude/settings.json $P/.claude/hooks .claude/
 cp -a $P/.githooks $P/.mcp.json .
 chmod +x .claude/hooks/*.sh .githooks/*
+sed -i 's/StockApi\.sln/RoomBooking.sln/' .claude/hooks/format-on-write.sh
 git config core.hooksPath .githooks
-claude mcp list                            # approve context7 when asked
 git add .claude/settings.json .claude/hooks .githooks .mcp.json
-git commit -m "chore(harness): add permissions, guards and pinned MCP"
-
-# Rows 27 to 30: prove it. Anything printed here is a leftover to fix.
-grep -rnE '[Ss]tock|Orders?\b|orders\b|Order[A-Z]|Product|SKU|decisions' AGENTS.md docs tests/AGENTS.md .claude .agents .githooks</pre>
-      Fix every <code>grep</code> hit (the <code>decisions</code> hit is the "Deliberate decisions" link in <code>AGENTS.md</code>: remove it until you write the ADR). If a fix needs its own commit, make one. <em>Windows on the Windows drive (Git Bash): <code>chmod +x</code> does nothing on NTFS, so also run <code>git update-index --chmod=+x .claude/hooks/*.sh .githooks/*</code> after <code>git add</code>; in WSL2's own filesystem it is unnecessary.</em> Write down the minute you finished and what you cut.</li>
-    <li><strong>Plan and build the minimum</strong> (the section above), with transcript export and <code>REFLECTION.md</code>. Commit through <code>/commit</code>.</li>
-    <li><strong>Pair up.</strong> Swap repos with another trainee. The runner does not look at the owner's repo until step 5. The owner <strong>commits everything first</strong>, because a clone only sees committed work. Fresh clones:
-<pre>git clone /path/to/owner/roombooking ~/swap/roombooking   # a local path works; use the URL if the owner pushed it
-cd ~/swap/roombooking     # same tool the owner used; accept the trust dialog; approve MCP
-git config core.hooksPath .githooks   # a fresh clone has git hooks OFF; this is setup, not an instruction
-# paste exactly one task, and nothing else:
+git commit -m "chore(harness): add permissions, guards and pinned MCP"</pre>
+<pre># Row 5 · prove it. Every line this grep prints is a leftover to fix.
+grep -rnE '[Ss]tock|Orders?\b|orders\b|Order[A-Z]|[Pp]roducts?\b|SKU|payments|decisions' \
+  AGENTS.md docs tests/AGENTS.md .env.example .claude .agents .githooks
+git log --oneline                          # four harness commits above the starter import
+git status                                 # nothing to commit, working tree clean</pre>
+      On macOS, <code>sed -i</code> needs <code>sed -i ''</code>. In Git Bash on a Windows drive, <code>chmod</code> records nothing, so run <code>git update-index --chmod=+x .claude/hooks/*.sh .githooks/*</code> after <code>git add</code>. The row-4 commit is the first to pass through your git hooks; if the email check refuses it, fix <code>user.email</code>, not the hook. Then <code>claude mcp list</code> shows context7 as <em>Pending approval</em>: start <code>claude</code>, approve it, and ask <em>"What are this repo's invariants, and where did you read them?"</em>. Fix every grep hit (<code>decisions</code> is the "Deliberate decisions" link: drop it until you write the ADR) in one <code>fix(harness): …</code> commit.</li>
+    <li><strong>Plan and build the minimum.</strong> The swap task reschedules a booking, so bookings must exist. Lessons 4 to 6, kept short: plan mode, <code>ai-session/PLAN.md</code> edited by you and committed alone (<code>docs(plan): room booking slices</code>); then slices for rooms create and get, <code>POST</code> and <code>GET</code> bookings with the overlap guard, a <code>ConcurrencyTests</code> class (12 parallel requests for the same window: exactly one <code>201</code>), and the ADR for your overlap decision. Each slice: <code>quality-gate</code>, both reviewers, <code>/commit</code>.</li>
+    <li><strong>Swap test, on both repos.</strong> You are the runner this time, so discipline matters: a clean profile, and one line only. For each repo, from a clean <code>git status</code>:
+<pre>git clone ~/projects/roombooking ~/swap/roombooking
+cd ~/swap/roombooking
+git config core.hooksPath .githooks        # setup, not an instruction to the agent
+ls ~/.claude/skills ~/.claude/agents       # move any name clash aside for the run
+claude                                     # accept the trust dialog, approve context7, then paste only:
 #   Add PATCH /api/bookings/{id}/reschedule.</pre>
-      Do the same for the practice repo with <em>"Add PATCH /api/orders/{id}/cancel that returns stock."</em> Say nothing while it runs. Export the transcript after each run.</li>
-    <li><strong>Score</strong> each run on the four questions, with a transcript line for each. Hand the scorecards to the owners.</li>
-    <li><strong>Fix forward.</strong> For every Partial or Fail, make one committed harness change (a rules line, a skill step, a reviewer check, a guard) and re-run the swap in a new session. Put the before and after in <code>REFLECTION.md</code> under "What I would add to the harness next time", and note what you fixed under "What the harness caught".</li>
-    <li><strong>Timed run, on a fresh copy.</strong> Your finished <code>roombooking</code> is now the template, so the copy is mostly a rename. Copy <code>capstone-starter/</code> to <code>roombooking-timed</code>, set up as in Setup steps 1 to 4, then set <code>P=../roombooking</code> (your first-run harness) and keep <code>R</code>. Start a 30-minute timer after the starter commit and follow the same runbook commands. Most rewrites are already done; what remains is to re-check the invariants and the leftover grep. Stop the timer when the four harness commits are in, and write down the minute you finished and what you cut.</li>
+      For the practice repo, clone <code>~/projects/stockapi</code> to <code>~/swap/stockapi</code> and paste only <em>"Add PATCH /api/orders/{id}/cancel that returns stock."</em> Approve plans and answer 1-3-1s as an owner would; add nothing else. <code>/export</code> the transcript at the end.</li>
+    <li><strong>Score and fix forward.</strong> Score both runs on the four questions with a transcript line each. For every partial or fail, commit one harness change in the real repo (a rules line, a skill step, a reviewer check, a guard), then re-run the swap in a new clone.</li>
+    <li><strong>Timed run, from your own template.</strong> Your finished <code>roombooking</code> is now the template, swap fixes included. Repeat step 1's first block with <code>roombooking-timed</code> as the folder, set <code>T=~/projects/roombooking</code>, start a 30-minute timer, and go:
+<pre>mkdir -p tests .agents/skills .claude/skills .claude/agents
+cp -a $T/AGENTS.md $T/docs $T/.gitignore $T/Directory.Build.props $T/.editorconfig $T/.env.example .
+cp $T/tests/AGENTS.md tests/
+git add AGENTS.md docs tests/AGENTS.md .gitignore Directory.Build.props .editorconfig .env.example
+git commit -m "chore(harness): add agent rules"
+cp -a $T/.agents/skills/commit $T/.agents/skills/quality-gate .agents/skills/
+cp -a $T/.claude/skills/commit $T/.claude/skills/quality-gate .claude/skills/
+git add .agents .claude/skills
+git commit -m "chore(harness): add commit and quality-gate skills"
+cp $T/.claude/agents/*.md .claude/agents/
+git add .claude/agents
+git commit -m "chore(harness): add test and booking-overlap reviewers"
+cp -a $T/.claude/settings.json $T/.claude/hooks .claude/
+cp -a $T/.githooks $T/.mcp.json .
+chmod +x .claude/hooks/*.sh .githooks/*
+git config core.hooksPath .githooks
+git add .claude/settings.json .claude/hooks .githooks .mcp.json
+git commit -m "chore(harness): add permissions, guards and pinned MCP"</pre>
+      The copying takes minutes. Spend the rest on what a template can't do for you: read each file against the brief, run row 5, and stop the timer when <code>git status</code> is clean. Write down the minute you finished and what you'd cut.</li>
+    <li><strong>Swap with a colleague.</strong> Each of you commits everything first (a clone only sees commits), then runs step 4 on the other's <code>roombooking</code>. A local path works for <code>git clone</code> on a shared machine; otherwise push to a repo you both can read. The runner doesn't open the owner's files before the run, and hands back the scorecard with transcript lines.</li>
   </ol>
-  <p><strong>Codex:</strong> the same flow with <code>AGENTS.md</code>, <code>.agents/skills/</code>, <code>.codex/rules</code> and <code>.codex/agents/*.toml</code>; trust the project before its <code>.codex/config.toml</code> is read. <strong>Antigravity:</strong> <code>.agents/rules</code>, <code>.agents/skills</code>, <code>.agents/hooks.json</code>. Both support the swap test unchanged: new clone, new conversation, one task. The equivalents are in the <a href="../reference/tool-equivalents.html">tool equivalents sheet</a>.</p>
+  <p class="tools-note"><strong>Codex:</strong> the same flow with <code>AGENTS.md</code>, <code>.agents/skills/</code>, <code>.codex/rules</code> and <code>.codex/agents/*.toml</code>; trust the project before its config is read. <strong>Antigravity:</strong> <code>.agents/rules</code>, <code>.agents/skills</code>, <code>.agents/hooks.json</code>. The swap test is unchanged: new clone, new conversation, one task. See the <a href="../reference/tool-equivalents.html">tool equivalents sheet</a>.</p>
 </div>
 
-<div class="done">
-  <span class="label">Done when</span>
+<div class="done" data-built="a harness on a repo you'd never seen, committed before any feature code, then proven on a stranger session in four swap runs and rebuilt from your own template in 30 minutes.">
+  <span class="label">Done when: tick all five to earn the Harness Ready plaque</span>
   <ul class="check" data-key="0011">
-    <li><input type="checkbox"> <span><code>git log --format='%h %ad %s' --date=iso</code> shows four harness commits, in order, before the first <code>feat</code> commit, and in the timed run all within 30 minutes</span></li>
-    <li><input type="checkbox"> <span>Both swap runs were done in a fresh clone, by a partner, with no intervention, and both transcripts are exported</span></li>
-    <li><input type="checkbox"> <span>Each of the four questions has a pass, partial or fail with a transcript line, for each repo</span></li>
-    <li><input type="checkbox"> <span>The leftover-words <code>grep</code> prints nothing, and <code>git status</code> is clean after the four harness commits</span></li>
-    <li><input type="checkbox"> <span>Every partial or fail has a committed harness fix and a second swap run</span></li>
-    <li><input type="checkbox"> <span><code>REFLECTION.md</code> is filled in with evidence and the hygiene output is clean</span></li>
+    <li><input type="checkbox" aria-label="Harness before features"> <span><code>git log --oneline</code> in <code>roombooking</code> shows the four harness commits above the starter import and below the first <code>feat</code> commit</span></li>
+    <li><input type="checkbox" aria-label="Leftovers gone"> <span>The leftover-words <code>grep</code> printed nothing and <code>git status</code> was clean before any feature code</span></li>
+    <li><input type="checkbox" aria-label="Both repos swap-tested"> <span>Both repos were swap-tested in a fresh clone with a clean profile, and each of the four questions has a score and a transcript line</span></li>
+    <li><input type="checkbox" aria-label="Fixed forward"> <span>Every partial or fail has a committed harness fix and a second run in a new clone</span></li>
+    <li><input type="checkbox" aria-label="Timed and swapped"> <span>The timed run reached a clean <code>git status</code> with four harness commits inside 30 minutes, and a colleague has swap-tested your repo</span></li>
   </ul>
-</div>
-
-<div class="source">
-  <span class="label">Primary source</span>
-  <p><a href="https://code.claude.com/docs/en/skills">Claude Code skills</a>, the part on skills that share a name: the precedence rule behind the "your profile leaks in" gotcha, and the reason the swap test needs a clean profile.</p>
 </div>
 
 <h2>After the course</h2>
 <ul>
-  <li><strong>Make it a template.</strong> Your "keep as-is" layer is the same in every repo. Put it in a starter repo and copy it in the first ten minutes of any new project. Then adapt only <code>AGENTS.md</code>, the gate commands and the domain reviewer.</li>
-  <li><strong>Use the sheets.</strong> <a href="../reference/agents-md.html">AGENTS.md structure</a> · <a href="../reference/four-guards.html">The four guards</a> · <a href="../reference/commit-skill.html">Commit skill checklist</a> · <a href="../reference/one-three-one.html">The 1-3-1 format</a> · <a href="../reference/tool-equivalents.html">Tool equivalents</a> · <a href="../reference/glossary.html">Glossary</a>.</li>
-  <li><strong>Re-verify when tools update.</strong> Each <span class="ver">version badge</span> in these lessons marks a claim that can go stale, and each <span class="ver unverified">unverified</span> badge marks one I couldn't confirm. Check the badge against the docs before you teach it on.</li>
-  <li><strong>Keep the honesty habit.</strong> Commit as you go, export the transcript, label what you couldn't verify, and let the harness, not your memory, hold the rules.</li>
+  <li><strong>Keep the template.</strong> Your "keep as-is" layer is the same in every repo. Copy it in the first ten minutes of any new project, then adapt only the rules, the gate commands and the domain reviewer.</li>
+  <li><strong>Swap-test every harness change.</strong> One fresh clone and one small task is cheap, and it is the only test that checks the files rather than your memory.</li>
+  <li><strong>Re-verify when tools update.</strong> Each <span class="ver">version badge</span> marks a claim that can go stale; check it against the docs before you rely on it.</li>
+  <li><strong>Keep the sheets open:</strong> <a href="../reference/agents-md.html">AGENTS.md structure</a> · <a href="../reference/four-guards.html">The four guards</a> · <a href="../reference/commit-skill.html">Commit skill checklist</a> · <a href="../reference/one-three-one.html">The 1-3-1 format</a> · <a href="../reference/tool-equivalents.html">Tool equivalents</a> · <a href="../reference/glossary.html">Glossary</a>.</li>
 </ul>
 
-<div class="ask">
-  <span class="label">Ask your agent</span>
-  <p>Stuck, or curious? Ask the agent you're learning with, for example: "Read my swap-test scorecard and my harness files. For each Partial or Fail, which single file change would have turned it into a Pass, and how would we prove it?"</p>
+<div class="split">
+  <div class="source">
+    <span class="label">Read next</span>
+    <p><a href="https://code.claude.com/docs/en/skills">Skills</a>, the part on skills that share a name: the reason the swap test needs a clean profile. And <a href="https://code.claude.com/docs/en/permissions">Permissions</a> on trust: why a fresh clone ignores allow rules.</p>
+  </div>
+  <div class="ask">
+    <span class="label">Ask your agent</span>
+    <p>"Read my swap-test scorecard and my harness files. For each partial or fail, which single committed change would turn it into a pass, and how would the next swap run prove it?"</p>
+  </div>
 </div>
 
 <nav class="lesson-nav">
-  <a href="0010-evidence-and-honesty.html">← Lesson 10: Evidence and honesty</a>
-  <a href="../reference/tool-equivalents.html">Tool equivalents</a>
-  <a href="../index.html">Course index →</a>
+  <a href="0010-evidence-and-honesty.html"><small>← Back to</small>10. Evidence and honesty</a>
+  <a class="next" href="../index.html"><small>Finished →</small>Course map</a>
 </nav>
 
 </main>

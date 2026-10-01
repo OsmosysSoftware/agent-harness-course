@@ -5,8 +5,8 @@
 
 ## Context
 Orders reserve stock. Under concurrency, a read-then-write (load `Product`, check `Stock >= qty`, assign,
-`SaveChanges`) lets two requests read the same value and both succeed. This is how a previous assessment
-submission oversold: 12 concurrent orders for 3 units succeeded more than 3 times. It was introduced to
+`SaveChanges`) lets two requests read the same value and both succeed. This is how a real
+session's code oversold: 12 concurrent orders for 3 units succeeded more than 3 times. It was introduced to
 make EF Core InMemory tests pass, because InMemory can't translate `ExecuteUpdateAsync` (and it rejects
 transactions by default, so the rewrite loses those too).
 

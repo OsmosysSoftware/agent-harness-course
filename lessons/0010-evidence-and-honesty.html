@@ -10,257 +10,296 @@
 <body data-lesson="0010">
 <main>
 
-<p class="kicker"><a href="../index.html">Agent Harness</a> · Lesson 10 of 11 · 16 min read + 35 min exercise</p>
-<h1>Evidence and honesty</h1>
-<p class="lede">Anything that shows how you worked (a plan, a tidy log, a reflection) can be produced afterwards, and an evaluator knows it. So the ranking is: what the tool recorded while you worked, then what git recorded, then files, and last of all what anyone, including an agent, wrote about it. Learn to produce the first kind and to say plainly when you can't.</p>
+<header class="lesson-head">
+  <span class="stage">Stage 10 of 11</span>
+  <h1>Evidence and honesty: a record your team can check</h1>
+  <p class="lede">Months from now, someone will ask why the code looks like this: a reviewer, a teammate taking over, you in an incident review. A note that says "I reviewed everything" can't answer that. The session transcript and an honest git history can. Keep them, read them before you share them, and never rewrite them.</p>
+  <div class="chips">
+    <span class="chip">12 min read</span>
+    <span class="chip">40 min exercise</span>
+    <span class="chip badge-chip">Plaque: Honest Log</span>
+  </div>
+</header>
+
+<div class="tldr">
+  <span class="label">In 30 seconds</span>
+  <ul>
+    <li>Records differ in strength. What the tool and git wrote <strong>while you worked</strong> beats what anyone wrote about it afterwards.</li>
+    <li>Save the <strong>raw transcript</strong>, but read it first: it holds everything the agent saw, and some teams keep transcripts out of the repo.</li>
+    <li>A short <code>REFLECTION.md</code> lists what you rejected or changed, each with a pointer. Mistakes on a shared branch get a new <strong>revert</strong> commit, never a rewrite.</li>
+  </ul>
+</div>
 
 <div class="recall">
   <span class="label">Recall</span>
-
   <div class="quiz">
-    <p class="q">After <code>/clear</code>, which instruction is still loaded?</p>
+    <p class="q">Lesson 7: the agent runs <code>git push --force origin main</code>. What stops it before git runs?</p>
     <div class="opts">
-      <button class="opt" data-correct>A rule written in AGENTS.md</button>
-      <button class="opt">A rule typed into chat</button>
-      <button class="opt">A rule stated in chat</button>
-      <button class="opt">A rule you pasted once</button>
+      <button class="opt" data-correct>Your deny rules and your guard hook.</button>
+      <button class="opt">The pre-commit hook that scans for secrets.</button>
+      <button class="opt">Only a polite line in your AGENTS.md.</button>
+      <button class="opt">A reviewer subagent that reads the diff.</button>
     </div>
-    <p class="why">Lesson 1: files in the repo root are loaded again in every session; conversation is gone. That is also why a transcript matters: it is the record of what was said and done in a session that no file keeps.</p>
+    <p class="why">The deny rules and the PreToolUse guard refuse the call itself. A sentence in <code>AGENTS.md</code> is only a request. Today adds the human half: you don't rewrite shared history either.</p>
   </div>
-
   <div class="quiz">
-    <p class="q">What does a correct 1-3-1 hand-over contain?</p>
+    <p class="q">Lesson 9: <code>/update-docs</code> finds a README line that the code contradicts. How is it labelled?</p>
     <div class="opts">
-      <button class="opt" data-correct>One problem, three options, one recommendation</button>
-      <button class="opt">One problem, one workaround, three retries</button>
-      <button class="opt">Three problems, one option, one summary</button>
-      <button class="opt">One question, three guesses, one commit</button>
+      <button class="opt" data-correct>STALE, with what the code does now.</button>
+      <button class="opt">TRUE, since the README itself says so.</button>
+      <button class="opt">UNVERIFIABLE, so it edits the code too.</button>
+      <button class="opt">Nothing, because it only checks the code.</button>
     </div>
-    <p class="why">Lesson 3: then the agent waits for the human's decision. Today you'll record each 1-3-1 you answered in <code>REFLECTION.md</code>, with evidence.</p>
+    <p class="why">A claim is TRUE, STALE or UNVERIFIABLE, each with evidence. Today you use the same three labels on notes about how the work was done.</p>
   </div>
-</div>
-
-<div class="note">
-  <span class="label">The win</span>
-  <p>By the end your repo holds an exported transcript and a <code>REFLECTION.md</code> in which every entry points at a commit or a transcript line. You'll have run the evaluator's own hygiene commands on your repo, and you'll have fixed what they found <em>forward</em>, with new commits and no rewritten history.</p>
 </div>
 
 <h2>What happened</h2>
 
 <div class="incident">
   <div class="happened">
-    <h4>What happened</h4>
-    <p>Trainee B's history, at the reviewed commit:</p>
-    <pre>0456e77 09-19 20:15:07 chore: target the
-        fulfillment service at .NET 10 … 7 files
-a29557f 09-19 20:15:07 feat: model products,
-        orders and stock alerts … 8 files
-6baafb4 09-19 20:15:07 feat: serve the product,
-        order and alert API … 16 files
-4e8c8db 09-19 20:15:07 test: cover order
-        atomicity and sentinel … 6 files</pre>
-    <p>Four well-named commits, 37 files between them, in the same second: "the work was done first and split into commits afterwards". Trainee C has 37 commits at 09-18 14:49:24 and 11 at 09-19 22:11:54; 56 commits in all share a timestamp. All 92 of their messages are conventional. The review: "A tidy log that isn't the real order of work is worse than a messy honest one."</p>
-    <p class="who">Trainee B, Trainee C · Claude Code, Antigravity · "rewritten" and "replayed" history</p>
+    <h4>Failed run</h4>
+    <p>One repository had four well-named commits stamped with the same second. Another had 56 commits sharing a single timestamp. Nobody writes 56 commits in one second: the history had been rewritten or replayed after the work was done, so it no longer showed the order of work.</p>
+    <p>In a third, a note said <em>"JWT rejected, not requested"</em>. One minute later, a commit added JWT.</p>
+    <p>In a fourth, the agent committed something unasked, and the developer then asked it to <strong>force-push</strong> over the remote branch. Only the server's branch protection refused.</p>
+    <p class="who">Four real sessions, anonymised</p>
   </div>
   <div class="harness">
-    <h4>What the harness does instead</h4>
-    <p>Commits happen when each slice is green, through the commit skill, so timestamps show the real sequence. A permission policy doesn't auto-allow <code>git rebase *</code>, and the destructive guard refuses history rewrites outright. The evaluator's command <code>git log --format='%ad' --date=iso | sort | uniq -c | sort -rn | head</code> then finds nothing, because nothing was replayed.</p>
-    <p>A messy honest log costs you some points of style. A replayed one costs you the credibility of everything else in the repo.</p>
+    <h4>With the habit</h4>
+    <p>Commits land as each slice goes green, so the timestamps <em>are</em> the order of work. Notes get checked against git before anyone trusts them. The unwanted commit gets undone by a new one:</p>
+    <pre>git revert &lt;commit&gt;     # a new commit that undoes it
+git log --oneline -2
+… Revert "docs: …"
+… docs: …</pre>
+    <p class="who">The mistake and its fix both stay visible. Every copy of the branch still agrees.</p>
   </div>
 </div>
 
-<div class="incident">
-  <div class="happened">
-    <h4>What happened</h4>
-    <p>Trainee A's agent committed unasked (<code>b456df0</code>, 09-20 18:46). Their transcript: "undo these changes (uncommit) — i did not want u to commit anything until I say so", then "rewrite the remote branch". The agent attempted a force-push; GitLab branch protection refused it. The fix became a revert commit, <code>56b7cd2</code> at 18:55: <code>Revert "docs: clarify native (5095) vs Docker (8080) ports; …"</code>.</p>
-    <p class="who">Trainee A · Claude Code · the honest outcome, reached by accident</p>
-  </div>
-  <div class="harness">
-    <h4>What the harness does instead</h4>
-    <p>The instinct to "rewrite the remote branch" is the wrong tool, and the force-push deny rule (lesson 7) protects the branch from the human as well as the agent. The revert is what you should do on purpose: it keeps both the mistake and its correction visible. Git's history is the second-strongest evidence you have. Don't spend it.</p>
-  </div>
+<h2>Which record to trust</h2>
+
+<p>Not all evidence is equal. The question for each kind is simple: when was it written, and by whom?</p>
+
+<figure class="diagram" data-intro="Four kinds of record, strongest first. It plays by itself; use <b>Back</b> and <b>Next</b> to go at your own pace." data-steps='[
+  {"cls":"s1","text":"<b>The raw transcript</b> is written by the tool as the session runs: every prompt, tool call and result, in order. It can’t show that anyone read the output, and because it holds everything the agent saw, it can hold secrets."},
+  {"cls":"s2","text":"<b>Git history</b> records what changed, who committed it, and when. It doesn’t say why. And it can be rewritten or replayed afterwards, which is what 56 commits in one second look like."},
+  {"cls":"s3","text":"<b>Files</b> show what exists now, not when it arrived. A plan committed in the same commit as the whole API, every box ticked, can’t prove it came first."},
+  {"cls":"s4","text":"<b>Notes, README files and reflections</b> explain why, in someone’s own words. Often an agent’s words. They are claims, like this note in a real repo."},
+  {"cls":"s5","text":"Check the claim against a stronger record. One minute after the note, a commit adds JWT. Label it <b>STALE</b>, exactly as <code>/update-docs</code> would in lesson 9."}
+]'>
+<div class="canvas">
+<!-- d2:l0010-evidence-ladder -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 450" role="img" aria-label="A ladder of evidence, strongest first. 1, the raw transcript: shows what was asked, run and seen, in order, but not that anyone read it, and it can hold secrets. 2, git history: what changed, by whom and in what order, but not why, and it can be replayed afterwards. 3, files in the repo: what exists now, but not when it arrived. 4, notes, README and reflections: claims, to check against 1 and 2. Example: a note says JWT was rejected, and a commit one minute later adds JWT, so the note is stale.">
+<defs><marker id="l10l-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<path class="l10-rail" d="M36,40 L36,404" marker-end="url(#l10l-head)"/><text class="l10-railtxt" transform="rotate(-90 26 222)" x="26" y="222">stronger  →  weaker</text>
+<g class="st s1"><rect class="l10-rung" x="70" y="24" width="450" height="88" rx="10"/><circle class="l10-num" cx="100" cy="68" r="17"/><text class="l10-numtxt" x="100" y="74">1</text><text class="l10-title" x="132" y="52">Raw transcript (.jsonl, /export)</text><text class="l10-proves" x="132" y="78">✓ what was asked, run and seen, in order</text><text class="l10-cant" x="132" y="100">✗ that anyone read it · it can hold secrets</text></g>
+<g class="st s2 s5"><rect class="l10-rung" x="70" y="126" width="450" height="88" rx="10"/><circle class="l10-num" cx="100" cy="170" r="17"/><text class="l10-numtxt" x="100" y="176">2</text><text class="l10-title" x="132" y="154">Git history</text><text class="l10-proves" x="132" y="180">✓ what changed, by whom, in what order</text><text class="l10-cant" x="132" y="202">✗ why · and it can be replayed afterwards</text></g>
+<g class="st s3"><rect class="l10-rung" x="70" y="228" width="450" height="88" rx="10"/><circle class="l10-num" cx="100" cy="272" r="17"/><text class="l10-numtxt" x="100" y="278">3</text><text class="l10-title" x="132" y="256">Files in the repo</text><text class="l10-proves" x="132" y="282">✓ what exists right now</text><text class="l10-cant" x="132" y="304">✗ when it arrived, or what it steered</text></g>
+<g class="st s4 s5"><rect class="l10-rung l10-claim" x="70" y="330" width="450" height="88" rx="10"/><circle class="l10-num" cx="100" cy="374" r="17"/><text class="l10-numtxt" x="100" y="380">4</text><text class="l10-title" x="132" y="358">Notes, README, reflections</text><text class="l10-proves" x="132" y="384">✓ why, in someone’s own words</text><text class="l10-cant" x="132" y="406">✗ anything, until checked against 1 and 2</text></g>
+<g class="st s4 s5"><text class="l10-head" x="560" y="40">Checking one claim</text><rect class="l10-card l10-claim" x="560" y="56" width="270" height="78" rx="8"/><text class="l10-cardname" x="574" y="80">a note in the repo says</text><text class="l10-quote" x="574" y="112">“JWT rejected, not requested”</text><path class="l10-link" d="M520,370 C540,370 540,95 556,95"/></g>
+<g class="st s5"><path class="arc" d="M695,138 L695,178" marker-end="url(#l10l-head)"/><text class="l10-small" x="706" y="164">check it against git</text><rect class="l10-card" x="560" y="186" width="270" height="78" rx="8"/><text class="l10-cardname" x="574" y="210">git log, one minute later</text><text class="l10-mono" x="574" y="242">a commit adds JWT</text><path class="l10-link" d="M520,170 C540,170 540,225 556,225"/><rect class="l10-verdict" x="560" y="290" width="270" height="40" rx="20"/><text class="l10-verdicttxt" x="695" y="316">STALE · git contradicts it</text><text class="l10-small" x="695" y="360" style="text-anchor:middle">Label each claim TRUE, STALE or</text><text class="l10-small" x="695" y="380" style="text-anchor:middle">UNVERIFIABLE, as in lesson 9.</text></g>
+</svg>
+<!-- /d2 -->
 </div>
-
-<h2>The evidence hierarchy</h2>
-<p>The evaluator's procedure (the checklist an evaluating agent follows when it marks a repo) opens with this ranking. It's the same order you should use on your own work:</p>
-<div class="table-wrap"><table>
-  <tr><th>Rank</th><th>Evidence</th><th>Why it ranks there</th></tr>
-  <tr><td>1</td><td>Raw session transcript (Claude Code <code>.jsonl</code>, Codex <code>.jsonl</code>, exported chat)</td><td>Recorded by the tool as it happened; shows who asked for what</td></tr>
-  <tr><td>2</td><td>Git history: file-add order, timestamps, authors, diffs</td><td>Hard to fake, but it <em>can</em> be replayed or rewritten (two of six were)</td></tr>
-  <tr><td>3</td><td>Files in the repo</td><td>Show what exists, not when or why it was written</td></tr>
-  <tr><td>4</td><td>Narrative docs (<code>PROCESS_NOTES</code>, <code>REFLECTION</code>, <code>SESSION_LOG</code>, README)</td><td>"These are CLAIMS. Usually agent-written. Verify each against 1–2; never score them as evidence alone."</td></tr>
-</table></div>
-<p>Each item has an incident in this course. Trainee A's <code>CLAUDE.md</code> (rank 3) was credited as deliberate orchestration, but git order (rank 2) showed it arrived in <code>c19c72a</code>, 31 minutes after the last feature commit. Trainee D's <code>PLAN.md</code> was "written before implementation" (rank 4), but it was first committed in <code>1009656</code> together with the entire API, and git can't show it came first. Trainee C's "JWT rejected" (rank 4) was contradicted by a commit (rank 2) one minute later. The next assessment's format states the consequence: the harness is checked at 0:30, "so order is enforced by the format rather than reconstructed from git".</p>
-<p>The evaluator labels each claim <strong>CONFIRMED</strong>, <strong>WRONG</strong> or <strong>UNVERIFIABLE</strong>, with a commit or transcript event as evidence. That is lesson 9's TRUE, STALE, UNVERIFIABLE under other names. Use the same three on your own docs, and write "I couldn't verify this" when it's the case. This course does it too: the badge <span class="ver unverified">unverified</span> marks what its author couldn't confirm.</p>
-
-<h2>Exporting the evidence</h2>
-<p>The required submission has <code>ai-session/&lt;raw transcript&gt;</code> "exported, unedited". Two forms exist, and you want both:</p>
-<ul>
-  <li><strong>Readable:</strong> <code>/export [filename]</code> "exports the current conversation as plain text. With a filename, writes directly to that file" (<a href="https://code.claude.com/docs/en/cmd">Commands</a>).</li>
-  <li><strong>Raw:</strong> Claude Code writes every message, tool use and result "to a plaintext JSONL file under <code>~/.claude/projects/</code>" (<a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code works</a>): <code>~/.claude/projects/&lt;project&gt;/&lt;session&gt;.jsonl</code> (on Windows with Git Bash that is <code>%USERPROFILE%\.claude\projects</code>; in WSL2 it is under the Linux home folder where you run Claude Code), with subagent transcripts under <code>&lt;session&gt;/subagents/</code>. <span class="ver">verified 2026-09-30</span> <dfn>JSONL</dfn> is "JSON Lines": one JSON object per line, so standard line tools work on it.</li>
-</ul>
-<p>The raw file is what an evaluator parses: it counts <code>tool_use</code> calls by name (<code>Skill</code>, <code>Agent</code>, <code>mcp__*</code>, <code>EnterPlanMode</code>) and finds the human prompts. You can run the same count. This line worked on a real session file on 2026-09-30:</p>
-<figure class="code">
-<figcaption>terminal, tested 2026-09-30</figcaption>
-<pre>grep -o '"type":"tool_use","id":"[^"]*","name":"[^"]*"' ai-session/transcript-*.jsonl \
-  | sed 's/.*"name":"//;s/"$//' | sort | uniq -c | sort -rn</pre>
 </figure>
-<p>If your harness ran, the output has <code>Skill</code> lines (your commit and quality-gate skills), <code>Agent</code> lines (reviewers) and <code>mcp__context7__…</code> lines. If it doesn't, a transcript that "shows" a harness is a claim, and you'll know before the evaluator does.</p>
 
-<h3>Same idea, other tools</h3>
-<div class="table-wrap"><table class="tools">
-  <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
-  <tr><td>Readable export</td><td><code>/export [filename]</code></td><td>Export the conversation, if your build offers it <span class="ver unverified">unverified</span></td><td>Export the conversation <span class="ver unverified">unverified</span></td></tr>
-  <tr><td>Raw record</td><td><code>~/.claude/projects/&lt;project&gt;/&lt;session&gt;.jsonl</code> <span class="ver">verified 2026-09-30</span></td><td><code>~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl</code> <span class="ver unverified">unverified</span></td><td>I could not verify a path <span class="ver unverified">unverified</span></td></tr>
-  <tr><td>What an evaluator reads</td><td><code>tool_use</code> names, user prompts</td><td><code>function_call</code> names, <code>turn_context</code>, user messages, aborted turns</td><td>The exported conversation</td></tr>
+<p>Your own notes are claims too, and so is the agent's end-of-session summary. When you can't confirm something, write "I couldn't verify this", as this course's <span class="ver unverified">unverified</span> badge does.</p>
+
+<h2>Save the transcript, then read it</h2>
+
+<p>Claude Code gives you two forms of a session:</p>
+<ul>
+  <li><strong>Readable:</strong> <code>/export [filename]</code> exports "the current conversation as plain text. With a filename, writes directly to that file" (<a href="https://code.claude.com/docs/en/commands">Commands</a>).</li>
+  <li><strong>Raw:</strong> every message, tool use and result is written "to a plaintext JSONL file under <code>~/.claude/projects/</code>" (<a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code works</a>). <dfn>JSONL</dfn> means JSON Lines: one JSON object per line, so <code>grep</code> works on it.</li>
+</ul>
+
+<p>Two facts make this urgent and delicate. Claude Code <strong>deletes</strong> these files once they are older than <code>cleanupPeriodDays</code>, which defaults to 30 days. And they hold far more than your chat: "Anything that passes through a tool is written to a transcript on disk: file contents, command output, pasted text". If a tool read a <code>.env</code> file, the value is in there (<a href="https://code.claude.com/docs/en/claude-directory#application-data">Application data</a>). <strong>Measured:</strong> the JSONL of a one-question session in a scratch repo held the full text of the developer's personal <code>~/.claude/CLAUDE.md</code>, private paths included.</p>
+
+<p>So review a transcript before it leaves your machine, then choose where it lives:</p>
+<div class="table-wrap"><table>
+  <tr><th>Option</th><th>Good for</th><th>Cost</th></tr>
+  <tr><td><strong>Commit it</strong> to <code>ai-session/</code></td><td>Reviewers see it next to the code, and it shares the code's history</td><td>Anything in it is now in git for good. Read it first.</td></tr>
+  <tr><td><strong>Keep it outside git</strong>, somewhere your team can reach it</td><td>Teams that don't want transcripts in the repo, or sessions that touched private data</td><td>Pointers in your notes depend on that copy staying around</td></tr>
 </table></div>
-<p class="small">The Codex path comes from community sources, not its docs. Find yours with <code>ls -t ~/.codex/sessions/*/*/*/ | head</code> after a session. For Antigravity, use its conversation export and check what the file contains before you rely on it.</p>
+<p>Either is honest. What isn't: editing the transcript to look better. An edited transcript is a narrative again. If you find a secret in it, <strong>rotate the secret</strong> first. Deleting text never un-leaks anything.</p>
 
-<h3>Before you commit a transcript</h3>
-<p>Transcripts are long, and they contain everything the agent saw. Trainee A's "contain local machine paths (<code>C:\Users\&lt;name&gt;</code>, <code>E:\&lt;work-folder&gt;\…</code>), which is harmless here but worth knowing before transcripts become a standard deliverable". The review scanned all committed transcripts for credentials and found none (two <code>sk-…</code> matches in Trainee E's were fragments inside encoded blobs). Two trainees pushed theirs only after review (Trainee C's 29,533-line transcript arrived in <code>939a0fd</code>, right after the reviewed commit). Do the check first. (The review here is the report on the six repos; its quotes are reproduced in this course.)</p>
-<ol>
-  <li>Look for paths and names: <code>grep -nE '/home/|/Users/|C:\\Users' ai-session/*</code>. A username in a path is normally fine. Decide on purpose.</li>
-  <li>Scan for secrets by staging and scanning what's staged: <code>git add ai-session/ &amp;&amp; gitleaks git --pre-commit --staged --redact --no-banner</code>. Your <code>.githooks/pre-commit</code> (lesson 7) runs the same scan at commit time. Its config-secret <em>pattern check</em> deliberately skips <code>ai-session/</code>, because a transcript quotes config on purpose and would trip it on harmless text; gitleaks still scans the transcript, so the secret scan is not skipped.</li>
-  <li>If a real secret is in there, <strong>rotate the secret</strong>. Don't hand-edit the transcript, because an edited transcript is a narrative again. Tell the reviewer what you rotated and why.</li>
-</ol>
+<details class="deeper">
+  <summary>Going deeper: count what your harness actually did, and the other tools</summary>
+  <p>Every tool call in the raw file has a <code>name</code>. This line counts them (tested on a real session file):</p>
+  <pre>grep -o '"type":"tool_use","id":"[^"]*","name":"[^"]*"' ai-session/transcript-*.jsonl \
+  | sed 's/.*"name":"//;s/"$//' | sort | uniq -c | sort -rn</pre>
+  <p>If your skills, reviewers and MCP server ran, you see <code>Skill</code>, <code>Agent</code> and <code>mcp__…</code> lines. If a count is zero for something you believed happened, your belief was a claim.</p>
+  <p>Subagent transcripts live next to the session, under <code>&lt;session&gt;/subagents/</code>.</p>
+  <div class="table-wrap"><table class="tools">
+    <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+    <tr><td>Readable</td><td><code>/export [filename]</code></td><td>Its own export, if your build has one <span class="ver unverified">unverified</span></td><td>Its own conversation export <span class="ver unverified">unverified</span></td></tr>
+    <tr><td>Raw</td><td><code>~/.claude/projects/&lt;project&gt;/&lt;session&gt;.jsonl</code></td><td>A session file under <code>~/.codex/</code> <span class="ver unverified">unverified</span></td><td>We couldn't find a documented path <span class="ver unverified">unverified</span></td></tr>
+  </table></div>
+</details>
 
-<h2>REFLECTION.md: your rejections, with evidence</h2>
-<p>The assessment's "critical review of AI output" criterion asks whether <em>you</em> reviewed the AI's output. Its scoring rule: "Human-led review with visible rejections/changes → 4–5. Agent self-review only → max 3. Accepted a correctness regression or a false safety claim → max 2." A reflection that says "I carefully reviewed everything" has no evidence in it. The reference template makes the evidence column mandatory:</p>
+<h2>REFLECTION.md: what you changed, with pointers</h2>
+
+<p>A reflection is one short page for your reviewer and your future self. It doesn't retell the session: it lists where <strong>you</strong> overruled, corrected or narrowed the agent, with a pointer to the proof:</p>
 <figure class="code">
-<figcaption>ai-session/REFLECTION.md</figcaption>
+<figcaption>ai-session/REFLECTION.md (one row filled in, as an example)</figcaption>
 <pre># Reflection (one page)
-
-Every entry points to evidence: a commit hash or a line in the raw transcript (`ai-session/transcript-*.jsonl` or `.txt`).
 
 ## Where I rejected or changed AI output
 | When | The agent proposed | I decided | Why | Evidence |
 |---|---|---|---|---|
-| | | | | commit / transcript line |
-
-## 1-3-1 hand-overs
-| Problem | Option chosen | Evidence |
-|---|---|---|
+| Plan review | Also store rejected orders | Declined | Not in the brief | transcript-….txt:212 |
 
 ## What the harness caught
 | Guard / reviewer | What it stopped | Evidence |
 |---|---|---|
 
-## What I would add to the harness next time
+## What I could not verify
 - </pre>
 </figure>
-<p>A row has this shape (an illustration, modelled on what the review says Trainee A did at their plan gate; the evidence cell is yours to fill):</p>
-<div class="table-wrap"><table>
-  <tr><th>When</th><th>The agent proposed</th><th>I decided</th><th>Why</th><th>Evidence</th></tr>
-  <tr><td>Plan gate</td><td>Persist Rejected orders</td><td>Decline</td><td>Not in the brief; scope creep</td><td><code>transcript-….jsonl:1482</code></td></tr>
-</table></div>
-<p>Three rules for filling it in. First, <strong>no evidence, no row</strong>: if you can't find a hash or a line, either find it (<code>grep -n "Rejected" ai-session/transcript-*.txt</code>) or delete the row. Second, <strong>the agent's catches are not yours</strong>: a review the agent ran on its own diff belongs under "What the harness caught", where a reviewer agent is named, and not under "I rejected". Third, <strong>an empty table is an honest table</strong>. The review says of Trainee B that "decisions and uncertainties are written down in detail, rather than the work being presented as flawless", and that is a point in their favour; inventing rejections is how you earn a "docs contradicted by the repo → minus 1". Mind the asymmetry: a raw transcript in the reviewed commit scores "up to 5"; a "post-hoc reconstruction or summary only" scores "max 3".</p>
+<p>Three rules keep it honest:</p>
+<ol>
+  <li><strong>No pointer, no row.</strong> Each row names a commit (<code>git log --oneline</code>) or a transcript line (<code>grep -n</code>). If you can't find one, delete the row.</li>
+  <li><strong>The agent's catches are not yours.</strong> A reviewer subagent's BLOCK goes under "What the harness caught". Your decision about it goes in your table.</li>
+  <li><strong>A short table is fine.</strong> Two real rows beat five invented ones. If you have fewer than three, say so.</li>
+</ol>
 
-<h2>Never rewrite history</h2>
-<p>The submission rule is short: "do not rewrite or squash history". Reasons, from the assessment review and the design notes: replayed history makes the evaluator distrust <em>all</em> of it ("history can be replayed or rewritten (two of six were)"); a rewritten remote can destroy the evidence you need; and rewriting shared history is precisely the power the deny rules in lesson 7 take from the agent. What you do instead is <strong>fix forward</strong>:</p>
-<div class="table-wrap"><table>
-  <tr><th>You find</th><th>Fix forward</th><th>What you leave honest</th></tr>
-  <tr><td>A commit you didn't want (Trainee A)</td><td><code>git revert &lt;hash&gt;</code>, a new commit</td><td>Both the mistake and the fix are in the log</td></tr>
-  <tr><td><code>bin/</code>, <code>obj/</code> or <code>tmp/</code> tracked</td><td><code>git rm -r --cached &lt;dir&gt;</code>, add to <code>.gitignore</code>, commit</td><td>Old commits still contain them; say so</td></tr>
-  <tr><td>Wrong author email on old commits</td><td>Set <code>user.email</code> now; later commits are right</td><td>Note the earlier ones in REFLECTION</td></tr>
-  <tr><td>An AI trailer on old commits</td><td>Fix the attribution setting and the commit-msg hook now</td><td>Same: note it</td></tr>
-  <tr><td>A secret committed</td><td>Rotate the secret first, then remove it in a new commit</td><td>History still has it; the rotation makes that harmless</td></tr>
-</table></div>
-<p>The last row is the rule that matters most: removing a secret from history doesn't un-leak it. Rotation does.</p>
+<h2>History is evidence: fix forward</h2>
 
-<h2>The evaluator's hygiene commands, on your repo</h2>
-<p>These are the evaluator's hygiene checks. Run each one yourself before anyone else does:</p>
-<figure class="code">
-<figcaption>the evaluator's hygiene checks (run from your repo root)</figcaption>
-<pre>git log --format='%ad' --date=iso | sort | uniq -c | sort -rn | head   # same-second bursts = replayed/rewritten
-git log --shortstat --format='%h %s'                                   # giant commits, vague messages
-git ls-files | grep -E '(^|/)(bin|obj|tmp)/'                           # build output tracked
-git log --format='%an &lt;%ae&gt;' | sort | uniq -c                        # personal vs company identity
-git log --format=%B | grep -i 'co-authored-by'                         # AI attribution trailers
-gitleaks git --redact --no-banner                                      # committed secrets</pre>
+<p>Git gives each commit the time it was written. A day of real work leaves commits spread across the day. Replaying it afterwards leaves a spike:</p>
+
+<figure class="diagram" data-intro="Two histories, then two ways to undo a mistake. It plays by itself; use <b>Back</b> and <b>Next</b> to go at your own pace." data-steps='[
+  {"cls":"s1","text":"<b>An honest history.</b> One commit per finished slice, at the moment it went green. The timestamps are the order of work."},
+  {"cls":"s2","text":"<b>A replayed history.</b> Rebasing or replaying commits stamps them all with the moment the replay ran. One check finds it: 56 commits, one second."},
+  {"cls":"s3","text":"Now a mistake, <b>X</b>, reaches the shared branch. Teammates may already have pulled it."},
+  {"cls":"s4","text":"<b>Force-pushing it away</b> rewrites the remote. Everyone who pulled X now disagrees with it, and the record of the mistake is gone. In the real session, only branch protection refused."},
+  {"cls":"s5","text":"<b>Fixing forward:</b> <code>git revert X</code> adds a new commit, <b>R</b>, that undoes it. The log shows the mistake and the fix, and nobody’s copy breaks."}
+]'>
+<div class="canvas">
+<!-- d2:l0010-honest-history -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 560" role="img" aria-label="Top: an honest history has commits spread across the day, one per finished slice. A replayed history has dozens of commits stamped with the same second, written after the work was done. Bottom: a mistake on a shared branch. Fixed forward, a new revert commit undoes it and both stay visible. Force-pushed away, the remote is rewritten, teammates’ copies no longer match, and the record of the mistake is gone; branch protection can refuse the push.">
+<defs><marker id="l10h-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<g class="st s1"><text class="l10-row" x="30" y="66">Honest</text><text class="l10-rowsub" x="30" y="86">one commit per slice</text><path class="l10-axis" d="M200,70 L820,70"/><path class="l10-tick" d="M200,64 L200,76"/><text class="l10-hour" x="200" y="94">09:00</text><path class="l10-tick" d="M407,64 L407,76"/><text class="l10-hour" x="407" y="94">12:00</text><path class="l10-tick" d="M613,64 L613,76"/><text class="l10-hour" x="613" y="94">15:00</text><path class="l10-tick" d="M820,64 L820,76"/><text class="l10-hour" x="820" y="94">18:00</text><circle class="l10-dot" cx="237" cy="70" r="7"/><circle class="l10-dot" cx="281" cy="70" r="7"/><circle class="l10-dot" cx="367" cy="70" r="7"/><circle class="l10-dot" cx="411" cy="70" r="7"/><circle class="l10-dot" cx="485" cy="70" r="7"/><circle class="l10-dot" cx="560" cy="70" r="7"/><circle class="l10-dot" cx="591" cy="70" r="7"/><circle class="l10-dot" cx="677" cy="70" r="7"/><circle class="l10-dot" cx="746" cy="70" r="7"/><circle class="l10-dot" cx="789" cy="70" r="7"/></g>
+<g class="st s2"><text class="l10-row" x="30" y="186">Replayed</text><text class="l10-rowsub" x="30" y="206">written afterwards</text><path class="l10-axis" d="M200,206 L820,206"/><path class="l10-tick" d="M200,200 L200,212"/><text class="l10-hour" x="200" y="230">09:00</text><path class="l10-tick" d="M407,200 L407,212"/><text class="l10-hour" x="407" y="230">12:00</text><path class="l10-tick" d="M613,200 L613,212"/><text class="l10-hour" x="613" y="230">15:00</text><path class="l10-tick" d="M820,200 L820,212"/><text class="l10-hour" x="820" y="230">18:00</text><rect class="l10-burst" x="761" y="196" width="18" height="7" rx="2"/><rect class="l10-burst" x="761" y="187" width="18" height="7" rx="2"/><rect class="l10-burst" x="761" y="178" width="18" height="7" rx="2"/><rect class="l10-burst" x="761" y="169" width="18" height="7" rx="2"/><rect class="l10-burst" x="761" y="160" width="18" height="7" rx="2"/><rect class="l10-burst" x="761" y="151" width="18" height="7" rx="2"/><rect class="l10-burst" x="761" y="142" width="18" height="7" rx="2"/><rect class="l10-burst" x="761" y="133" width="18" height="7" rx="2"/><rect class="l10-burst" x="761" y="124" width="18" height="7" rx="2"/><rect class="l10-burst" x="761" y="115" width="18" height="7" rx="2"/><rect class="l10-burst" x="761" y="106" width="18" height="7" rx="2"/><text class="l10-burstlbl" x="748" y="112" style="text-anchor:end">56 commits, one timestamp</text><path class="l10-lead" d="M752,108 L766,108 L766,100"/><rect class="l10-term" x="200" y="122" width="430" height="46" rx="6"/><text class="l10-mono" x="214" y="141">$ git log --format=%ci | sort | uniq -c | awk …</text><text class="l10-mono l10-badtxt" x="214" y="160">     56 ‹the same second›</text></g>
+<path class="l10-divider" d="M30,262 L830,262"/>
+<text class="l10-head" x="30" y="296">A mistake reaches the shared branch</text>
+<g class="st s3 s5"><text class="l10-sidehead" x="30" y="336">Fix forward</text><path class="l10-chain" d="M54,390 L330,390"/><circle class="l10-commit " cx="54" cy="390" r="17"/><text class="l10-ctxt " x="54" y="395">A</text><circle class="l10-commit " cx="144" cy="390" r="17"/><text class="l10-ctxt " x="144" y="395">B</text><circle class="l10-commit l10-x" cx="234" cy="390" r="17"/><text class="l10-ctxt l10-x" x="234" y="395">X</text><text class="l10-small" x="234" y="436" style="text-anchor:middle">the mistake</text></g>
+<g class="st s5"><circle class="l10-commit l10-r" cx="324" cy="390" r="17"/><text class="l10-ctxt l10-r" x="324" y="395">R</text><text class="l10-small" x="324" y="436" style="text-anchor:middle">git revert X</text><text class="l10-good" x="30" y="482">✓ X and its undo both stay in the log</text><text class="l10-good" x="30" y="506">✓ every copy of the branch still agrees</text></g>
+<g class="st s4"><text class="l10-sidehead" x="470" y="336">Force-push it away</text><path class="l10-chain" d="M494,390 L640,390"/><circle class="l10-commit " cx="494" cy="390" r="17"/><text class="l10-ctxt " x="494" y="395">A</text><circle class="l10-commit " cx="584" cy="390" r="17"/><text class="l10-ctxt " x="584" y="395">B</text><circle class="l10-ghost" cx="674" cy="390" r="17"/><text class="l10-ctxt l10-gtxt" x="674" y="395">X</text><path class="l10-strike" d="M656,372 L692,408 M692,372 L656,408"/><rect class="l10-refuse" x="712" y="372" width="118" height="36" rx="8"/><text class="l10-refusetxt" x="771" y="388">branch protection</text><text class="l10-refusetxt" x="771" y="402">can refuse it</text><text class="l10-badtxt l10-plain" x="470" y="482">✗ teammates who pulled X no longer match</text><text class="l10-badtxt l10-plain" x="470" y="506">✗ the record of the mistake is gone</text></g>
+</svg>
+<!-- /d2 -->
+</div>
 </figure>
-<p>Three notes. <strong>No output is a pass</strong> for every <code>grep</code> line and for <code>git ls-files | grep</code> (an empty screen means nothing was found); the gitleaks run ends with <code>no leaks found</code>. On a fresh repo the first command shows one line (count <code>1</code>, one timestamp), which is expected. Second, the evaluator's own notes write <code>gitleaks detect</code>; that subcommand has been deprecated since gitleaks v8.19.0, so the block above uses <code>gitleaks git --redact --no-banner</code> (<span class="ver">gitleaks v8.30.1 · verified 2026-09-30</span>). Third, the evaluator also runs a timing check: for each config file, <code>git log --diff-filter=A --format='%h %ad %s' --date=iso -- &lt;file&gt;</code>, compared with the first feature commit. Credit goes only to what was added <em>before</em> the work it claims to steer. Try it on <code>AGENTS.md</code>, your skills and <code>.githooks/</code>.</p>
-<p>The procedure's last line for each trainee is "confidence, and what evidence was missing". Write that line about your own repo. It's the honesty habit in one sentence.</p>
+
+<p>To <dfn>fix forward</dfn> is to correct a mistake with a new commit instead of rewriting the ones already shared. Pro Git puts the rule plainly: "Do not rebase commits that exist outside your repository and that people may have based work on" (<a href="https://git-scm.com/book/en/v2/Git-Branching-Rebasing">The Perils of Rebasing</a>). Commits that exist only on your machine are yours to tidy. Once a commit is shared, it's part of the record.</p>
+
+<div class="table-wrap"><table>
+  <tr><th>You find</th><th>Fix forward</th></tr>
+  <tr><td>A commit nobody wanted</td><td><code>git revert &lt;commit&gt;</code></td></tr>
+  <tr><td><code>bin/</code>, <code>obj/</code> or <code>tmp/</code> tracked</td><td><code>git rm -r --cached &lt;dir&gt;</code>, add it to <code>.gitignore</code>, commit</td></tr>
+  <tr><td>Old commits with the wrong email or an AI trailer</td><td>Fix the setting now, and note the old ones in <code>REFLECTION.md</code></td></tr>
+  <tr><td>A committed secret</td><td>Rotate it first. GitHub's advice: once rotated, rewriting history "may not be warranted" (<a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository">Removing sensitive data</a>)</td></tr>
+</table></div>
+
+<h3>Check your own history</h3>
+<p>Run these from your repo root. For each, <strong>no output is a pass</strong>:</p>
+<figure class="code">
+<figcaption>hygiene checks (no output = pass)</figcaption>
+<pre>git log --format=%ci | sort | uniq -c | awk '$1 &gt; 1'      # commits sharing one second
+git ls-files | grep -E '(^|/)(bin|obj|tmp)/'               # build output tracked
+git log --format=%ae | sort -u | grep -v '@yourcompany\.com$'   # other identities
+git log --format=%B | grep -i 'co-authored-by'             # AI trailers</pre>
+</figure>
+<p>Use your own email domain in the third line. If gitleaks is installed, add <code>gitleaks git --redact --no-banner</code>: a pass ends with <code>no leaks found</code>. The first check uses the <em>committer</em> date on purpose. <strong>Measured:</strong> replaying three commits kept their original author dates but gave all three the same committer second. That includes tidying your own local commits with a rebase: if you did, the check flags it, so say so in your reflection. The fourth check matches lesson 7's no-trailer policy; if your team wants AI trailers, flip it. Either way, the transcript and reflection disclose the AI's part.</p>
 
 <h2>Check yourself</h2>
 <p class="score"></p>
 
 <div class="quiz">
-  <p class="q">Four commits share the timestamp 20:15:07. What does the evaluator conclude?</p>
+  <p class="q">The first check prints <code>56</code> commits sharing one second. What does that most likely mean?</p>
   <div class="opts">
-    <button class="opt">The agent committed faster than one second.</button>
-    <button class="opt" data-correct>Work happened first, then commits were split.</button>
-    <button class="opt">That machine's clock was simply set wrongly.</button>
-    <button class="opt">A commit skill batched them together safely.</button>
+    <button class="opt" data-correct>They were written or replayed afterwards.</button>
+    <button class="opt">The agent commits faster than humans.</button>
+    <button class="opt">The machine clock was set incorrectly.</button>
+    <button class="opt">The commit skill batches slices safely.</button>
   </div>
-  <p class="why">That's the assessment review's reading of Trainee B's history: "the work was done first and split into commits afterwards". The timestamps show the log is not the real order of work.</p>
+  <p class="why">Each commit gets the time it was written. A rebase or replay gives every commit it touches the moment it ran. A wrong clock shifts times, but it doesn't squeeze 56 commits into one second.</p>
 </div>
 
 <div class="quiz">
-  <p class="q">You committed an unwanted change and pushed it. What is the honest fix?</p>
+  <p class="q">You pushed a commit your team didn't want. What is the honest fix?</p>
   <div class="opts">
-    <button class="opt">Force-push the branch minus that one commit.</button>
+    <button class="opt">Reset to before it and then force-push.</button>
+    <button class="opt" data-correct>Revert it with a new, visible commit.</button>
     <button class="opt">Squash the whole branch into one commit.</button>
-    <button class="opt" data-correct>Revert it with a separate visible commit.</button>
     <button class="opt">Amend that commit and change its date.</button>
   </div>
-  <p class="why">Trainee A's <code>56b7cd2</code> is the model: the mistake and its correction both stay in the log. Force-push is denied in lesson 7, and rewriting history is the dishonest path.</p>
+  <p class="why">The revert keeps the mistake and its fix in the log. The other three rewrite history that teammates may already have, and erase the record of what happened.</p>
 </div>
 
 <div class="quiz">
-  <p class="q">A transcript you want to commit contains a live API key. What do you do?</p>
+  <p class="q">Your raw transcript is ready to share. What do you do first?</p>
   <div class="opts">
-    <button class="opt">Delete the key line and commit quietly.</button>
-    <button class="opt">Commit it anyway since transcripts are exempt.</button>
-    <button class="opt" data-correct>Rotate the key first, then tell reviewers.</button>
-    <button class="opt">Replace the key with asterisks in place.</button>
+    <button class="opt">Edit out every turn that looks awkward.</button>
+    <button class="opt">Nothing; it holds only what you typed.</button>
+    <button class="opt" data-correct>Read it and scan it for secrets.</button>
+    <button class="opt">Summarise it so the file is shorter.</button>
   </div>
-  <p class="why">Editing a transcript turns evidence into narrative, and removal from history doesn't un-leak a secret. Rotation is what makes it harmless; say what you rotated.</p>
+  <p class="why">It holds everything that passed through a tool: file contents, command output, even your personal instructions. Editing or summarising turns it into a narrative. If you find a secret, rotate it, and decide whether the transcript belongs in git at all.</p>
 </div>
 
-<h2>Exercise: audit your own repo, then fix forward</h2>
+<h2>Exercise: an honest record of your own repo</h2>
 <div class="exercise">
-  <span class="label">Exercise · ~35 min · adds: ai-session/transcript files and a filled REFLECTION.md</span>
+  <span class="label">Exercise · about 40 min · you add: a reviewed transcript, ai-session/REFLECTION.md, and one practised revert</span>
+  <p>Work in your practice repo (<code>~/projects/stockapi</code>) after lessons 1 to 9. <strong>Windows:</strong> use WSL2 or Git Bash (<a href="../index.html#before-you-start">setup</a>). In Git Bash, transcripts live under <code>%USERPROFILE%\.claude\projects</code>: run <code>ls -t ~/.claude/projects/</code> and pick the folder ending in your repo's name.</p>
   <ol>
-    <li><strong>Export both forms.</strong> Do this in <em>the same session that did the work</em>, before you <code>/clear</code> or quit: an empty new session exports nothing useful. <em>Windows: run the terminal commands in WSL2 or Git Bash (see Before you start on the <a href="../index.html">index</a>).</em>
-<pre>mkdir -p ai-session
-# in the agent:
-/export ai-session/transcript-2026-09-30.txt       # use today's date
-# in a terminal, find and copy the raw file:
-ls -t ~/.claude/projects/$(pwd | sed 's|[^A-Za-z0-9]|-|g')/*.jsonl | head -3
-cp ~/.claude/projects/&lt;project&gt;/&lt;session&gt;.jsonl ai-session/transcript-2026-09-30.jsonl</pre>
-      (The folder under <code>~/.claude/projects/</code> is your repo's absolute path with every character that isn't a letter or digit turned into <code>-</code>, so <code>/home/priya/stockapi</code> becomes <code>-home-priya-stockapi</code>, and the <code>$(pwd | sed …)</code> above builds that name for you. Listing all projects at once with <code>*</code> would mix in other repos' transcripts, and you don't want those in your repository.) Don't open the files in an editor and save them.</li>
-    <li><strong>Count what your harness actually did</strong> with the <code>grep … | sort | uniq -c</code> line above. Write down the number of <code>Skill</code>, <code>Agent</code> and <code>mcp__</code> calls. If a number is zero for something you've claimed, note that for step 5.</li>
-    <li><strong>Copy the template</strong> from <code>reference-solution/ai-session/REFLECTION.md</code> and fill it in. Minimum: three rows under "Where I rejected or changed AI output" (lesson 3's 1-3-1 answers, lesson 6's BLOCK, lesson 9's declined simplification are all candidates), each with a commit hash or <code>grep -n</code> line number. Every row must have evidence, or be deleted. If you end up with fewer than three rows, say so in the confidence line rather than inventing one: an honest short table beats a padded one.</li>
-    <li><strong>Run the evaluator's commands</strong> from the list above on your repo, plus the <code>git log --diff-filter=A …</code> timing check for <code>AGENTS.md</code>. Paste the raw output into a "Hygiene check" section at the bottom of REFLECTION.md.</li>
-    <li><strong>Fix forward</strong> anything it found, using the table above (new commits only). Examples: a same-second burst is just the starter import plus one commit, so say so, don't "fix" it. A tracked <code>obj/</code> gets <code>git rm -r --cached</code>. A personal email on commit 1 gets one sentence in the reflection. No <code>Co-authored-by</code> lines is a pass. End with the confidence line: <em>what I could not verify about my own repo</em>.</li>
-    <li><strong>Check before you commit the transcript</strong> (paths, then <code>gitleaks git --pre-commit --staged --redact --no-banner</code> after <code>git add ai-session/</code>), then commit through <code>/commit</code>: <code>docs(ai-session): add transcript and reflection</code>.</li>
+    <li><strong>Start clean.</strong> <code>git status</code> says <em>nothing to commit, working tree clean</em>, on <code>main</code>.</li>
+    <li><strong>Pick a real session.</strong> Use one that did real work here, such as lesson 9's. List this repo's transcripts, newest first:
+<pre>ls -t ~/.claude/projects/$(pwd | sed 's|[^A-Za-z0-9]|-|g')/*.jsonl | head -5</pre>
+      The folder name is your repo's path with every character that isn't a letter or digit turned into <code>-</code>. Run <code>claude --resume</code>, pick the session, and type <code>/export ai-session/transcript.txt</code>. Nothing listed? Sessions older than 30 days are deleted by default. Make a real one now: start <code>claude</code>, ask it to run the hygiene checks above and explain each result, then <code>/export</code> that session. Check with <code>ls ai-session/</code>. If the file isn't there, run <code>/export</code> without a name and save it from the dialog.</li>
+    <li><strong>Copy the raw file</strong> next to it, without opening it in an editor. Resuming made it the newest file:
+<pre>cp "$(ls -t ~/.claude/projects/$(pwd | sed 's|[^A-Za-z0-9]|-|g')/*.jsonl | head -1)" ai-session/transcript.jsonl</pre></li>
+    <li><strong>Review both files before deciding anything.</strong> Look for paths and names:
+<pre>grep -ohE '(/home/|/Users/|C:.{1,2}Users)[^" ]*' ai-session/transcript.* | sort -u | head -20</pre>
+      Search for your email, hostnames and anything from your personal <code>~/.claude/CLAUDE.md</code>. Then scan for secrets, if you have gitleaks: <code>git add ai-session/ &amp;&amp; gitleaks git --pre-commit --staged --redact --no-banner</code>, then <code>git restore --staged ai-session/</code>.</li>
+    <li><strong>Choose where it lives.</strong> Commit it, or move both files out of the repo (for example <code>mkdir -p ~/ai-sessions/stockapi &amp;&amp; mv ai-session/transcript.* ~/ai-sessions/stockapi/</code>). No gitleaks, and you haven't read it all? Keep it outside git. Write your choice and one sentence of why into <code>REFLECTION.md</code> in the next step. If you found a real secret, rotate it now, whichever you chose.</li>
+    <li><strong>Write <code>ai-session/REFLECTION.md</code>.</strong> Copy the template with <code>cp ../agent-harness-course/reference-solution/ai-session/REFLECTION.md ai-session/</code>. Candidates for rows: your 1-3-1 answers and the lesson 6 decision under "Decisions made by the human" in <code>ai-session/PLAN.md</code> (find the commit: <code>git log --oneline -- ai-session/PLAN.md</code>), and anything you declined in the transcript (<code>grep -n "BLOCK" ai-session/transcript.txt</code>). Every row gets a commit or a line number, or goes. Fewer than three is fine: say so. Add a "What I could not verify" line.</li>
+    <li><strong>Run the hygiene checks</strong> from the box above, with your email domain. Paste the output into a "Hygiene check" section, writing <em>no output</em> where there was none. Anything found gets fixed forward with a new commit, using the table, and gets a sentence in the reflection.</li>
+    <li><strong>Practise a revert on a scratch branch.</strong> Each commit runs your hooks, so give it a few seconds:
+<pre>git switch -c scratch/revert
+printf '\nRun on port 9999.\n' &gt;&gt; README.md
+git add README.md &amp;&amp; git commit -m "docs: note the api port"
+git revert --no-edit HEAD
+git log --oneline -3
+git diff HEAD~2 --stat</pre>
+      Expect <code>Revert "docs: note the api port"</code> on top, the commit below it, and no output from the last line: the file is back as it was, and both commits stay in the log. Your <code>commit-msg</code> hook lets <code>Revert …</code> subjects through. Clean up: <code>git switch main</code>, then <code>git branch -D scratch/revert</code>. That branch never left your machine, so deleting it rewrites nothing shared.</li>
+    <li><strong>Commit through <code>/commit</code></strong>: <code>ai-session/REFLECTION.md</code>, plus the transcripts if you chose to keep them in the repo. For example <code>docs(ai-session): add reflection and transcript</code>. Your pre-commit pattern check skips <code>ai-session/</code>, because transcripts quote config on purpose. gitleaks still scans it. Finish with <code>git status</code> clean.</li>
   </ol>
-  <p><strong>Codex:</strong> find the newest file with <code>ls -t ~/.codex/sessions/*/*/*/ | head</code> (path unverified) and copy it the same way. <strong>Antigravity:</strong> use the conversation export, open the file to see what it contains, and record in REFLECTION.md that you could not verify a raw file location. That sentence is itself honest evidence.</p>
+  <p class="tools-note"><strong>Codex</strong> and <strong>Antigravity:</strong> steps 6 to 9 are plain git and identical. For steps 2 and 3, use the tool's own conversation export. If you can't find a raw session file, write that under "What I could not verify". That sentence is honest evidence too.</p>
 </div>
 
-<div class="done">
-  <span class="label">Done when</span>
+<div class="done" data-built="a reviewed transcript kept where you chose, a REFLECTION.md where every row points at proof, a clean hygiene check, and one practised revert.">
+  <span class="label">Done when: tick all four to earn the Honest Log plaque</span>
   <ul class="check" data-key="0010">
-    <li><input type="checkbox"> <span><code>ai-session/</code> holds an exported transcript, unedited, committed after the secret scan</span></li>
-    <li><input type="checkbox"> <span>Every row in <code>REFLECTION.md</code> has a commit hash or transcript line number</span></li>
-    <li><input type="checkbox"> <span>The hygiene output is in the file, and each finding was fixed with a new commit (<code>git log</code> has no rebase or force-push)</span></li>
+    <li><input type="checkbox" aria-label="Transcript reviewed and placed"> <span>A transcript is exported and reviewed for paths and secrets, and <code>REFLECTION.md</code> says whether it is committed or kept outside git, and why</span></li>
+    <li><input type="checkbox" aria-label="Every row has a pointer"> <span>Every row in <code>REFLECTION.md</code> names a commit or a transcript line, and there's a "What I could not verify" line</span></li>
+    <li><input type="checkbox" aria-label="Hygiene checks pass"> <span>The four hygiene checks print nothing, or each finding is fixed with a new commit and noted</span></li>
+    <li><input type="checkbox" aria-label="Revert practised"> <span>You saw <code>Revert "…"</code> on top of the commit it undid, deleted the scratch branch, and <code>git status</code> is clean</span></li>
   </ul>
 </div>
 
-<div class="source">
-  <span class="label">Primary source</span>
-  <p><a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code works</a>, the "application data" part: where the session files live and what they hold. Read it before you rely on the paths in this lesson.</p>
-</div>
-
-<div class="ask">
-  <span class="label">Ask your agent</span>
-  <p>Stuck, or curious? Ask the agent you're learning with, for example: "Act as the evaluator. Using only my git log and transcript, label every claim in REFLECTION.md CONFIRMED, WRONG or UNVERIFIABLE, with evidence."</p>
+<div class="split">
+  <div class="source">
+    <span class="label">Read next</span>
+    <p><a href="https://code.claude.com/docs/en/claude-directory#application-data">Application data in ~/.claude</a>: what each transcript file holds, the 30-day cleanup, and how to shorten it. Then <a href="https://git-scm.com/docs/git-revert">git revert</a>, including how to revert a merge commit.</p>
+  </div>
+  <div class="ask">
+    <span class="label">Ask your agent</span>
+    <p>"Using only <code>git log</code> and the files in <code>ai-session/</code>, label every claim in <code>REFLECTION.md</code> TRUE, STALE or UNVERIFIABLE, with the commit or line." Then check its labels yourself.</p>
+  </div>
 </div>
 
 <nav class="lesson-nav">
-  <a href="0009-writing-for-the-agent.html">← Lesson 9: Writing for the agent</a>
-  <a href="../reference/glossary.html">Glossary</a>
-  <a href="0011-capstone.html">Lesson 11: Capstone →</a>
+  <a href="0009-writing-for-the-agent.html"><small>← Back to</small>9. Writing for the agent</a>
+  <a class="next" href="0011-capstone.html"><small>Next stage →</small>11. Capstone</a>
 </nav>
 
 </main>

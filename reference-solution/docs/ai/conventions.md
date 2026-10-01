@@ -1,6 +1,7 @@
 # Conventions
 
-- Layout: `Controllers/` (HTTP only), `Services/` (rules and transactions), `Domain/` (entities), `Data/` (DbContext).
+- Layout: `Controllers/` (HTTP; simple reads may use `StockDbContext` directly, like `ProductsController`), `Services/`
+  (rules, transactions and every stock change), `Domain/` (entities), `Data/` (DbContext).
 - The reference shape for a resource is `ProductsController` + its tests. Copy it (skill `new-endpoint`).
 - Errors are `ProblemDetails`: 400 validation, 404 missing, 409 conflict (duplicate SKU, insufficient stock).
 - Everything is async, with a `CancellationToken` passed through.

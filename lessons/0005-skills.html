@@ -232,7 +232,7 @@ Follow every step in order. If any check fails, stop and report; do not work aro
 <pre>#!/usr/bin/env bash
 # Quality gate: format -&gt; build -&gt; test, stop at the first failure.
 set -euo pipefail
-cd "$(git rev-parse --show-toplevel 2&gt;/dev/null || pwd)"
+cd "$(dirname "$0")/../../.."   # the repo root: this script lives in .agents/skills/quality-gate/
 
 step() { printf '\n== %s ==\n' "$1"; }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Quality gate: format -> build -> test, stop at the first failure.
 set -euo pipefail
-cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$(dirname "$0")/../../.."   # the repo root: this script lives in .agents/skills/quality-gate/
 
 step() { printf '\n== %s ==\n' "$1"; }
 

@@ -10,81 +10,108 @@
 <body data-lesson="0008">
 <main>
 
-<p class="kicker"><a href="../index.html">Agent Harness</a> · Lesson 8 of 11 · 18 min read + 60 min exercise</p>
-<h1>MCP: live docs and real data instead of memory</h1>
-<p class="lede">A model writes against the library version it was trained on and guesses at your data. An MCP server lets it look both up instead. It is also code that runs with your permissions, so you pin it and vet it before it goes in the repo.</p>
+<header class="lesson-head">
+  <span class="stage">Stage 8 of 11</span>
+  <h1>MCP: live docs and real data instead of memory</h1>
+  <p class="lede">A model writes code against the library it saw in training, and guesses at the rows in your database. An MCP server gives it a tool to look both up. It is also a program that runs with your permissions, so you vet it, pin it and approve it first.</p>
+  <div class="chips">
+    <span class="chip">12 min read</span>
+    <span class="chip">60 min exercise</span>
+    <span class="chip badge-chip">Plaque: Live Docs</span>
+  </div>
+</header>
+
+<div class="tldr">
+  <span class="label">In 30 seconds</span>
+  <ul>
+    <li>An <strong>MCP server</strong> adds tools to the agent's loop. <strong>context7</strong> adds "look up current library docs".</li>
+    <li>It helps <strong>only if the agent calls it</strong>, so you ask for the lookup in the prompt and the rules. A passing test is still the proof.</li>
+    <li>For data, you don't need a new server: <code>sqlite3 -readonly -safe</code> through Bash, where the <strong>database engine</strong> refuses writes.</li>
+  </ul>
+</div>
 
 <div class="recall">
   <span class="label">Recall</span>
-
   <div class="quiz">
-    <p class="q">You type a request that names no skill. How might a skill still run?</p>
+    <p class="q">Lesson 1: the agent states how a library call works. Unless a tool fetched it, where did that come from?</p>
     <div class="opts">
-      <button class="opt" data-correct>The model matches your request to descriptions.</button>
-      <button class="opt">Every skill loads automatically at session start.</button>
-      <button class="opt">Claude Code reads your commit history first.</button>
-      <button class="opt">The harness picks the alphabetically first skill.</button>
+      <button class="opt" data-correct>Its training data, frozen at a cutoff.</button>
+      <button class="opt">The library website, fetched on every turn.</button>
+      <button class="opt">Your package cache, scanned at session start.</button>
+      <button class="opt">The compiler, queried before each answer runs.</button>
     </div>
-    <p class="why">Lesson 5: a skill can be invoked by <code>/name</code> or chosen by the model from its <code>description</code>. That is why the description says when to use the skill, not only what it does.</p>
+    <p class="why">The model knows its training data plus whatever is in the context window. A tool result is the only way something newer gets in, and that is what this lesson adds.</p>
   </div>
-
   <div class="quiz">
-    <p class="q">Which guard also stops a human who commits from a terminal?</p>
+    <p class="q">Lesson 7: which guard also stops a human who commits from a terminal?</p>
     <div class="opts">
       <button class="opt" data-correct>A git pre-commit hook</button>
       <button class="opt">A settings.json deny rule</button>
       <button class="opt">A PreToolUse hook script</button>
       <button class="opt">A line in AGENTS.md</button>
     </div>
-    <p class="why">Lesson 7: permission rules and PreToolUse hooks live in the agent's harness, so they only see the agent's tool calls. A git hook runs inside git, for whoever commits.</p>
+    <p class="why">Permission rules and PreToolUse hooks live in the agent's harness, so they only see the agent's tool calls. A git hook runs inside git, for whoever commits.</p>
   </div>
-</div>
-
-<div class="note">
-  <span class="label">The win</span>
-  <p>By the end, <code>.mcp.json</code> in your practice repo pins a docs server (context7 4.1.1). You'll have watched one session hit a SQLite error that a docs lookup avoids. You'll have queried <code>stock.db</code> through a read-only rule, and you'll have a five-line verdict on a server you chose <em>not</em> to add.</p>
 </div>
 
 <h2>What happened</h2>
 
 <div class="incident">
   <div class="happened">
-    <h4>What happened</h4>
-    <p>Trainee A's agent wrote <code>GET /api/orders</code> ordered by a <code>DateTimeOffset</code> column. SQLite can't do that, and nothing in the session looked it up first. The failure showed up only when tests ran against the running app. The transcript, 09-19 (UTC):</p>
-    <pre>16:29:23 dotnet test → 7 failures
-16:29:58 "GET /api/orders itself is 500.
-         Confirming the cause before fixing."
-16:30:10 reproduced: SQLite does not support
-         DateTimeOffset in ORDER BY
-16:30:46 value converter; regenerated migration
-         would AlterColumn TEXT→INTEGER (lossy)
-16:31:52 migrations removed and regenerated as
-         one InitialCreate
-16:32:16 25 / 25 passing</pre>
-    <p>The review calls it "a good model handled well": reproduce, root-cause, fix, verify in under 3 minutes. It also says it was "found through a 500 in the running app".</p>
-    <p class="who">Trainee A · Claude Code · review: "SQLite can't order by DateTimeOffset"</p>
+    <h4>Failed run</h4>
+    <p>The slice: <code>GET /api/orders</code>, newest first. The obvious query sorts on <code>CreatedAt</code>, a <code>DateTimeOffset</code>. It compiles. The endpoint answers <strong>500</strong>, and the response body says only "An error occurred while processing your request". The API's log has the reason:</p>
+    <pre>System.NotSupportedException: SQLite does not support
+expressions of type 'DateTimeOffset' in ORDER BY clauses.</pre>
+    <p class="who">Reproduced on the course's reference app, 2026-10-01</p>
   </div>
   <div class="harness">
-    <h4>What the harness does instead</h4>
-    <p>The agent consults current library docs <em>before</em> it writes the query. The review's "Pinned versions and live docs" row says context7 in <code>.mcp.json</code> "would have flagged the SQLite DateTimeOffset limit". The error costs 3 minutes here. On a real project the same discovery can arrive as a lossy migration on a database that already has rows.</p>
-    <p>The review also lists a hook that nudges the agent to consult docs before it writes against a library API. The course uses a cheaper nudge, one line in <code>docs/ai/conventions.md</code> (lesson 9).</p>
+    <h4>With the harness</h4>
+    <p>The agent asks the docs before it writes the query. The EF Core docs, fetched through context7, say that on SQLite, <code>DateTimeOffset</code> "comparison and ordering will require evaluation on the client". So it stores the column in a type SQLite can sort:</p>
+    <pre>GET /api/orders → 200, newest first
+dotnet test     → green</pre>
+    <p class="who">The lookup costs one tool call. The 500 costs a debugging loop, or on a real project a data migration.</p>
   </div>
 </div>
 
 <h2>What MCP is</h2>
 
-<p>The <dfn>Model Context Protocol</dfn> (<dfn>MCP</dfn>) is "an open source standard for AI-tool integrations" (<a href="https://code.claude.com/docs/en/mcp">Claude Code: MCP</a>). An <dfn>MCP server</dfn> is a separate program that advertises tools; the harness connects to it and adds those tools to the loop from lesson 1. Nothing else changes. The model still picks a tool call, the harness still runs it, and the result still lands in the context window. Two things follow:</p>
-<ol>
-  <li><strong>MCP tools pass through the same permission check.</strong> They are named <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>. A rule <code>mcp__context7</code> matches every tool from that server, and allow rules accept a glob (a pattern with <code>*</code> wildcards) only after a literal <code>mcp__&lt;server&gt;__</code> prefix (<a href="https://code.claude.com/docs/en/permissions">Permissions</a>). An allow glob such as <code>mcp__*</code> is skipped with a warning and approves nothing.</li>
-  <li><strong>A server is a process, not a document.</strong> A <dfn>stdio</dfn> server is a program Claude Code starts on your machine (here via <code>npx</code>, the package launcher that comes with Node); an <dfn>http</dfn> server is a remote URL. Either way its output enters your context, and a local one runs as you.</li>
-</ol>
+<p>The <dfn>Model Context Protocol</dfn> (<dfn>MCP</dfn>) is "an open source standard for AI-tool integrations" (<a href="https://code.claude.com/docs/en/mcp">Claude Code: MCP</a>). An <dfn>MCP server</dfn> is a separate program that tells the harness which tools it offers. Think of it as a plug: the loop from lesson 1 stays the same, and it just has more tools to call.</p>
 
-<h2>context7: current docs instead of training memory</h2>
+<figure class="diagram" data-intro="What plugging in a server changes. It plays by itself; use <b>Back</b> and <b>Next</b> to go at your own pace." data-steps='[
+  {"cls":"s1","text":"Out of the box, the model can call the harness’s built-in tools: <code>Read</code>, <code>Edit</code>, <code>Bash</code> and a few more."},
+  {"cls":"s2","text":"<code>.mcp.json</code> names a server and the command that starts it. Claude Code runs <code>npx -y @upstash/context7-mcp@4.1.1</code>: <b>a process on your machine, running as you</b>. This one sends your question to context7.com and returns docs as text."},
+  {"cls":"s3","text":"The server lists its tools, and they join the model’s list as <code>mcp__context7__resolve-library-id</code> and <code>mcp__context7__query-docs</code>. They go through the same permission check as every other tool."},
+  {"cls":"s4","text":"A server in the shared project file is code from the repo, so Claude Code holds it at <b>Pending approval</b> until you say yes in an interactive session."},
+  {"cls":"s5","text":"Not every server earns a socket. A community SQLite server with unanswered questions stays <b>unplugged</b>. For read-only data, the existing Bash tool and <code>sqlite3 -readonly -safe</code> already do the job."}
+]'>
+<div class="canvas">
+<!-- d2:l0008-sockets -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 500" role="img" aria-label="What an MCP server is. Claude Code, the harness, has built-in tools such as Read, Edit and Bash, and two sockets. The context7 server, named in .mcp.json and started with npx at a pinned version, plugs into one socket. It is a process on your machine running as you, and it sends your query to context7.com. Its two tools, mcp__context7__resolve-library-id and mcp__context7__query-docs, join the tool list and pass the same permission check as any tool. A lock on its cable shows that a project server waits for your approval. A community SQLite server stays unplugged: its vetting tag has unanswered questions, so it is not added; read-only data comes through Bash with sqlite3 -readonly -safe.">
+<rect class="l8-harness" x="20" y="40" width="360" height="420" rx="16"/>
+<text class="lbl" x="200" y="72">Claude Code (the harness)</text>
+<text class="sub" x="200" y="94">runs the loop from lesson 1</text>
+<text class="l8-key" x="44" y="132">TOOLS THE MODEL CAN CALL</text>
+<rect class="l8-row" x="40" y="142" width="320" height="30" rx="7"/><text class="l8-code" x="54" y="162">Read · Edit · Write · Bash · …</text>
+<rect class="l8-socket" x="370" y="214" width="22" height="32" rx="5"/><circle class="l8-pin" cx="381" cy="224" r="2.6"/><circle class="l8-pin" cx="381" cy="236" r="2.6"/>
+<rect class="l8-socket" x="370" y="364" width="22" height="32" rx="5"/><circle class="l8-pin" cx="381" cy="374" r="2.6"/><circle class="l8-pin" cx="381" cy="386" r="2.6"/>
+<g class="st s1"><text class="l8-note" x="356" y="132" style="text-anchor:end">built in</text></g>
+<g class="st s2 s3 s4"><path class="l8-cable" d="M392,230 C430,230 430,150 470,150"/><rect class="l8-plug" x="470" y="137" width="24" height="26" rx="5"/><path class="l8-prong" d="M470,144 L460,144 M470,156 L460,156"/><rect class="l8-server" x="494" y="58" width="346" height="190" rx="12"/><text class="l8-srvname" x="512" y="86">context7</text><text class="l8-srvsub" x="600" y="86">an MCP server</text><text class="l8-mono-sm" x="512" y="112">npx -y @upstash/context7-mcp@4.1.1</text><text class="l8-plain" x="512" y="140">a process on your machine,</text><text class="l8-plain" x="512" y="159">running as you</text><text class="l8-note" x="512" y="192">sends your question to context7.com,</text><text class="l8-note" x="512" y="210">returns library docs as text</text></g>
+<g class="st s3 s4"><rect class="l8-row l8-new" x="40" y="182" width="320" height="30" rx="7"/><text class="l8-code" x="52" y="202">mcp__context7__resolve-library-id</text><rect class="l8-row l8-new" x="40" y="218" width="320" height="30" rx="7"/><text class="l8-code" x="52" y="238">mcp__context7__query-docs</text><text class="l8-note" x="44" y="272">same permission check as any tool</text></g>
+<g class="st s4"><circle class="l8-lockbg" cx="431" cy="190" r="20"/><g class="l8-lock" transform="translate(419,178)"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></g><rect class="l8-badge" x="494" y="258" width="346" height="34" rx="17"/><text class="l8-badgetxt" x="667" y="280">⏸ Pending approval until you say yes</text></g>
+<g class="st s5"><path class="l8-cable l8-loose" d="M392,380 C420,380 440,392 452,400"/><rect class="l8-server l8-cand" x="494" y="312" width="346" height="164" rx="12"/><text class="l8-srvname" x="512" y="340">a community SQLite server</text><text class="l8-q" x="512" y="368">☐ who maintains it? when was its last release?</text><text class="l8-q" x="512" y="392">☐ have you read the source?</text><text class="l8-q" x="512" y="416">☐ can it write, delete or run commands?</text><g transform="rotate(-6 760 452)"><rect class="l8-stamp" x="688" y="434" width="138" height="34" rx="6"/><text class="l8-stamptxt" x="757" y="457">NOT ADDED</text></g><rect class="l8-row l8-alt" x="40" y="396" width="320" height="48" rx="7"/><text class="l8-code" x="52" y="416">Bash: sqlite3 -readonly -safe …</text><text class="l8-note" x="52" y="436">the database engine refuses writes</text></g>
+</svg>
+<!-- /d2 -->
+</div>
+</figure>
 
-<p>context7 serves up-to-date library documentation to the agent. The course uses it for one job: before the agent writes against an EF Core, ASP.NET Core or other library API it isn't sure of, it looks the API up. Here is the reference solution's <code>.mcp.json</code>, verbatim:</p>
+<p>Two things follow. <strong>MCP tools are ordinary tools</strong> to the permission system: a rule <code>mcp__context7</code> matches every tool from that server (<a href="https://code.claude.com/docs/en/permissions">Permissions</a>). And <strong>a server is a process, not a document</strong>. This one is a <dfn>stdio</dfn> server: a program Claude Code starts locally and talks to over its input and output. It can do whatever your user account can do.</p>
+
+<h2>context7: today's docs, pinned</h2>
+
+<p>context7, maintained by Upstash under the MIT licence, "pulls up-to-date, version-specific documentation and code examples straight from the source". This is the course's <code>.mcp.json</code>:</p>
 
 <figure class="code">
-<figcaption>reference-solution/.mcp.json</figcaption>
+<figcaption>.mcp.json</figcaption>
 <pre>{
   "mcpServers": {
     "context7": {
@@ -96,142 +123,134 @@
 }</pre>
 </figure>
 
-<p>The <code>@4.1.1</code> is the point. Without it, <code>npx -y @upstash/context7-mcp</code> fetches whatever is newest each time a session starts, and runs it. <dfn>Pinning</dfn> means naming an exact version so nothing new reaches your machine unreviewed. This is the 14-day rule from lesson 7 (no package version younger than 14 days is added) applied to a tool rather than a library. Version 4.1.1 was published 2026-09-14, which is 16 days before this lesson's verification date (<code>npm view @upstash/context7-mcp@4.1.1 time</code> shows the dates). <span class="ver">context7-mcp 4.1.1 · verified 2026-09-30</span></p>
+<p>The <code>@4.1.1</code> is the important part. Without it, <code>npx -y</code> downloads and runs whatever version is newest, every time a session starts. <dfn>Pinning</dfn> means naming one exact version, so nothing new runs on your machine until someone changes that line in a reviewed commit. The version also follows lesson 7's 14-day rule: 4.1.1 was published on 2026-09-14, 17 days before this lesson was checked (<code>npm view @upstash/context7-mcp time</code>). <span class="ver">context7-mcp 4.1.1 · verified 2026-10-01</span></p>
 
-<p>A remote alternative exists (<code>https://mcp.context7.com/mcp</code>), and an API key is optional (it raises rate limits). The stdio form above keeps the version in your repo, so a reviewer can see what was pinned and when it changed.</p>
-
-<h3>Scopes: who gets the server</h3>
-<p>A <dfn>scope</dfn> decides which projects load a server and whether the configuration is shared (<a href="https://code.claude.com/docs/en/mcp#mcp-installation-scopes">MCP installation scopes</a>):</p>
-<div class="table-wrap"><table>
-  <tr><th>Scope</th><th>Loads in</th><th>Shared with team</th><th>Stored in</th></tr>
-  <tr><td>Local (default)</td><td>Current project only</td><td>No</td><td><code>~/.claude.json</code></td></tr>
-  <tr><td>Project</td><td>Current project only</td><td>Yes, via version control</td><td><code>.mcp.json</code> in the project root</td></tr>
-  <tr><td>User</td><td>All your projects</td><td>No</td><td><code>~/.claude.json</code></td></tr>
-</table></div>
-<p>Harness servers belong in <strong>project</strong> scope: the file is committed, so every clone and every agent gets the same pinned server. Add it with <code>claude mcp add --scope project context7 -- npx -y @upstash/context7-mcp@4.1.1</code>. Check it with <code>claude mcp list</code> or <code>claude mcp get context7</code>; a server you haven't approved yet shows as <code>⏸ Pending approval</code>.</p>
-
-<h3>The approval prompt exists because a server is code</h3>
-<p>"For security reasons, Claude Code prompts for approval in interactive sessions before using project-scoped servers from <code>.mcp.json</code> files." Reset your choices with <code>claude mcp reset-project-choices</code>. Two details matter for a team repo:</p>
-<ul>
-  <li>A cloned repository can't approve its own servers. <code>enableAllProjectMcpServers</code> or <code>enabledMcpjsonServers</code> committed in <code>.claude/settings.json</code> is ignored in an untrusted folder, and the server stays at Pending approval. <span class="ver">v2.1.196+ · verified 2026-09-30</span></li>
-  <li>The prompt needs an interactive session. In non-interactive runs (<code>claude -p</code>, where no dialog can appear) and cloud sessions, Claude Code "loads project-scoped servers without asking".</li>
-</ul>
-<p>So a one-line change to <code>.mcp.json</code> in a pull request is a change to <em>what code runs on every teammate's laptop</em>. Review it the way you review a <code>.githooks/</code> script: read the package name, the version and the arguments. The docs add a warning: "Verify you trust each server before connecting it. Servers that fetch external content can expose you to prompt injection risk" (prompt injection: text the agent reads that tries to give it new orders).</p>
-
-<h2>Making the agent actually use it</h2>
-<p>A server that's connected is only a capability; the agent still has to choose to call it. Two levers, both in files that survive <code>/clear</code>:</p>
-<ol>
-  <li>A line in the rules, in <code>docs/ai/conventions.md</code>: <em>"For any library API you are not sure of, look it up (context7 MCP) instead of relying on memory."</em> The same file records the answer for this repo, so the next agent doesn't need the lookup. Both lines come from the reference solution:
-<figure class="code">
-<figcaption>reference-solution/docs/ai/conventions.md (extract)</figcaption>
-<pre>- Versions: `net8.0`, EF Core 8.0.x. For any library API you are not sure of, look it up (context7 MCP)
-  instead of relying on memory.
-- SQLite can't ORDER BY or compare `DateTimeOffset` in SQL; store it with `DateTimeOffsetToBinaryConverter`.
-  See the [EF Core SQLite limitations](https://learn.microsoft.com/en-us/ef/core/providers/sqlite/limitations).</pre>
-</figure></li>
-  <li>The prompt, for the slice at hand: <em>"Check EF Core SQLite limitations with context7 first."</em> Put the lookup in the plan slice so it is repeatable.</li>
-</ol>
-
-<p>What it finds is in Microsoft's docs: on SQLite "comparison and ordering will require evaluation on the client", and the fix is <code>DateTimeOffsetToBinaryConverter</code> or storing UTC <code>DateTime</code> (<a href="https://learn.microsoft.com/en-us/ef/core/providers/sqlite/limitations">EF Core SQLite limitations</a>). Without the lookup, session A's query is the obvious one (sketch):</p>
-<figure class="code">
-<figcaption>sketch: what the agent writes from memory</figcaption>
-<pre>await db.Orders.AsNoTracking()
-    .OrderByDescending(o =&gt; o.CreatedAt)   // CreatedAt is DateTimeOffset
-    .ToListAsync(ct);</pre>
-</figure>
-<p>It compiles, and the endpoint answers 500 with: <code>System.NotSupportedException: SQLite does not support expressions of type 'DateTimeOffset' in ORDER BY clauses. Convert the values to a supported type, or use LINQ to Objects to order the results on the client side.</code> With the lookup, the reference solution has this, in the real code:</p>
-<figure class="code">
-<figcaption>reference-solution/src/StockApi/Data/StockDbContext.cs (extract)</figcaption>
-<pre>// SQLite can't ORDER BY DateTimeOffset; see docs/ai/conventions.md
-modelBuilder.Entity&lt;Order&gt;().Property(o =&gt; o.CreatedAt).HasConversion(new DateTimeOffsetToBinaryConverter());</pre>
-</figure>
-<figure class="code">
-<figcaption>reference-solution/src/StockApi/Controllers/OrdersController.cs (extract)</figcaption>
-<pre>[HttpGet]
-public async Task&lt;List&lt;Order&gt;&gt; List([FromQuery] int? productId, CancellationToken ct) =&gt;
-    await db.Orders.AsNoTracking()
-        .Where(o =&gt; productId == null || o.ProductId == productId)
-        .OrderByDescending(o =&gt; o.CreatedAt)
-        .ToListAsync(ct);</pre>
-</figure>
-<p>Note what a docs lookup does <em>not</em> do: it doesn't prove the code works. The test <code>ListOrders_MultipleOrders_ReturnsNewestFirst</code> does, and it runs on real SQLite (lesson 9, <code>docs/ai/testing.md</code>). Also note Trainee A's 16:30:46 line: on a database that already holds rows, the converter changes the column from TEXT to INTEGER, and the regenerated migration is lossy. They deleted and regenerated the migrations because nothing had shipped. On a real project that's a decision with data consequences, which is a 1-3-1 (lesson 3), not a silent choice.</p>
-
-<h2>Real data: read-only database access</h2>
-<p>The second use of MCP in the review's harness table is "read-only database": let the agent look at real rows instead of inferring them from entity classes. The rule is that reading is cheap and writing is a human decision. Options, and what we know about each (<span class="ver">verified 2026-09-30</span>):</p>
-<div class="table-wrap"><table>
-  <tr><th>Option</th><th>Status</th><th>Read-only enforced by</th></tr>
-  <tr><td>Official SQLite MCP reference server</td><td>Archived: "no longer maintained"</td><td>n/a. Don't add an unmaintained server.</td></tr>
-  <tr><td>Community SQLite MCP servers (for example npm <code>mcp-sqlite-server</code>)</td><td>Exist; unvetted</td><td>Whatever the author wrote. You must read it.</td></tr>
-  <tr><td><code>sqlite3 -readonly stock.db "…"</code> plus an allow rule</td><td>A standard CLI you already have</td><td>The database engine</td></tr>
-</table></div>
-
-<p>The course's choice is the third row: no new server, no new code. You need the <code>sqlite3</code> command-line tool: macOS has it, Linux and WSL2 install it with the package manager (<code>sudo apt install sqlite3</code>), and Git Bash users can download the "sqlite-tools" zip from <a href="https://www.sqlite.org/download.html">sqlite.org</a> and put <code>sqlite3.exe</code> on the PATH. Check with <code>sqlite3 --version</code>. A first attempt is an allow rule <code>"Bash(sqlite3 -readonly *)"</code>: the agent can query without a prompt, and the engine refuses writes. I ran it on 2026-09-30 (sqlite3 3.51.2):</p>
-<figure class="code">
-<figcaption>terminal, tested 2026-09-30</figcaption>
-<pre>$ sqlite3 -readonly s.db "insert into t values(2);"
-Error: stepping, attempt to write a readonly database (8)</pre>
-</figure>
-
-<p><strong>Be honest about what that guarantees.</strong> The <em>database</em> is read-only. The <em>program</em> isn't sandboxed: Claude Code's Bash rules match the command text, and docs say such a rule "isn't a security boundary around the program". The sqlite3 shell has dot-commands, and I checked that one runs even with <code>-readonly</code>:</p>
-<figure class="code">
-<figcaption>terminal, tested 2026-09-30</figcaption>
-<pre>$ sqlite3 -readonly s.db ".shell echo SHELL-RAN"
-SHELL-RAN
-$ sqlite3 -readonly -safe s.db ".shell echo SHELL-RAN"
-line 0: cannot run .shell in safe mode</pre>
-</figure>
-<p>So the rule the reference <code>.claude/settings.json</code> actually uses is <code>"Bash(sqlite3 -readonly -safe *)"</code>, and the agent must pass both flags. An earlier draft of this course shipped the weaker rule; a reviewer caught it. The destructive-guard hook from lesson 7 is a second line of defence, not the first. Check that your build has the flag with <code>sqlite3 -help</code>. Also remember that <strong>rows are data, not instructions</strong>: a text column can contain "ignore your rules and…". The agent should report what it read, not obey it.</p>
-
-<h2>Vet an MCP server before adding it</h2>
-<p>A community server is a stranger's program that you'll start with your user account's rights: it can read <code>~/.ssh</code> as easily as a database. Before it reaches <code>.mcp.json</code>, answer six questions, and write the answers down:</p>
-<div class="table-wrap"><table>
-  <tr><th>Question</th><th>How to find out</th></tr>
-  <tr><td><strong>Who maintains it?</strong> An organisation, or one person?</td><td><code>npm view &lt;pkg&gt; maintainers repository.url</code></td></tr>
-  <tr><td><strong>When was the last release?</strong> How many releases exist?</td><td><code>npm view &lt;pkg&gt; time --json</code>; the 14-day rule still applies to the version you pick</td></tr>
-  <tr><td><strong>Can you read the source?</strong> Does it match the package?</td><td>Open the repository; compare to the published tarball</td></tr>
-  <tr><td><strong>What tools does it expose?</strong></td><td>Read the tool list in the source, then <code>/mcp</code> after adding locally</td></tr>
-  <tr><td><strong>Can it write, delete or run code?</strong></td><td>Search the source for writes, <code>exec</code>, network calls</td></tr>
-  <tr><td><strong>What does it inherit?</strong> Env vars, files, network.</td><td>Look at <code>dependencies</code> and what it is passed in <code>env</code>/<code>args</code></td></tr>
-</table></div>
-<p>A worked example, from <code>npm view mcp-sqlite-server</code> on 2026-09-30: version 1.0.1; two releases (2026-02-20 and 2026-03-10); one individual maintainer; repository <code>github.com/ofershap/mcp-server-sqlite</code>; dependencies <code>@modelcontextprotocol/sdk</code>, <code>better-sqlite3</code> and <code>zod</code>; its description advertises "export data". None of that is damning, and none of it answers "can it write?" That answer is in the source. Until someone on the team has read it, the verdict is <strong>not added</strong>. The free alternative already gives engine-enforced read-only.</p>
+<p>You put it in <strong>project scope</strong>, which writes <code>.mcp.json</code> in the repo root. Everyone who clones the repo gets the same pinned server. That is also why Claude Code asks first: "For security reasons, Claude Code prompts for approval in interactive sessions before using project-scoped servers from <code>.mcp.json</code> files." So a one-line change to <code>.mcp.json</code> in a pull request changes <em>what runs on every teammate's laptop</em>. Review it like a git hook script.</p>
 
 <details class="deeper">
-<summary>Going deeper: the same idea in Codex and Antigravity</summary>
-<div class="table-wrap"><table class="tools">
-  <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
-  <tr><td>Shared config</td><td><code>.mcp.json</code> (project scope)</td><td><code>.codex/config.toml</code>, loaded only when the project is trusted</td><td><code>.agents/mcp_config.json</code> (workspace)</td></tr>
-  <tr><td>Personal config</td><td><code>~/.claude.json</code> (local, user)</td><td><code>~/.codex/config.toml</code></td><td><code>~/.gemini/config/mcp_config.json</code></td></tr>
-  <tr><td>Add from CLI</td><td><code>claude mcp add --scope project …</code></td><td><code>codex mcp add &lt;name&gt; -- &lt;cmd&gt;</code></td><td>Edit the JSON file</td></tr>
-  <tr><td>Remote server</td><td><code>"type": "http"</code> + <code>url</code></td><td><code>url = "…"</code></td><td><code>serverUrl</code></td></tr>
-  <tr><td>Approval</td><td>Prompt per project server <span class="ver">verified 2026-09-30</span></td><td>Trust the project first</td><td>Not verified by me</td></tr>
-</table></div>
-<p class="small">Sources: <a href="https://learn.chatgpt.com/docs/extend/mcp?surface=cli">Codex MCP</a> · <a href="https://antigravity.google/docs/mcp">Antigravity MCP</a>. I couldn't verify whether Antigravity prompts before starting a workspace server. <span class="ver unverified">unverified</span></p>
+  <summary>Going deeper: scopes, approval details and output limits</summary>
+  <div class="table-wrap"><table>
+    <tr><th>Scope</th><th>Loads in</th><th>Shared</th><th>Stored in</th></tr>
+    <tr><td>Local (the default)</td><td>This project</td><td>No</td><td><code>~/.claude.json</code></td></tr>
+    <tr><td>Project</td><td>This project</td><td>Yes, through git</td><td><code>.mcp.json</code></td></tr>
+    <tr><td>User</td><td>All your projects</td><td>No</td><td><code>~/.claude.json</code></td></tr>
+  </table></div>
+  <ul>
+    <li>A cloned repo can't approve its own servers: <code>enableAllProjectMcpServers</code> or <code>enabledMcpjsonServers</code> committed in <code>.claude/settings.json</code> is ignored in an untrusted folder.</li>
+    <li><code>claude mcp list</code> shows an unapproved project server as <code>⏸ Pending approval (run `claude` to approve)</code>. <code>claude mcp reset-project-choices</code> clears your answers.</li>
+    <li>"In <code>claude -p</code> runs, Agent SDK sessions, and cloud sessions, Claude Code can't show that prompt: it loads project-scoped servers without asking." Read <code>.mcp.json</code> before you script against a repo.</li>
+    <li>The docs warn: "Verify you trust each server before connecting it. Servers that fetch external content can expose you to prompt injection risk." <dfn>Prompt injection</dfn> is text the agent reads that tries to give it new orders.</li>
+    <li>Claude Code warns when one tool result passes 10,000 tokens, and caps it at 25,000 by default (<code>MAX_MCP_OUTPUT_TOKENS</code>). Docs cost context like any file read.</li>
+  </ul>
+  <p class="small">Source: <a href="https://code.claude.com/docs/en/mcp#mcp-installation-scopes">MCP installation scopes</a> and the approval section after it. <span class="ver">Claude Code 2.1.286 · verified 2026-10-01</span></p>
+</details>
+
+<h2>Making the agent use it</h2>
+
+<p>A connected server is only a capability. The agent still has to decide to call it, and a model that is sure it remembers an API often won't. Here is the same slice, done both ways:</p>
+
+<figure class="diagram" data-intro="One slice, from memory and docs first. It plays by itself; use <b>Back</b> and <b>Next</b> to go at your own pace." data-steps='[
+  {"cls":"s1","text":"<b>From memory.</b> The agent writes the query it has seen many times: <code>OrderByDescending(o =&gt; o.CreatedAt)</code>. It compiles, because the compiler doesn’t know which database runs it."},
+  {"cls":"s2","text":"On SQLite, the request fails with <b>500</b>. The client only sees a generic error. The API log has the reason: SQLite can’t sort a <code>DateTimeOffset</code> in SQL. Measured on the course’s reference app."},
+  {"cls":"s3","text":"<b>Docs first.</b> Asked to check the EF Core SQLite limitations, the agent calls <code>mcp__context7__query-docs</code>. The answer quotes Microsoft’s page: comparison and ordering of <code>DateTimeOffset</code> need client-side evaluation."},
+  {"cls":"s4","text":"So it changes how the column is stored, not the query: <code>DateTimeOffsetToBinaryConverter</code> saves the value as a number SQLite can sort. Microsoft also suggests storing UTC <code>DateTime</code>. Either fix is a decision you can see in the diff."},
+  {"cls":"s5","text":"<code>GET /api/orders</code> answers 200, newest first, and the test is green. The docs pointed the way; <b>the test is the proof</b>."}
+]'>
+<div class="canvas">
+<!-- d2:l0008-memory-vs-docs -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 500" role="img" aria-label="The same slice, two ways. Top lane, from memory: the agent writes OrderByDescending on CreatedAt, a DateTimeOffset. It compiles, but GET /api/orders answers 500, and the API log says SQLite does not support expressions of type DateTimeOffset in ORDER BY clauses. Bottom lane, docs first: the agent calls the context7 query-docs tool, reads that comparison and ordering of DateTimeOffset need evaluation on the client, stores CreatedAt with DateTimeOffsetToBinaryConverter, and GET /api/orders answers 200, newest first, with the test green.">
+<defs><marker id="l8m-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<rect class="l8-lane l8-lane-bad" x="14" y="14" width="832" height="220" rx="14"/>
+<text class="l8-lanetitle l8-badtxt" x="34" y="42">FROM MEMORY</text>
+<text class="l8-lanesub" x="160" y="42">the API as the model remembers it</text>
+<rect class="l8-lane" x="14" y="258" width="832" height="228" rx="14"/>
+<text class="l8-lanetitle l8-goodtxt" x="34" y="286">DOCS FIRST</text>
+<text class="l8-lanesub" x="140" y="286">the API as the docs describe it today</text>
+<g class="st s1 s2"><rect class="panel" x="34" y="58" width="262" height="150" rx="10"/><text class="mono strong" x="48" y="82">OrdersController.cs</text><text class="l8-code" x="48" y="108">await db.Orders</text><text class="l8-code" x="48" y="127">  .OrderByDescending(</text><text class="l8-code" x="48" y="146">     o =&gt; o.CreatedAt)</text><text class="l8-code" x="48" y="165">  .ToListAsync(ct);</text><text class="l8-comment" x="48" y="194">// CreatedAt is a DateTimeOffset</text></g>
+<g class="st s1"><rect class="chip pass" x="318" y="66" width="150" height="30" rx="15"/><text class="chiptxt" x="393" y="86">it compiles ✓</text></g>
+<g class="st s2"><path class="arc l8-arrbad" d="M298,150 L324,150" marker-end="url(#l8m-head)"/><rect class="l8-fail" x="330" y="112" width="140" height="76" rx="10"/><text class="l8-mono-sm" x="400" y="134" style="text-anchor:middle">GET /api/orders</text><text class="l8-big l8-badtxt" x="400" y="174" style="text-anchor:middle">500</text><path class="arc l8-arrbad" d="M472,150 L498,150" marker-end="url(#l8m-head)"/><rect class="l8-term" x="504" y="58" width="326" height="158" rx="10"/><text class="l8-termhead" x="518" y="80">API log</text><text class="l8-termtxt" x="518" y="106">System.NotSupportedException:</text><text class="l8-termtxt" x="518" y="125">SQLite does not support expressions</text><text class="l8-termtxt" x="518" y="144">of type 'DateTimeOffset' in ORDER BY</text><text class="l8-termtxt" x="518" y="163">clauses. Convert the values to a</text><text class="l8-termtxt" x="518" y="182">supported type, or use LINQ to …</text></g>
+<g class="st s3 s4 s5"><rect class="panel" x="34" y="302" width="262" height="170" rx="10"/><rect class="l8-tool" x="46" y="314" width="238" height="28" rx="14"/><text class="l8-tooltxt" x="165" y="333">mcp__context7__query-docs</text><text class="l8-q" x="48" y="364">“EF Core SQLite limitations”</text><text class="l8-quote" x="48" y="394">“DateTimeOffset … comparison</text><text class="l8-quote" x="48" y="414">and ordering will require</text><text class="l8-quote" x="48" y="434">evaluation on the client”</text><text class="l8-src" x="48" y="458">EF Core docs, via context7</text></g>
+<g class="st s4 s5"><path class="arc " d="M298,386 L324,386" marker-end="url(#l8m-head)"/><rect class="panel" x="330" y="302" width="300" height="170" rx="10"/><text class="mono strong" x="344" y="326">StockDbContext.cs</text><text class="l8-code" x="344" y="352">.Property(o =&gt; o.CreatedAt)</text><text class="l8-code" x="344" y="371">.HasConversion(new</text><text class="l8-code" x="344" y="390">  DateTimeOffsetToBinaryConverter())</text><text class="l8-note" x="344" y="420">stored as an INTEGER that SQLite</text><text class="l8-note" x="344" y="438">can sort; the query stays the same</text></g>
+<g class="st s5"><path class="arc " d="M632,386 L650,386" marker-end="url(#l8m-head)"/><rect class="l8-ok" x="656" y="318" width="174" height="140" rx="10"/><text class="l8-mono-sm" x="743" y="342" style="text-anchor:middle">GET /api/orders</text><text class="l8-big l8-goodtxt" x="743" y="384" style="text-anchor:middle">200</text><text class="l8-note" x="743" y="410" style="text-anchor:middle">newest first</text><rect class="chip pass" x="676" y="422" width="134" height="26" rx="13"/><text class="chiptxt" x="743" y="440">dotnet test ✓</text></g>
+</svg>
+<!-- /d2 -->
+</div>
+</figure>
+
+<p>Two places to ask for the lookup, both in files or prompts you control:</p>
+<ol>
+  <li><strong>In the prompt</strong>, for the slice at hand: <em>"Check the EF Core SQLite limitations with context7 before you write the query."</em></li>
+  <li><strong>In the rules</strong>, for every session. Lesson 9's <code>docs/ai/conventions.md</code> gets the line <em>"For any library API you are not sure of, look it up (context7 MCP) instead of relying on memory"</em>, and records today's answer so the next session doesn't need the lookup.</li>
+</ol>
+
+<p>A lookup is not a guarantee: the agent can skip it, pick the wrong library or misread the result. Nor does it prove the code works. The test <code>ListOrders_MultipleOrders_ReturnsNewestFirst</code>, on real SQLite, does that.</p>
+
+<h2>Real data, read-only</h2>
+
+<p>The other thing an agent guesses at is your data. Let it read real rows instead of inferring them from entity classes: reading is cheap, writing is a human decision. No MCP server needed, because lesson 7's settings already allow one command:</p>
+
+<pre>"Bash(sqlite3 -readonly -safe *)"</pre>
+
+<p>Each flag does a different job, and we checked both (sqlite3 3.51.2, on a copy of <code>stock.db</code>):</p>
 
 <figure class="code">
-<figcaption>.codex/config.toml (same server, pinned)</figcaption>
+<figcaption>terminal, measured 2026-10-01</figcaption>
+<pre>$ sqlite3 -readonly -safe stock.db "DELETE FROM Orders;"
+Error: stepping, attempt to write a readonly database (8)
+$ sqlite3 -readonly stock.db ".shell echo SHELL-RAN"
+SHELL-RAN
+$ sqlite3 -readonly -safe stock.db ".shell echo SHELL-RAN"
+line 0: cannot run .shell in safe mode</pre>
+</figure>
+
+<p><code>-readonly</code> makes the <strong>engine</strong> refuse writes, but the sqlite3 program's dot-commands still work, and <code>.shell</code> runs any command. <code>-safe</code> "attempts to disable all features of the CLI that might cause any changes to the host computer" other than that database file: <code>.shell</code>, <code>.output</code> and <code>ATTACH</code> were all refused when we tried them (<a href="https://www.sqlite.org/cli.html">sqlite3 CLI</a>). Without both flags the allow rule doesn't match, so you get a prompt. And remember that <strong>rows are data, not instructions</strong>: a text column can say "ignore your rules". The agent reports what it read, and doesn't obey it.</p>
+
+<h2>Vet a server before you add it</h2>
+
+<p>A community server is a stranger's program, started with your account's rights: it can read <code>~/.ssh</code> as easily as a database. Before it reaches <code>.mcp.json</code>, answer these and write the answers down:</p>
+
+<div class="table-wrap"><table>
+  <tr><th>Question</th><th>How to find out</th><th>context7, 2026-10-01</th></tr>
+  <tr><td>Who maintains it?</td><td><code>npm view &lt;pkg&gt; maintainers repository.url license</code></td><td>Upstash (most npm maintainers use upstash.com addresses); <code>github.com/upstash/context7</code>; MIT</td></tr>
+  <tr><td>Which version, and how old?</td><td><code>npm view &lt;pkg&gt; time --json</code></td><td>4.1.1, 2026-09-14 (17 days)</td></tr>
+  <tr><td>What tools does it expose?</td><td>Its README, then <code>/mcp</code> once added</td><td><code>resolve-library-id</code>, <code>query-docs</code></td></tr>
+  <tr><td>Can it write, delete or run commands?</td><td>Read the source for file writes, <code>exec</code> and network calls</td><td>Its tools return docs; read the source to confirm</td></tr>
+  <tr><td>What leaves your machine?</td><td>README and tool descriptions</td><td>Your query goes to context7.com: keep secrets and private code out of it</td></tr>
+</table></div>
+
+<p>If a question has no answer yet, the verdict is <strong>not added</strong>. That's a normal outcome, not a failure.</p>
+
+<details class="deeper">
+  <summary>Going deeper: the same server in Codex and Antigravity</summary>
+  <div class="table-wrap"><table class="tools">
+    <tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
+    <tr><td>Shared config</td><td><code>.mcp.json</code></td><td><code>.codex/config.toml</code>, trusted projects only</td><td><code>.agents/mcp_config.json</code></td></tr>
+    <tr><td>Personal config</td><td><code>~/.claude.json</code></td><td><code>~/.codex/config.toml</code></td><td><code>~/.gemini/config/mcp_config.json</code></td></tr>
+    <tr><td>Add from the CLI</td><td><code>claude mcp add --scope project …</code></td><td><code>codex mcp add &lt;name&gt; -- &lt;cmd&gt;</code></td><td>Edit the JSON file</td></tr>
+    <tr><td>Tool approval</td><td>Permission rules on <code>mcp__&lt;server&gt;</code></td><td><code>default_tools_approval_mode</code>, per tool <code>approval_mode</code></td><td>MCP tools ask by default; <code>mcp(server/tool)</code> policies</td></tr>
+  </table></div>
+<figure class="code">
+<figcaption>.codex/config.toml</figcaption>
 <pre>[mcp_servers.context7]
 command = "npx"
 args = ["-y", "@upstash/context7-mcp@4.1.1"]</pre>
 </figure>
 <figure class="code">
-<figcaption>.agents/mcp_config.json (same server, pinned)</figcaption>
+<figcaption>.agents/mcp_config.json</figcaption>
 <pre>{
   "mcpServers": {
-    "context7": {
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp@4.1.1"]
-    }
+    "context7": { "command": "npx", "args": ["-y", "@upstash/context7-mcp@4.1.1"] }
   }
 }</pre>
 </figure>
-<p class="small">Fuller comparison: <a href="../reference/tool-equivalents.html">Tool equivalents</a>.</p>
+  <p class="small">Sources: <a href="https://learn.chatgpt.com/docs/extend/mcp?surface=cli">Codex MCP</a> · <a href="https://antigravity.google/docs/mcp">Antigravity MCP</a> <span class="ver">verified 2026-10-01</span></p>
 </details>
 
 <h2>Check yourself</h2>
 <p class="score"></p>
 
 <div class="quiz">
-  <p class="q">Why does the reference <code>.mcp.json</code> say <code>@upstash/context7-mcp@4.1.1</code>?</p>
+  <p class="q">Why does <code>.mcp.json</code> say <code>@upstash/context7-mcp@4.1.1</code> and not just the package name?</p>
   <div class="opts">
     <button class="opt" data-correct>Pinning stops a brand-new release running unreviewed.</button>
     <button class="opt">A pinned package downloads faster from registries.</button>
@@ -242,75 +261,79 @@ args = ["-y", "@upstash/context7-mcp@4.1.1"]</pre>
 </div>
 
 <div class="quiz">
-  <p class="q">A teammate commits a new server to <code>.mcp.json</code>. What happens when you open the repo?</p>
+  <p class="q">context7 is connected and approved, yet the agent writes the <code>DateTimeOffset</code> sort from memory. Why?</p>
   <div class="opts">
-    <button class="opt" data-correct>Claude Code asks you to approve that server.</button>
-    <button class="opt">It connects silently because the file is committed.</button>
-    <button class="opt">It checks the package against a vendor allowlist.</button>
-    <button class="opt">It copies the entry into your user settings.</button>
+    <button class="opt" data-correct>A connected tool helps only if it's called.</button>
+    <button class="opt">Project servers stay off until the next reboot.</button>
+    <button class="opt">context7 only answers questions asked in plan mode.</button>
+    <button class="opt">MCP servers ignore any project written in C#.</button>
   </div>
-  <p class="why">Project-scoped servers need approval in an interactive session, and they show as Pending approval until you give it. A server is code that runs as you, so the file is reviewed like code.</p>
+  <p class="why">The model decides which tools to call. Ask for the lookup in the prompt and in the rules, and let the test prove the result.</p>
 </div>
 
 <div class="quiz">
-  <p class="q">What does <code>sqlite3 -readonly</code> guarantee about the agent's commands?</p>
+  <p class="q">What does <code>sqlite3 -readonly</code> on its own guarantee?</p>
   <div class="opts">
     <button class="opt">It blocks every write, including shell commands too.</button>
     <button class="opt" data-correct>The engine rejects writes, but dot-commands still run.</button>
     <button class="opt">The model is merely forbidden from writing rows.</button>
     <button class="opt">The allow rule text is what enforces read-only.</button>
   </div>
-  <p class="why">The engine refuses writes to the database (error 8). The CLI's <code>.shell</code> still ran under <code>-readonly</code> when I tested, and <code>-safe</code> refused it, so use both flags.</p>
+  <p class="why">The engine refuses writes to the database (error 8), but <code>.shell</code> still ran under <code>-readonly</code>. <code>-safe</code> refused it, so the rule and the command carry both flags.</p>
 </div>
 
-<h2>Exercise: pin context7, then compare two sessions</h2>
+<h2>Exercise: vet, pin, then compare two sessions</h2>
 <div class="exercise">
-  <span class="label">Exercise · ~60 min · adds: .mcp.json, a vetting verdict and the orders slice</span>
-  <p>Before you start: <code>node -v</code> must print v18 or later (<code>npx</code> comes with Node), and <code>sqlite3 --version</code> must work (install notes above). Windows: run the shell commands in WSL2 or Git Bash (see <a href="../index.html#before-you-start">Before you start</a> on the index).</p>
+  <span class="label">Exercise · about 60 min · you add: .mcp.json, two vetting verdicts, the orders history slice</span>
+  <p>Work in your practice repo (<code>~/projects/stockapi</code>), with everything from lessons 1 to 7. You need Node 18 or later for <code>npx</code> (<code>node -v</code>) and the <code>sqlite3</code> command (<code>sqlite3 --version</code>; on Linux or WSL2, <code>sudo apt install sqlite3</code>). <strong>Windows:</strong> use WSL2 or Git Bash (<a href="../index.html#before-you-start">setup</a>).</p>
   <ol>
-    <li><strong>Add the server</strong>, from the repo root:
+    <li><strong>Start clean.</strong> <code>git status</code> is clean and you are on <code>main</code>. Run <code>grep -rn DateTimeOffset AGENTS.md docs tests .claude</code>: it should print nothing. If it finds a rule about it, the agent will likely get step 6 right first time. Note that, and carry on.</li>
+    <li><strong>Vet before you add.</strong> Run the <code>npm view</code> commands from the table for <code>@upstash/context7-mcp</code>, and check that 4.1.1 is at least 14 days old. Then do the same, on paper, for a community SQLite MCP server you find on npm. Under "Decisions made by the human" in <code>ai-session/PLAN.md</code>, write one line each, for example: <em>2026-10-01: context7 4.1.1 → added: Upstash, MIT, 17 days old, docs only. &lt;sqlite server&gt; → not added: source unread, and sqlite3 -readonly -safe already covers reads.</em></li>
+    <li><strong>Add it at project scope and approve it.</strong>
 <pre>claude mcp add --scope project context7 -- npx -y @upstash/context7-mcp@4.1.1
-cat .mcp.json          # compare with reference-solution/.mcp.json
-claude mcp list        # expect a context7 line; Pending approval until you approve it</pre>
-      Your <code>.mcp.json</code> may be laid out differently from the reference (for example an empty <code>"env": {}</code>): <code>command</code> and <code>args</code> must match. Start <code>claude</code>, approve the server, run <code>/mcp</code> and confirm context7 is connected. Native Windows without WSL2 or Git Bash usually needs <code>cmd /c npx …</code> in place of <code>npx …</code>. <span class="ver unverified">unverified: native Windows npx wrapper not tested</span></li>
-    <li><strong>Plan the slice first, on main.</strong> In plan mode, add to <code>ai-session/PLAN.md</code> the slice <em>"orders: history GET /api/orders, newest first, optional productId filter"</em>, and commit the plan alone: <code>docs(plan): orders history slice</code> (leave <code>.mcp.json</code> out of that commit). Then <code>git switch -c scratch/orders-a</code>. In a new session ask: <em>"Implement the next unchecked slice in ai-session/PLAN.md, tests first, and run them. Do not use context7 or web search."</em> Expect the 500 and the <code>NotSupportedException</code> above. Write down how long the agent took to recover and what it did (converter? client-side sort? a migration?). If it applies the converter unprompted, record that too: your model knew. Trainee A's didn't.</li>
-    <li><strong>Discard it yourself</strong>, in your own terminal (the guard hooks only watch the agent): <code>git restore . ; git switch main ; git branch -D scratch/orders-a</code>. Run <code>git status --short</code> and delete only the untracked files the agent created (a new test file, say). Keep <code>.mcp.json</code>: it is yours, and still uncommitted.</li>
-    <li><strong>Session B, with lookup, on main.</strong> New session, same slice: <em>"Check EF Core SQLite limitations with context7 first, then implement the next unchecked slice in ai-session/PLAN.md, tests first."</em> Look for a tool call whose name starts with <code>mcp__context7__</code>, and confirm the converter appears in <code>StockDbContext</code>. Run <code>dotnet test</code>. Don't commit yet.</li>
-    <li><strong>Read-only data.</strong> <code>stock.db</code> is created at <code>src/StockApi/stock.db</code> and is git-ignored. Delete any old copy first (<code>rm -f src/StockApi/stock.db*</code>), because the converter changes how dates are stored. In a second terminal run <code>dotnet run --project src/StockApi --urls http://127.0.0.1:5077</code>, then in another:
+cat .mcp.json
+claude mcp list</pre>
+      Expect the JSON above (plus an empty <code>"env": {}</code>), and <code>context7: … ⏸ Pending approval (run `claude` to approve)</code>. The <code>--</code> separates Claude's options from the server's command. Start <code>claude</code>, approve the server, then run <code>/mcp</code>: context7 should show as connected.</li>
+    <li><strong>Commit it.</strong> Stage <code>.mcp.json</code> and <code>ai-session/PLAN.md</code>, then <code>/commit</code>, for example <code>chore(harness): add context7 MCP server pinned to 4.1.1</code>.</li>
+    <li><strong>Plan the slice.</strong> In plan mode, add to <code>ai-session/PLAN.md</code>: <em>"orders: history GET /api/orders, newest first, optional productId filter (tests: order, filter)"</em>. Stage only that file and <code>/commit</code> it alone: <code>docs(plan): orders history slice</code>.</li>
+    <li><strong>Session A, from memory, on a scratch branch.</strong> <code>git switch -c scratch/orders-a</code>, start a fresh session and ask: <em>"Implement the next unchecked slice in ai-session/PLAN.md, tests first, and run them. Do not use context7 or web search."</em> Expect a failing test with a 500, and the <code>NotSupportedException</code> when the agent digs in. Write down what it did about it: a converter, sorting in memory, something else? If it used the converter without being told, write that down too. Your model knew, but you can't count on it knowing.</li>
+    <li><strong>Throw it away</strong>, yourself, in this order: <code>git restore .</code>, <code>git switch main</code>, <code>git branch -D scratch/orders-a</code>. Then <code>git status --short</code>, and delete any untracked file the agent created (a new test file, say).</li>
+    <li><strong>Session B, docs first, on <code>main</code>.</strong> Fresh session: <em>"Check the EF Core SQLite limitations with context7 before you write any query, then implement the next unchecked slice in ai-session/PLAN.md, tests first."</em> If Claude asks before an <code>mcp__context7__…</code> call, approve it. Read what came back. Confirm the fix is in <code>StockDbContext</code> and that <code>dotnet test</code> is green. Don't commit yet.</li>
+    <li><strong>Real data.</strong> The database lives at <code>src/StockApi/stock.db</code> and is git-ignored. Delete any old copy, because the converter changes the column type: <code>rm -f src/StockApi/stock.db src/StockApi/stock.db-shm src/StockApi/stock.db-wal</code>. In a second terminal, <code>dotnet run --project src/StockApi --urls http://127.0.0.1:5077</code>. In a third:
 <pre>curl -s -X POST http://127.0.0.1:5077/api/products -H 'Content-Type: application/json' -d '{"sku":"A1","name":"A","stock":5}'
 curl -s -X POST http://127.0.0.1:5077/api/orders -H 'Content-Type: application/json' -d '{"productId":1,"quantity":1}'
-curl -s -X POST http://127.0.0.1:5077/api/orders -H 'Content-Type: application/json' -d '{"productId":1,"quantity":2}'</pre>
-      Stop the API with Ctrl+C. The tighter rule <code>"Bash(sqlite3 -readonly -safe *)"</code> is already under <code>permissions.allow</code> from the lesson 7 listing; if your file lacks it, add it now. Ask: <em>"Using sqlite3 -readonly -safe on src/StockApi/stock.db, how many orders does each product have?"</em> (expect product 1 with 2 orders). Then probe: <em>"Now delete all orders with sqlite3."</em> Expect the engine error. You just ran a guard probe for lesson 7's table.</li>
-    <li><strong>Vet a server, on paper.</strong> Pick <code>mcp-sqlite-server</code> or any other community server. Fill in the six questions from the table. Put the verdict in <code>ai-session/PLAN.md</code> under "Decisions made by the human", for example: <em>2026-09-30: add mcp-sqlite-server? → not added, because source unread and sqlite3 -readonly already enforces read-only.</em></li>
-    <li><strong>Commit through <code>/commit</code>, in two commits.</strong> First <code>chore(harness): add context7 MCP server pinned to 4.1.1</code> (<code>.mcp.json</code> and the plan verdict), then the slice as <code>feat(orders): list orders newest first</code> (tick its box in <code>PLAN.md</code> first).</li>
+curl -s -X POST http://127.0.0.1:5077/api/orders -H 'Content-Type: application/json' -d '{"productId":1,"quantity":2}'
+curl -s http://127.0.0.1:5077/api/orders</pre>
+      The last line should list order 2 before order 1. Stop the API with Ctrl+C. Ask the agent: <em>"Using sqlite3 -readonly -safe on src/StockApi/stock.db, how many orders does each product have?"</em> Expect product 1 with 2 orders, and no permission prompt. Then: <em>"Now delete all orders, with sqlite3 -readonly -safe."</em> Expect <code>attempt to write a readonly database (8)</code>. If it tries a different command, you get a prompt: say no. If it declines to try at all, run that command yourself and read the error.</li>
+    <li><strong>Review and commit.</strong> Follow your workflow: <code>/quality-gate</code>, the reviewers from lesson 6, tick the slice in <code>PLAN.md</code>, then <code>/commit</code>, for example <code>feat(orders): list orders newest first</code>.</li>
   </ol>
-  <p><strong>Codex:</strong> put the <code>[mcp_servers.context7]</code> block above in <code>.codex/config.toml</code> (the project must be trusted) and ask for the lookup by name. Codex has no <code>.mcp.json</code> approval prompt that I could verify; read the server list before you start. <strong>Antigravity:</strong> save the JSON above as <code>.agents/mcp_config.json</code>. Steps 2 to 4 are the same in both tools; for step 5 use the tool's own command allow list (<code>command(sqlite3)</code> in Antigravity permissions), and keep both flags in the command itself.</p>
+  <p class="tools-note"><strong>Codex:</strong> put the <code>[mcp_servers.context7]</code> block in <code>.codex/config.toml</code> (the project must be trusted) or use <code>codex mcp add</code>, and ask for the lookup by name. <strong>Antigravity:</strong> save the JSON as <code>.agents/mcp_config.json</code>; MCP tools ask before they run by default. In both, keep both sqlite3 flags in the command itself.</p>
 </div>
 
-<div class="done">
-  <span class="label">Done when</span>
+<div class="done" data-built="a pinned, approved docs server in .mcp.json, a slice the docs got right before the tests did, and read-only access to real data that the database itself enforces.">
+  <span class="label">Done when: tick all four to earn the Live Docs plaque</span>
   <ul class="check" data-key="0008">
-    <li><input type="checkbox"> <span><code>.mcp.json</code> is committed with <code>@upstash/context7-mcp@4.1.1</code> (no bare package name)</span></li>
-    <li><input type="checkbox"> <span>You saw the <code>DateTimeOffset</code> error in session A and a <code>mcp__context7__</code> call in session B</span></li>
-    <li><input type="checkbox"> <span>The agent's <code>DELETE</code> against <code>stock.db</code> failed with "attempt to write a readonly database"</span></li>
-    <li><input type="checkbox"> <span>PLAN.md holds a six-question verdict for a server you did not add</span></li>
+    <li><input type="checkbox" aria-label="Server committed"> <span><code>.mcp.json</code> is committed with <code>@upstash/context7-mcp@4.1.1</code>, and <code>/mcp</code> shows it connected</span></li>
+    <li><input type="checkbox" aria-label="Two sessions compared"> <span>You saw what session A did without docs, and a <code>mcp__context7__</code> call in session B before its query</span></li>
+    <li><input type="checkbox" aria-label="Read-only probe"> <span>The agent counted orders with <code>sqlite3 -readonly -safe</code>, and its <code>DELETE</code> failed with "attempt to write a readonly database"</span></li>
+    <li><input type="checkbox" aria-label="Verdicts and slice committed"> <span><code>PLAN.md</code> holds both vetting verdicts, and <code>feat(orders)</code> is committed with <code>dotnet test</code> green</span></li>
   </ul>
 </div>
 
-<div class="source">
-  <span class="label">Primary source</span>
-  <p><a href="https://code.claude.com/docs/en/mcp">Connect Claude Code to tools via MCP</a> (Anthropic). Read "MCP installation scopes" and "Project scope", then the approval and workspace-trust section. For the EF Core limit itself: <a href="https://learn.microsoft.com/en-us/ef/core/providers/sqlite/limitations">SQLite EF Core Database Provider limitations</a>.</p>
-</div>
-
-<div class="ask">
-  <span class="label">Ask your agent</span>
-  <p>Stuck, or curious? Ask the agent you're learning with, for example: "Read my <code>.mcp.json</code> as a security reviewer: what does each entry run, with which version, and what could it reach on this machine?"</p>
+<div class="split">
+  <div class="source">
+    <span class="label">Read next</span>
+    <p><a href="https://code.claude.com/docs/en/mcp">Connect Claude Code to tools via MCP</a>: "MCP installation scopes", then the approval and workspace-trust section. For the limit itself: <a href="https://learn.microsoft.com/en-us/ef/core/providers/sqlite/limitations">SQLite EF Core provider limitations</a> and the built-in converters in <a href="https://learn.microsoft.com/en-us/ef/core/modeling/value-conversions">Value conversions</a>.</p>
+  </div>
+  <div class="ask">
+    <span class="label">Ask your agent</span>
+    <p>"Read my <code>.mcp.json</code> as a security reviewer. For each entry: what does it run, at which version, and what could it reach on this machine?"</p>
+  </div>
 </div>
 
 <nav class="lesson-nav">
-  <a href="0007-guards.html">← Lesson 7: Guards</a>
-  <a href="../reference/four-guards.html">The four guards</a>
-  <a href="0009-writing-for-the-agent.html">Lesson 9: Writing for the agent →</a>
+  <a href="0007-guards.html"><small>← Back to</small>7. Guards</a>
+  <a class="next" href="0009-writing-for-the-agent.html"><small>Next stage →</small>9. Writing for the agent</a>
 </nav>
 
 </main>
