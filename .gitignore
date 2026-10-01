@@ -4,3 +4,8 @@ obj/
 *.db-shm
 *.db-wal
 __pycache__/
+
+# local only: author notes and the separately published practice repo
+NOTES.md
+practice-repo/
+learning-records/
