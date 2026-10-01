@@ -3,7 +3,7 @@
 ## The loop
 1. **Explore**: read the relevant code and docs. Do not edit yet (plan mode, if your tool has one).
 2. **Plan**: write or update `ai-session/PLAN.md`: slices, each with its test and the files it touches.
-   The human edits and approves it. The plan is committed on its own (`docs: plan …`) before any code.
+   The human edits and approves it. The plan is committed on its own (`docs(plan): …`) before any code.
 3. **One slice**: implement only the next unchecked slice in the plan.
 4. **Quality gate**: run the `quality-gate` skill. Fix failures; if a fix would touch an invariant, use 1-3-1.
 5. **Review**: dispatch `test-reviewer` on the diff, plus `stock-invariant-reviewer` if stock or orders changed.

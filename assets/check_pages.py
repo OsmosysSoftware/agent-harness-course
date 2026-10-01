@@ -21,6 +21,7 @@ class Page(HTMLParser):
         self.quiz_depth = 0
         self.depth = 0
         self.has_css = False
+        self.bad_steps = []
         self.svg = 0               # <style> inside a rendered diagram's <svg> is allowed
 
     def handle_starttag(self, tag, attrs):
@@ -39,6 +40,12 @@ class Page(HTMLParser):
             self.svg += 1
         if tag == "style" and not self.svg:
             self.styles += 1
+        if a.get("data-steps") is not None:
+            try:
+                import json
+                json.loads(a["data-steps"])
+            except ValueError as e:
+                self.bad_steps.append(str(e))
         if tag == "div" and "quiz" in cls:
             self.quizzes.append([])
         if tag == "button" and "opt" in cls:
@@ -74,6 +81,8 @@ def check(path: Path):
         target = (path.parent / href.split("#")[0]).resolve()
         if not target.exists():
             problems.append(f"broken local link: {href}")
+    for e in p.bad_steps:
+        problems.append(f"diagram data-steps is not valid JSON: {e}")
     for i, q in enumerate(p.quizzes, 1):
         if not q:
             problems.append(f"quiz {i}: no options")

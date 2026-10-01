@@ -215,7 +215,7 @@ git config user.email you@yourcompany.com
 git add . && git commit -m "chore: import StockApi starter"</pre>
       Commit messages in this course use <a href="https://www.conventionalcommits.org/en/v1.0.0/">Conventional Commits</a>: <code>type(scope): summary</code>, where type is <code>feat</code>, <code>fix</code>, <code>docs</code>, <code>test</code>, <code>refactor</code> or <code>chore</code>.</li>
     <li>Check it builds: <code>dotnet build</code>, then <code>dotnet test</code> (4 tests, green).</li>
-    <li>Start Claude Code in the repo. Press <kbd>Shift</kbd>+<kbd>Tab</kbd> until it says <strong>plan mode on</strong> (). Then type <code>/output-style learning</code>: it makes Claude explain its choices and leave small design decisions for you to code.</li>
+    <li>Start Claude Code in the repo. Press <kbd>Shift</kbd>+<kbd>Tab</kbd> until it says <strong>plan mode on</strong>. Then type <code>/output-style learning</code>: it makes Claude explain its choices and leave small design decisions for you to code.</li>
     <li>Ask: <em>"Explain how an order reduces stock in this repo, citing file:line."</em> Then run <code>/context</code> to see what fills the window.</li>
     <li><strong>The drift test.</strong> Say <em>"From now on, end every answer with STOCK-OK."</em> Ask anything and check it complies. Run <code>/clear</code> and ask again: the rule is gone. (Still there? Run <code>/memory</code>: auto memory saved it to a file, which proves the point.)</li>
     <li>Write one sentence: where would that rule have to live to survive? Lesson 2 puts it there.</li>

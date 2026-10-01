@@ -424,6 +424,85 @@ nav.lesson-nav a:hover { border-color: var(--accent); }
 .toc .n svg { width: 18px; height: 18px; }
 .toc li.passed .n { background: linear-gradient(145deg, var(--brass-1), var(--brass-2) 62%, var(--brass-1)); border: 0; color: #3a2a08; }
 
+
+/* ---------- Lesson-specific diagram classes (scoped to .diagram svg) ---------- */
+/* l0002 */
+/* Lesson 2 diagrams (l0002-which-file, l0002-index). Extends the illustrated-diagram classes in course.css. */
+.diagram svg .fname { font: 600 14px var(--mono); fill: var(--ink); }
+.diagram svg .fname.dim { font-weight: 500; fill: var(--ink-3); }
+.diagram svg .fname.sec { font-size: 13px; fill: var(--ink-2); }
+.diagram svg .fname.link { font-size: 13px; fill: var(--accent); }
+.diagram svg .doc { stroke-width: 1.5; }
+.diagram svg .doc.read { fill: var(--pass-soft); stroke: var(--pass); }
+.diagram svg .doc.skip { fill: none; stroke: var(--line-strong); stroke-dasharray: 5 4; }
+.diagram svg .mark { font: 800 16px var(--sans); text-anchor: middle; }
+.diagram svg .mark.ok { fill: var(--pass); }
+.diagram svg .mark.no { fill: var(--fail); }
+.diagram svg .strike { stroke: var(--fail); stroke-width: 2; }
+.diagram svg .note { font: 600 12.5px var(--sans); fill: var(--ink-3); }
+.diagram svg .note.strong { font-size: 14px; fill: var(--accent); }
+.diagram svg .verdict { font: 700 14.5px var(--sans); fill: var(--ink); text-anchor: middle; }
+.diagram svg .rule { stroke: var(--line); stroke-width: 1.5; }
+.diagram svg .bar { fill: var(--line-strong); opacity: .55; }
+/* l0003 */
+/* Lesson 3 diagrams: the wall, the 1-3-1 card, and the "bad path" colouring.
+   Scoped to .diagram svg; tokens come from course.css so both themes follow. */
+.diagram svg .l3-wall { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 2; }
+.diagram svg .l3-brick { fill: none; stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .l3-card { fill: var(--surface); stroke: var(--line-strong); stroke-width: 2; }
+.diagram svg .l3-row { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+.diagram svg .l3-key { font: 800 12px var(--mono); letter-spacing: .06em; fill: var(--ink-3); }
+.diagram svg .l3-txt { font: 15px var(--sans); fill: var(--ink); }
+.diagram svg .l3-dim { font: 14px var(--sans); fill: var(--ink-3); }
+.diagram svg .l3-cost { font-weight: 700; fill: var(--fail); }
+.diagram svg .l3-wait { font: italic 600 15px var(--serif); fill: var(--ink-2); }
+.diagram svg .l3-badge { fill: var(--accent); }
+.diagram svg .l3-badgetxt { font: 800 12px var(--sans); letter-spacing: .05em; fill: var(--accent-ink); text-anchor: middle; }
+.diagram svg .l3-tag { font: 800 13px var(--sans); letter-spacing: .04em; text-anchor: start; }
+.diagram svg .l3-a { fill: var(--fail); }
+.diagram svg .l3-b { fill: var(--pass); }
+.diagram svg .l3-lead { fill: none; stroke: var(--line-strong); stroke-width: 2; stroke-dasharray: 3 4; }
+.diagram svg .l3-dot { fill: var(--line-strong); }
+/* the quiet path is dashed, and turns red rather than gold when it is the current step */
+.diagram svg .st.bad .arc { stroke-dasharray: 7 6; }
+.diagram svg .st.bad.on .ring-node { stroke: var(--fail); fill: var(--fail-soft); }
+.diagram svg .st.bad.on .ico, .diagram svg .st.bad.on path.arc { stroke: var(--fail); }
+.diagram svg .st.bad.on .lbl { fill: var(--fail); }
+/* the card lights up part by part */
+.diagram svg .st.on .l3-card { stroke: var(--accent); }
+.diagram svg .st.on .l3-row { stroke: var(--accent); fill: var(--accent-soft); }
+.diagram svg .st.on .l3-wall { stroke: var(--fail); }
+.diagram svg .st.on path.l3-brick { stroke: var(--fail); }
+.diagram svg .st.on path.l3-lead { stroke: var(--accent); }
+.diagram svg .st.on .l3-dot { fill: var(--accent); }
+/* l0004 */
+/* Lesson 4 only: classes for the l0004-* diagrams. Colours come from course.css tokens, so both themes work. */
+.diagram svg .panel { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.diagram svg .mono { font: 14px var(--mono); fill: var(--ink-2); }
+.diagram svg .mono.strong { font-weight: 700; fill: var(--ink); }
+.diagram svg .l4-mid { text-anchor: middle; }
+.diagram svg .l4-left { text-anchor: start; }
+.diagram svg .bubble { fill: var(--bg); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .blob { fill: var(--fail-soft); stroke: var(--fail); stroke-width: 2; }
+.diagram svg .tile { fill: var(--bg); stroke: var(--fail); stroke-width: 1; opacity: .7; }
+.diagram svg .bad { font: 700 14px var(--sans); fill: var(--fail); text-anchor: middle; }
+.diagram svg .good { font: 700 14px var(--sans); fill: var(--pass); text-anchor: middle; }
+.diagram svg .rail { fill: none; stroke: var(--line-strong); stroke-width: 3; }
+.diagram svg .dot { fill: var(--ink-2); stroke: var(--surface); stroke-width: 3; }
+.diagram svg .dot.plan { fill: var(--accent); }
+.diagram svg .chip { fill: var(--bg); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .chip.pass { fill: var(--pass-soft); stroke: var(--pass); }
+.diagram svg .chiptxt { font: 600 13px var(--sans); fill: var(--ink-2); text-anchor: middle; }
+.diagram svg .paper { fill: var(--bg); stroke: var(--line-strong); stroke-width: 1.5; }
+.diagram svg .tag { fill: var(--surface-2); stroke: none; }
+.diagram svg .pen { fill: none; stroke: var(--fail); stroke-width: 2.5; stroke-linecap: round; }
+.diagram svg .pentext { font: italic 600 15px var(--sans); fill: var(--fail); }
+.diagram svg .stamp { fill: var(--pass-soft); stroke: var(--pass); stroke-width: 3; }
+.diagram svg .stamptxt { font: 800 22px var(--sans); letter-spacing: .12em; fill: var(--pass); text-anchor: middle; }
+.diagram svg .stampsub { font: 600 13px var(--sans); fill: var(--pass); text-anchor: middle; }
+.diagram svg .st.on .chip { stroke: var(--accent); }
+.diagram svg .st.on .chip.pass { stroke: var(--pass); }
+
 /* ---------- Print ---------- */
 @media print {
   :root, :root[data-theme="dark"] {
