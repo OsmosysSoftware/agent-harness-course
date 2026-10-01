@@ -19,7 +19,9 @@ This is `docs/ai/workflow.md` steps 3 to 7 as one command. Steps marked **STOP**
    **STOP** if a fix would touch an invariant.
 5. **Review.** Dispatch `test-reviewer`, plus `stock-invariant-reviewer` if stock or orders changed. Report each
    finding with its file:line. **STOP** on any BLOCK: the human decides.
-6. **Commit.** Tick the slice in `PLAN.md`, then run the `commit` skill. It asks before staging and before
+6. **Docs.** If the slice added or changed an endpoint or a documented behaviour, run the `update-docs` skill
+   and fix any STALE row in this slice.
+7. **Commit.** Tick the slice in `PLAN.md`, then run the `commit` skill. It asks before staging and before
    committing. **STOP** there.
-7. **Report and stop.** The commit hash, what the reviewers said, and the next unchecked slice. Never start the
+8. **Report and stop.** The commit hash, what the reviewers said, and the next unchecked slice. Never start the
    next slice yourself.

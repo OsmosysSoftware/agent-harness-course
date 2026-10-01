@@ -230,7 +230,7 @@ Docs written from memory drift. This skill compares every claim with the code.
 
 <h2>One skill for the whole loop</h2>
 
-<p><code>docs/ai/workflow.md</code> describes the loop: one slice, gate, review, commit. Typed out each time, it's a prompt again, and prompts drift. A <dfn>workflow skill</dfn> turns the loop into one command that calls the skills and reviewers you already have, in order, and stops wherever a human decides. Because it commits, it's user-only (<code>disable-model-invocation: true</code>): you start each slice; the agent never starts the next one by itself.</p>
+<p><code>docs/ai/workflow.md</code> describes the loop: one slice, gate, review, commit. Typed out each time, it's a prompt again, and prompts drift. A <dfn>workflow skill</dfn> turns the loop into one command that calls the skills and reviewers you already have (<code>new-endpoint</code>, <code>quality-gate</code>, the two reviewers, <code>update-docs</code>, <code>commit</code>), in order, and stops wherever a human decides. Because it commits, it's user-only (<code>disable-model-invocation: true</code>): you start each slice; the agent never starts the next one by itself.</p>
 
 <figure class="code"><figcaption>.agents/skills/ship-slice/SKILL.md</figcaption><pre>---
 name: ship-slice
@@ -253,9 +253,11 @@ This is `docs/ai/workflow.md` steps 3 to 7 as one command. Steps marked **STOP**
    **STOP** if a fix would touch an invariant.
 5. **Review.** Dispatch `test-reviewer`, plus `stock-invariant-reviewer` if stock or orders changed. Report each
    finding with its file:line. **STOP** on any BLOCK: the human decides.
-6. **Commit.** Tick the slice in `PLAN.md`, then run the `commit` skill. It asks before staging and before
+6. **Docs.** If the slice added or changed an endpoint or a documented behaviour, run the `update-docs` skill
+   and fix any STALE row in this slice.
+7. **Commit.** Tick the slice in `PLAN.md`, then run the `commit` skill. It asks before staging and before
    committing. **STOP** there.
-7. **Report and stop.** The commit hash, what the reviewers said, and the next unchecked slice. Never start the
+8. **Report and stop.** The commit hash, what the reviewers said, and the next unchecked slice. Never start the
    next slice yourself.</pre></figure>
 
 <p>Notice how little of it the model does on its own. Each step goes to whichever part of the harness does it most reliably:</p>
@@ -266,6 +268,7 @@ This is `docs/ai/workflow.md` steps 3 to 7 as one command. Steps marked **STOP**
   <tr><td>Write the test and the code</td><td>The agent</td><td>The part that needs a model</td></tr>
   <tr><td>Format, build, test</td><td>A script (<code>gate.sh</code>)</td><td>Same result every run; the model only reads the output</td></tr>
   <tr><td>Is the change safe?</td><td>Reviewer subagents</td><td>Judgement, but from a fresh context that didn't write the code</td></tr>
+  <tr><td>Are the docs still true?</td><td>The <code>update-docs</code> skill</td><td>A model checks each claim against the code, so the README can't quietly fall behind</td></tr>
   <tr><td>Secrets, junk files, message format</td><td>Git hooks (lesson 7)</td><td>Must hold even if every model gets it wrong</td></tr>
   <tr><td>Approve the plan, decide a BLOCK, approve the commit</td><td>You</td><td>Decisions with consequences stay human</td></tr>
 </table></div>
