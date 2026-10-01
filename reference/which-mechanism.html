@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Which mechanism?</title>
+<link rel="stylesheet" href="../assets/course.css">
+<script src="../assets/course.js"></script>
+</head>
+<body class="ref">
+<main>
+
+<p class="kicker"><a href="../index.html">Agent Harness</a> · Reference sheet</p>
+<h1>Which mechanism?</h1>
+<p class="lede">You want something to happen every time. Should it be a line in a rules file, a skill, a reviewer, a hook, a test or an MCP server? And does it need a model at all? One question decides most cases: <strong>does this step have one right answer?</strong></p>
+
+<div class="note"><span class="label">The rule of thumb</span>
+<p><strong>One right answer</strong> (format, build, a file pattern, a commit message shape): a script, a hook or a test does it, the same way every run. <strong>Needs judgement</strong> (write the code, is this change safe?): the model does it, and a second model with a fresh context checks it. <strong>Has consequences</strong> (approve the plan, accept a BLOCK, commit, push): you decide. A model is the most flexible part of the harness and the least reliable, so give it only the steps that need it.</p>
+</div>
+
+<h2>Need → mechanism</h2>
+<div class="table-wrap"><table>
+<tr><th>You need…</th><th>Build</th><th>Why this and not a rules line</th><th>Lesson</th></tr>
+<tr><td>A fact every session should know (build command, the invariant)</td><td>A line in <code>AGENTS.md</code></td><td>It is a rules line: short, loaded every session, re-read after compaction</td><td><a href="../lessons/0002-rules-files.html">2</a></td></tr>
+<tr><td>A fact that only matters in one folder or file type</td><td>Nested <code>AGENTS.md</code> or <code>.claude/rules/</code> with <code>paths:</code></td><td>Loads only when needed, so other tasks don't pay for it</td><td><a href="../lessons/0002-rules-files.html">2</a></td></tr>
+<tr><td>The agent to stop and ask at a real decision</td><td>The 1-3-1 rule in <code>AGENTS.md</code>, plus an <code>ask</code> rule for risky commands</td><td>The rule shapes the hand-over; the ask rule makes the stop happen even in auto mode</td><td><a href="../lessons/0003-one-three-one.html">3</a>, <a href="../lessons/0007-guards.html">7</a></td></tr>
+<tr><td>A procedure you repeat (commit, release, new endpoint)</td><td>A skill</td><td>Loads only when used; steps run in order; a script inside gives the same result every run</td><td><a href="../lessons/0005-skills.html">5</a></td></tr>
+<tr><td>A whole loop as one command</td><td>A workflow skill (<code>ship-slice</code>) that calls the others</td><td>One command, with the human stops written in</td><td><a href="../lessons/0009-writing-for-the-agent.html">9</a></td></tr>
+<tr><td>A second opinion on every diff</td><td>A reviewer subagent, read-only</td><td>Fresh context: it never saw the author's reasoning</td><td><a href="../lessons/0006-reviewer-subagents.html">6</a></td></tr>
+<tr><td>Something the agent must never run</td><td>A <code>deny</code> rule, plus a PreToolUse hook for patterns</td><td>Blocks the call before it runs, whatever the model decides</td><td><a href="../lessons/0007-guards.html">7</a></td></tr>
+<tr><td>Something no commit may contain, whoever wrote it</td><td>A git hook (<code>pre-commit</code>, <code>commit-msg</code>)</td><td>Runs on every commit, by a human or an agent, with any tool</td><td><a href="../lessons/0007-guards.html">7</a></td></tr>
+<tr><td>Proof that an invariant holds</td><td>A guard test (12 orders for 3 units)</td><td>Fails the build when the code breaks it; a reviewer can be wrong</td><td><a href="../lessons/0007-guards.html">7</a></td></tr>
+<tr><td>Live docs or data the model would otherwise guess</td><td>An MCP server (pinned, vetted) or one read-only command</td><td>Reading the source beats remembering it</td><td><a href="../lessons/0008-mcp.html">8</a></td></tr>
+<tr><td>The reason odd-looking code is that way</td><td>An ADR, plus a one-line comment pointing at it</td><td>The why lives in one file the agent reads before it edits</td><td><a href="../lessons/0009-writing-for-the-agent.html">9</a></td></tr>
+<tr><td>Docs that stay true</td><td>A checking skill (<code>/update-docs</code>) in the definition of done</td><td>Claims get checked against the code, not trusted</td><td><a href="../lessons/0009-writing-for-the-agent.html">9</a></td></tr>
+<tr><td>Work to continue somewhere else</td><td>A handoff file, or <code>/fork</code></td><td>A new chat, tool or colleague can't see this one</td><td><a href="../lessons/0005-skills.html">5</a></td></tr>
+</table></div>
+
+<h2>Claude hooks or git hooks?</h2>
+<p>Both run a script, and they fire at different moments. Most teams want both for the things that matter.</p>
+<div class="table-wrap"><table>
+<tr><th></th><th>Claude Code hook (PreToolUse, PostToolUse…)</th><th>Git hook (pre-commit, commit-msg)</th></tr>
+<tr><td>Fires when</td><td>The agent is about to call a tool, or just did</td><td>Anyone runs <code>git commit</code></td></tr>
+<tr><td>Sees</td><td>The tool call: the command, the file, the edit</td><td>The staged diff and the message</td></tr>
+<tr><td>Binds</td><td>This agent, in Claude Code only</td><td>Every human and every agent, in every tool</td></tr>
+<tr><td>Good for</td><td>Stopping a command before it runs (force-push, <code>rm -rf</code>); formatting after an edit</td><td>Secrets, build output, identity, message format</td></tr>
+<tr><td>Misses</td><td>Anything you type yourself; an Edit-tool write when the hook only watches Bash</td><td>Anything that never reaches a commit</td></tr>
+</table></div>
+
+<h2>Does it need a model at all?</h2>
+<p>Before you write a skill, ask whether a plain command would do. Formatting is <code>dotnet format</code>, not a request to "format nicely". A version check is <code>dotnet --version</code>, not a question. If the step can be a script, make it one, and let the skill call it: <code>quality-gate</code> runs <code>gate.sh</code>, and the model's job is only to read the output and fix the cause.</p>
+
+<p class="small">This is one way to split the work, built from the course's reference solution. Your team may draw some lines differently; keep the principle.</p>
+
+<nav class="lesson-nav"><a href="../index.html"><small>Back to</small>← Course map and lessons</a></nav>
+</main>
+</body>
+</html>

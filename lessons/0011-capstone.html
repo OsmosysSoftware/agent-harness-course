@@ -382,6 +382,99 @@ WHERE NOT EXISTS (
   <p class="why">The refusal is the guard working. Editing or disabling it would test a harness you changed, not the one the owner committed.</p>
 </div>
 
+<h3>Final round: what would you build?</h3>
+<p>Situations from all eleven lessons, mixed. Pick the mechanism, then check it against the <a href="../reference/which-mechanism.html">Which mechanism?</a> sheet.</p>
+<div class="quiz">
+  <p class="q">Every session you remind the agent that an order for too much stock returns 409.</p>
+  <div class="opts">
+    <button class="opt" data-correct>Rules line</button>
+    <button class="opt">New skill</button>
+    <button class="opt">MCP server</button>
+    <button class="opt">Ask rule</button>
+  </div>
+  <p class="why">A fact every session needs: one line in AGENTS.md (or invariants.md). Typing it twice is the signal.</p>
+</div>
+<div class="quiz">
+  <p class="q">Agents keep "simplifying" the guarded UPDATE into read-then-write. Nothing in the repo says why it looks the way it does.</p>
+  <div class="opts">
+    <button class="opt" data-correct>Decision record</button>
+    <button class="opt">Pre-commit hook</button>
+    <button class="opt">PreToolUse hook</button>
+    <button class="opt">Rules line</button>
+  </div>
+  <p class="why">The missing piece is the why. An ADR holds it, and a one-line comment sends the agent there before it edits (lesson 9). A reviewer would catch it later; the ADR stops it earlier.</p>
+</div>
+<div class="quiz">
+  <p class="q">Every Friday you walk the agent through the same six release steps by hand.</p>
+  <div class="opts">
+    <button class="opt" data-correct>New skill</button>
+    <button class="opt">Rules line</button>
+    <button class="opt">Deny rule</button>
+    <button class="opt">Guard test</button>
+  </div>
+  <p class="why">A repeated procedure is a skill: loaded only when used, steps in order, a script for the parts with one right answer.</p>
+</div>
+<div class="quiz">
+  <p class="q">Last month a key reached git through a file the agent wrote with its Edit tool. You want commits holding keys refused, whoever wrote the file.</p>
+  <div class="opts">
+    <button class="opt" data-correct>Pre-commit hook</button>
+    <button class="opt">PreToolUse hook</button>
+    <button class="opt">Reviewer subagent</button>
+    <button class="opt">Rules line</button>
+  </div>
+  <p class="why">Only the pre-commit hook sees the staged diff for every commit. A Bash PreToolUse hook never sees Edit-tool writes; a reviewer can miss it.</p>
+</div>
+<div class="quiz">
+  <p class="q">The agent must never run terraform destroy in this repo, even if someone asks it to.</p>
+  <div class="opts">
+    <button class="opt" data-correct>Deny rule</button>
+    <button class="opt">Ask rule</button>
+    <button class="opt">Rules line</button>
+    <button class="opt">New skill</button>
+  </div>
+  <p class="why">A deny rule can't be approved from a prompt. An ask rule would let a hurried yes through; a rules line is only a request.</p>
+</div>
+<div class="quiz">
+  <p class="q">The agent keeps writing EF Core calls from an older version. You want it to read the current docs first.</p>
+  <div class="opts">
+    <button class="opt" data-correct>MCP server</button>
+    <button class="opt">Rules line</button>
+    <button class="opt">New skill</button>
+    <button class="opt">Guard test</button>
+  </div>
+  <p class="why">Live docs beat memory: a pinned, vetted docs server (lesson 8). A rules line can say "check the docs", but something has to fetch them.</p>
+</div>
+<div class="quiz">
+  <p class="q">Before every commit you want a second opinion on whether the new tests really cover 404, 409 and 400.</p>
+  <div class="opts">
+    <button class="opt" data-correct>Reviewer subagent</button>
+    <button class="opt">PreToolUse hook</button>
+    <button class="opt">Decision record</button>
+    <button class="opt">Rules line</button>
+  </div>
+  <p class="why">Judgement from a fresh context: a read-only reviewer subagent. A hook can't judge coverage; a rules line asks the author to grade itself.</p>
+</div>
+<div class="quiz">
+  <p class="q">Stock must never go below zero under 12 concurrent orders, and you don't want to rely on anyone noticing.</p>
+  <div class="opts">
+    <button class="opt" data-correct>Guard test</button>
+    <button class="opt">Rules line</button>
+    <button class="opt">Ask rule</button>
+    <button class="opt">MCP server</button>
+  </div>
+  <p class="why">A guard test fails the build when the invariant breaks, every run. A reviewer can be wrong; a test that goes red can't be talked past.</p>
+</div>
+<div class="quiz">
+  <p class="q">After every feature the README's endpoint list is out of date again.</p>
+  <div class="opts">
+    <button class="opt" data-correct>New skill</button>
+    <button class="opt">Rules line</button>
+    <button class="opt">Guard test</button>
+    <button class="opt">Deny rule</button>
+  </div>
+  <p class="why">A checking skill, /update-docs, in the definition of done (lesson 9): it compares each claim with the code. Same answer as lesson 9, on purpose: mixing earlier lessons in is how they stick.</p>
+</div>
+
 <h2>Exercise: harness first, then swap</h2>
 <div class="exercise">
   <span class="label">Exercise · about 4 h over two sittings · you add: a second repo with a full harness, four scored swap runs, and a 30-minute timed run</span>
@@ -490,7 +583,7 @@ git commit -m "chore(harness): add permissions, guards and pinned MCP"</pre>
   <li><strong>Keep the template.</strong> Your "keep as-is" layer is the same in every repo. Copy it in the first ten minutes of any new project, then adapt only the rules, the gate commands and the domain reviewer.</li>
   <li><strong>Swap-test every harness change.</strong> One fresh clone and one small task is cheap, and it is the only test that checks the files rather than your memory.</li>
   <li><strong>Re-verify when tools update.</strong> Each <span class="ver">version badge</span> marks a claim that can go stale; check it against the docs before you rely on it.</li>
-  <li><strong>Keep the sheets open:</strong> <a href="../reference/agents-md.html">AGENTS.md structure</a> · <a href="../reference/four-guards.html">The four guards</a> · <a href="../reference/commit-skill.html">Commit skill checklist</a> · <a href="../reference/one-three-one.html">The 1-3-1 format</a> · <a href="../reference/tool-equivalents.html">Tool equivalents</a> · <a href="../reference/glossary.html">Glossary</a>.</li>
+  <li><strong>Keep the sheets open:</strong> <a href="../reference/agents-md.html">AGENTS.md structure</a> · <a href="../reference/four-guards.html">The four guards</a> · <a href="../reference/which-mechanism.html">Which mechanism?</a> · <a href="../reference/commit-skill.html">Commit skill checklist</a> · <a href="../reference/one-three-one.html">The 1-3-1 format</a> · <a href="../reference/tool-equivalents.html">Tool equivalents</a> · <a href="../reference/glossary.html">Glossary</a>.</li>
 </ul>
 
 <div class="kit">
