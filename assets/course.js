@@ -457,6 +457,26 @@
   function saveProfile(p) { set("profile", JSON.stringify(p)); }
   function esc(t) { return String(t || "").replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function initWho() {
+    // A lesson opened directly, with no name yet: ask before the lesson, as the home page does.
+    if (document.body.getAttribute("data-lesson") && !profile().name) {
+      var ov = document.createElement("div");
+      ov.className = "name-gate";
+      ov.innerHTML = '<form class="ask-name" role="dialog" aria-modal="true" aria-labelledby="gate-name-l">' +
+        '<label id="gate-name-l" for="gate-name">Before you start: what\u2019s your name? It goes on your completion page at the end, and is saved only in this browser.</label>' +
+        '<div><input id="gate-name" type="text" autocomplete="name" maxlength="60" placeholder="Your name" required aria-required="true">' +
+        '<button class="btn primary" type="submit">Start</button></div></form>';
+      document.body.appendChild(ov);
+      document.body.classList.add("gated");
+      var gi = ov.querySelector("input");
+      gi.focus();
+      ov.querySelector("form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var v = gi.value.trim();
+        if (!v) { gi.focus(); return; }
+        var q = profile(); q.name = v; saveProfile(q);
+        ov.remove(); document.body.classList.remove("gated");
+      });
+    }
     var box = document.querySelector("[data-who]");
     if (!box) return;
     function render() {
