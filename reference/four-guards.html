@@ -12,7 +12,7 @@
 
 <p class="kicker"><a href="../index.html">Agent Harness</a> · Reference sheet</p>
 <h1>The four guards</h1>
-<p class="lede">Rule vs guard, and the four mechanisms that mechanically block: permission rule, PreToolUse hook, git hook, guard test. Where each lives, what it stops, who it binds.</p>
+<p class="lede">Rule vs guard, and the four mechanisms that mechanically block: permission rule, PreToolUse hook, git hook, guard test. Where each lives, what it stops, who it binds. They are one working set: if your team already has CI checks or branch protection doing the same job, keep those and fill the gaps.</p>
 
 
 <div class="note"><span class="label">Rule vs guard</span>
@@ -55,7 +55,7 @@ $hits"
 if command -v gitleaks &gt;/dev/null 2&gt;&amp;1; then
   gitleaks git --pre-commit --staged --redact --no-banner || fail "gitleaks found a secret (see above)."</code></pre></figure><figure class="code"><figcaption>.githooks/commit-msg (excerpt)</figcaption><pre><code>echo "$subject" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9._/-]+\))?!?: .{1,72}$' || {
 ...
-if grep -Eqi '^(co-authored-by: .*(claude|codex|gemini|copilot|anthropic|openai|noreply@)|.*generated with .*(claude|codex|gemini|antigravity))' "$msg_file"; then</code></pre></figure><p class="small">Secret scanning runs a pattern check <em>and</em> gitleaks: gitleaks 8.23.3 and 8.30.1 both did not flag the low-entropy "SuperSecretAuthenticationKey..." value, and both flagged a random 32-character key (measured 2026-09-30); the pattern check does. No Node needed: a shell regex. <code>@commitlint/cli</code> 21.2.3 was 11 days old on 2026-09-30, inside the 14-day package rule. Nothing forces <code>core.hooksPath</code>; the deny rule on the no-verify flag covers the agent.</p>
+if grep -Eqi '^(co-authored-by: .*(claude|codex|gemini|copilot|anthropic|openai|noreply@)|.*generated with .*(claude|codex|gemini|antigravity))' "$msg_file"; then</code></pre></figure><p class="small">Secret scanning runs a pattern check <em>and</em> gitleaks: gitleaks 8.23.3 and 8.30.1 both did not flag the low-entropy "SuperSecretAuthenticationKey..." value, and both flagged a random 32-character key (measured 2026-09-30); the pattern check does. No Node needed: a shell regex. <code>@commitlint/cli</code> 21.2.3 was 11 days old on 2026-09-30, inside this course's 14-day rule for new packages (supply-chain attacks target fresh releases). Nothing forces <code>core.hooksPath</code>; the deny rule on the no-verify flag covers the agent.</p>
 </div>
 <div>
 <h3>2 PreToolUse hook</h3><p>A script that reads the call and can deny it. Wiring, then the script:</p><figure class="code"><figcaption>.claude/settings.json (wiring)</figcaption><pre><code>    "PreToolUse": [
@@ -77,7 +77,7 @@ check 'TargetFramework&gt;net[0-7]\.|net7\.0|net6\.0' &amp;&amp; deny "Target fr
 <h3>4 Guard test</h3><p>A test for a project rule; the only guard that checks behaviour, not text.</p><figure class="code"><figcaption>tests/StockApi.Tests/ConcurrencyTests.cs (asserts)</figcaption><pre><code>        Assert.Equal(3, responses.Count(r =&gt; r.StatusCode == HttpStatusCode.Created));
         Assert.Equal(9, responses.Count(r =&gt; r.StatusCode == HttpStatusCode.Conflict));
         var after = await _client.GetFromJsonAsync&lt;Product&gt;($"/api/products/{product.Id}");
-        Assert.Equal(0, after!.Stock);</code></pre></figure><p class="small">Measured 2026-09-30: read-then-write <em>inside</em> <code>BeginTransaction()</code> still passes on SQLite (Microsoft.Data.Sqlite takes the write lock up front); without the transaction it fails with "Expected: 3 / Actual: 12". A green guard test can be green for the wrong reason, so a reviewer agent reads the diff as well.</p>
+        Assert.Equal(0, after!.Stock);</code></pre></figure><p class="small">Measured 2026-09-30: read-then-write <em>inside</em> <code>BeginTransactionAsync()</code> still passes on SQLite (Microsoft.Data.Sqlite takes the write lock up front); without the transaction it fails with "Expected: 3 / Actual: 12". A green guard test can be green for the wrong reason, so a reviewer agent reads the diff as well.</p>
 </div>
 </div>
 
@@ -193,17 +193,17 @@ check 'TargetFramework&gt;net[0-7]\.|net7\.0|net6\.0' &amp;&amp; deny "Target fr
 
 <details class="deeper">
 <summary>Appendix: the incident each guard would have caught</summary>
-<div class="table-wrap"><table><tr><th>Incident (from the review)</th><th>What would have caught it</th><th>Kind</th></tr>
-<tr><td>Trainee A <code>b456df0</code>: agent committed unasked, then tried to force-push; only GitLab branch protection refused</td><td><code>ask</code> on <code>Bash(git commit *)</code>; <code>deny</code> on <code>git push --force*</code>; the destructive guard</td><td>1 and 2</td></tr>
-<tr><td>Trainee B: committed an auto-saved allow-list holding <code>git rebase *</code> and <code>rm -f .claude/settings.json</code></td><td>A written policy: <code>ask</code> on rebase and reset; the guard denies <code>git rebase</code></td><td>1 and 2</td></tr>
-<tr><td>Trainee A: agent launched Docker Desktop itself and polled for 35 min</td><td>Guard pattern on <code>Start-Process</code> and <code>Docker Desktop</code>: "starting software is the human's call"</td><td>2</td></tr>
-<tr><td>Trainee E: agent targeted <code>net7.0</code> because only .NET 6/7 was installed</td><td>Guard denies <code>TargetFramework&gt;net[0-7].</code> and <code>net7.0</code>; the answer is a 1-3-1</td><td>2</td></tr>
-<tr><td>Trainee E <code>367d6e1</code>: 1,089 files, 1,081 junk (<code>tmp/</code>, <code>obj/</code>)</td><td><code>pre-commit</code> step 1 refuses <code>bin/ obj/ tmp/ *.db .env</code></td><td>3</td></tr>
-<tr><td>Trainee C: JWT signing key in <code>appsettings.json</code></td><td><code>pre-commit</code> pattern check plus gitleaks step; <code>deny Read/Edit(./.env)</code> keeps real values away from the agent</td><td>3 and 1</td></tr>
-<tr><td>Trainee E, Trainee C: personal author emails (4/4, 58/92)</td><td><code>pre-commit</code> identity check (<code>@osmosys.co</code>); <code>deny Bash(git config user.email *@*)</code></td><td>3 and 1</td></tr>
-<tr><td>Trainee A, Trainee B, Trainee D: AI co-author trailers (11/13, 12/13, 6/7)</td><td><code>attribution</code> setting drops it; <code>commit-msg</code> rejects any that remain</td><td>1 (setting) and 3</td></tr>
-<tr><td>Trainee E "Update the changes", "First commit"</td><td><code>commit-msg</code> Conventional Commits regex</td><td>3</td></tr>
-<tr><td>Trainee D: atomic <code>ExecuteUpdateAsync</code> rewritten to read-then-write to suit InMemory; oversold</td><td><code>ConcurrencyTests</code> (12 for 3) goes red when the transaction is gone too; <code>stock-invariant-reviewer</code> blocks the pattern even when the test is green</td><td>4 (plus a reviewer)</td></tr>
+<div class="table-wrap"><table><tr><th>Incident (real sessions, anonymised)</th><th>What would have caught it</th><th>Kind</th></tr>
+<tr><td>The agent committed unasked; later the developer asked it to force-push and it ran it. Only the git server's branch protection refused</td><td><code>ask</code> on <code>Bash(git commit *)</code>; <code>deny</code> on <code>git push --force*</code>; the destructive guard</td><td>1 and 2</td></tr>
+<tr><td>A developer committed a clicked-together allow list as the shared settings, holding <code>git rebase *</code> and <code>rm -f .claude/settings.json</code></td><td>A written policy: <code>ask</code> on rebase and reset; the guard denies <code>git rebase</code></td><td>1 and 2</td></tr>
+<tr><td>The agent launched Docker Desktop itself and polled for 35 min before asking</td><td>Guard pattern on <code>Start-Process</code> and <code>Docker Desktop</code>: "starting software is the human's call"</td><td>2</td></tr>
+<tr><td>The agent targeted <code>net7.0</code> because only .NET 6/7 was installed</td><td>Guard denies <code>TargetFramework&gt;net[0-7].</code> and <code>net7.0</code>; the answer is a 1-3-1</td><td>2</td></tr>
+<tr><td>One commit of 1,089 files, mostly a vendored <code>tmp/</code> toolchain and <code>obj/</code> output</td><td><code>pre-commit</code> step 1 refuses <code>bin/ obj/ tmp/ *.db .env</code></td><td>3</td></tr>
+<tr><td>A JWT signing key committed in <code>appsettings.json</code></td><td><code>pre-commit</code> pattern check plus gitleaks step; <code>deny Read/Edit(./.env)</code> keeps real values away from the agent</td><td>3 and 1</td></tr>
+<tr><td>Commits authored under a personal email</td><td><code>pre-commit</code> identity check (your work domain, <code>@yourcompany.com</code> in the reference); <code>deny Bash(git config user.email *@*)</code></td><td>3 and 1</td></tr>
+<tr><td>AI co-author trailers on most commits</td><td><code>attribution</code> setting drops it; <code>commit-msg</code> rejects any that remain</td><td>1 (setting) and 3</td></tr>
+<tr><td>"Update the changes", "First commit"</td><td><code>commit-msg</code> Conventional Commits regex</td><td>3</td></tr>
+<tr><td>The atomic <code>ExecuteUpdateAsync</code> rewritten as read-then-write to suit InMemory, called "still correct against concurrent writes"; a live test of 12 orders for 3 units oversold</td><td><code>ConcurrencyTests</code> (12 for 3) goes red when the transaction is gone too; <code>stock-invariant-reviewer</code> blocks the pattern even when the test is green</td><td>4 (plus a reviewer)</td></tr>
 </table></div>
 </details>
 

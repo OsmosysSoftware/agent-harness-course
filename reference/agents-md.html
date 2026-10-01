@@ -12,7 +12,7 @@
 
 <p class="kicker"><a href="../index.html">Agent Harness</a> · Reference sheet</p>
 <h1>AGENTS.md structure</h1>
-<p class="lede">The rules file is an index of about 40 lines: commands, definition of done, invariants, 1-3-1, links. Commit it before any feature code.</p>
+<p class="lede">The rules file is an index of about 40 lines: commands, definition of done, invariants, 1-3-1, links. Commit it before any feature code. This is one working shape: keep the sections, word them for your project.</p>
 <div class="note"><span class="label">Claude Code only: the quick view</span>Claude Code reads <code>AGENTS.md</code> natively (v2.1.277+) when no <code>CLAUDE.md</code>, <code>.claude/CLAUDE.md</code> or <code>CLAUDE.local.md</code> exists in the folder or above. The root file is re-read from disk after <code>/compact</code>. A nested <code>tests/AGENTS.md</code> loads when Claude reads a file there. <code>.claude/rules/*.md</code> with <code>paths:</code> loads only for matching files. Aim for under 200 lines per file, and about 40 for the index. Legend: <span class="ver">verified 2026-09-30</span> = checked against the docs on that date; <span class="ver unverified">unverified</span> = test it yourself before relying on it. Skip the Codex and Antigravity columns unless you use them.</div>
 
 
@@ -112,7 +112,7 @@ Plan first, then one slice at a time: docs/ai/workflow.md
 <div>
 <h2>What not to put in</h2>
 <div class="table-wrap"><table><tr><th>Do not put in</th><th>Why</th><th>Put it instead</th></tr>
-<tr><td>Narrative ("we decided to use SQLite because...")</td><td>The agent reads every line every session; story costs context and adds no rule</td><td>An ADR in <code>docs/decisions/</code>, linked from the index</td></tr>
+<tr><td>Narrative ("we decided to use SQLite because...")</td><td>The agent reads every line every session; story costs context and adds no rule</td><td>An ADR (architecture decision record: a short "this is deliberate, here is why" file) in <code>docs/decisions/</code>, linked from the index</td></tr>
 <tr><td>How-to for humans (clone, install, run the UI)</td><td>Humans need steps; agents need constraints</td><td><code>README.md</code></td></tr>
 <tr><td>Long code blocks</td><td>They go stale and the agent copies them literally</td><td>A pointer to the reference shape: "copy <code>ProductsController</code>"</td></tr>
 <tr><td>Text duplicated from other docs</td><td>Two copies drift; the agent obeys whichever it saw last</td><td>One home, plain link from the index</td></tr>
@@ -123,7 +123,7 @@ Plan first, then one slice at a time: docs/ai/workflow.md
 <div>
 <h2>Commit-it-first checklist</h2>
 <ul class="check" data-key="ref-agents">
-<li><input type="checkbox"> <span>Written <strong>before</strong> any feature code, committed as <code>chore(harness): add agent rules</code> (the agent-written-afterwards file is the Trainee A failure).</span></li>
+<li><input type="checkbox"> <span>Written <strong>before</strong> any feature code, committed as <code>chore(harness): add agent rules</code> (in one real session the rules file was written at the very end, so it steered nothing).</span></li>
 <li><input type="checkbox"> <span>No <code>CLAUDE.md</code> or <code>CLAUDE.local.md</code> next to it (or one that only says <code>@AGENTS.md</code>).</span></li>
 <li><input type="checkbox"> <span>Under ~40 lines; every line passes the pruning test.</span></li>
 <li><input type="checkbox"> <span>Commands run as written (paste them into a terminal once).</span></li>
@@ -148,7 +148,7 @@ Plan first, then one slice at a time: docs/ai/workflow.md
 
 <h2>Load rules per tool</h2>
 <div class="table-wrap"><table><tr><th></th><th>Claude Code</th><th>Codex</th><th>Antigravity</th></tr>
-<tr><td>Reads AGENTS.md?</td><td>Natively, when the project has no CLAUDE.md <span class="ver">v2.1.277+ · verified 2026-09-30</span>. Before v2.1.281, some sessions, such as those on Amazon Bedrock or with telemetry disabled, read CLAUDE.md only <span class="ver">v2.1.281+</span></td><td>Yes: the main rules file. Global <code>~/.codex/AGENTS.md</code> (or <code>AGENTS.override.md</code>), then every directory from the git root to the cwd</td><td>Yes: <code>AGENTS.md</code> or <code>GEMINI.md</code> are read as <code>always_on</code>. Global: <code>~/.gemini/AGENTS.md</code> or <code>GEMINI.md</code></td></tr>
+<tr><td>Reads AGENTS.md?</td><td>Natively, when the project has no CLAUDE.md <span class="ver">v2.1.277+ · verified 2026-09-30</span>. Some sessions still read CLAUDE.md only: versions before v2.1.277, sometimes the first session after upgrading, and before v2.1.281 some Amazon Bedrock or telemetry-off sessions <span class="ver">v2.1.281+</span>. Use the fallback below there</td><td>Yes: the main rules file. Global <code>~/.codex/AGENTS.md</code> (or <code>AGENTS.override.md</code>), then every directory from the git root to the cwd</td><td>Yes: <code>AGENTS.md</code> or <code>GEMINI.md</code> are read as <code>always_on</code>. Global: <code>~/.gemini/AGENTS.md</code> or <code>GEMINI.md</code></td></tr>
 <tr><td>What suppresses it</td><td>A <code>CLAUDE.md</code>, <code>.claude/CLAUDE.md</code> or <code>CLAUDE.local.md</code> in the cwd or above. <code>~/.claude/CLAUDE.md</code> and <code>.claude/rules</code> do not count <span class="ver">verified 2026-09-30</span></td><td>Per directory the override file is checked first, then <code>AGENTS.md</code>, then fallbacks</td><td>Not documented <span class="ver unverified">unverified</span></td></tr>
 <tr><td>Fallback</td><td>A <code>CLAUDE.md</code> containing <code>@AGENTS.md</code>; it is never read twice. <code>/config</code> &gt; Project instructions can read both</td><td>None needed</td><td>None needed</td></tr>
 <tr><td>Nested files</td><td>A subdirectory <code>AGENTS.md</code> loads when Claude <em>reads a file</em> there. All parents of the cwd load at start</td><td>Concatenated root-down; closer files come later so they win</td><td>Not documented <span class="ver unverified">unverified</span></td></tr>
@@ -160,7 +160,7 @@ Plan first, then one slice at a time: docs/ai/workflow.md
 
 
 <hr>
-<p class="small"><strong>Taught in:</strong> <a href="../lessons/0002-rules-files.html">Lesson 2: Rules files</a> · <a href="../lessons/0009-writing-for-the-agent.html">Lesson 9: Writing for the agent</a><br><strong>Other sheets:</strong> <a href="four-guards.html">The four guards</a> · <a href="commit-skill.html">Commit skill</a> · <a href="one-three-one.html">1-3-1</a> · <a href="glossary.html">Glossary</a> · <a href="tool-equivalents.html">Tool equivalents</a></p>
+<p class="small"><strong>Taught in:</strong> <a href="../lessons/0002-rules-files.html">Lesson 2: Rules files</a> · <a href="../lessons/0003-one-three-one.html">Lesson 3: 1-3-1</a> · <a href="../lessons/0009-writing-for-the-agent.html">Lesson 9: Writing for the agent</a> · <a href="../lessons/0011-capstone.html">Lesson 11: Capstone</a><br><strong>Other sheets:</strong> <a href="four-guards.html">The four guards</a> · <a href="commit-skill.html">Commit skill</a> · <a href="one-three-one.html">1-3-1</a> · <a href="glossary.html">Glossary</a> · <a href="tool-equivalents.html">Tool equivalents</a></p>
 
 </main>
 </body>

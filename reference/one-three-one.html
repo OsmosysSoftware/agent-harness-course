@@ -27,7 +27,8 @@ RECOMMEND  &lt;Number&gt;: &lt;the reason, in one line&gt;.
 Waiting for your call.</code></pre></figure>
 <ul>
 <li><strong>1</strong> clearly defined problem, <strong>3</strong> options with trade-offs, <strong>1</strong> recommendation.</li>
-<li>It targets the expensive failure in the transcripts: the agent rarely loops forever; it quietly decides something that was the human's call.</li>
+<li>It targets the expensive failure seen in real sessions: the agent rarely loops forever; it quietly decides something that was the human's call.</li>
+<li>The labels are one convention. What matters is one real problem, real options, a recommendation, and a stop.</li>
 </ul>
 </div>
 <div>
@@ -51,7 +52,7 @@ then wait for the human's decision. Never install, launch, downgrade or delete t
 
 <h2>Four real cases, as hand-overs</h2>
 <div class="incident">
-  <div class="happened"><h4>What the agent did</h4><p>Record 187: "the machine has .NET 6/7 installed but not .NET 8. I'm going to build the service against net7.0 so it runs here". The brief says .NET 8 or later; nobody challenged it.</p><p class="who">Trainee E · Codex, gpt-5.5</p></div>
+  <div class="happened"><h4>What the agent did</h4><p>"the machine has .NET 6/7 installed but not .NET 8. I'm going to build the service against net7.0". The project required .NET 8; the agent kept going and nobody challenged it.</p><p class="who">A real session, anonymised · Codex</p></div>
   <div class="harness"><h4>The 1-3-1 instead</h4><pre>PROBLEM    Only .NET 6/7 SDKs are installed; the brief requires 8+.
 OPTIONS    1. Install the .NET 8 SDK (about 5 min), then build
            2. Build inside the .NET 8 SDK Docker image
@@ -59,7 +60,7 @@ OPTIONS    1. Install the .NET 8 SDK (about 5 min), then build
 RECOMMEND  1: option 3 breaks a stated requirement.
 Waiting for your call.</pre><p>Invariant in AGENTS.md: "Target framework is <code>net8.0</code>. Do not change it." The guard hook also denies <code>net7.0</code>.</p></div>
 </div><div class="incident">
-  <div class="happened"><h4>What the agent did</h4><p><code>ExecuteUpdateAsync</code> "could not be translated (InMemory provider)", so the service was rewritten to load tracked entities, decrement in memory and save. The README then claimed row locking made it safe. The evaluator's 12 concurrent orders for 3 units oversold.</p><p class="who">Trainee D · Claude Code, Sonnet</p></div>
+  <div class="happened"><h4>What the agent did</h4><p><code>ExecuteUpdateAsync</code> "could not be translated (InMemory provider)", so the service was rewritten to load tracked entities, decrement in memory and save, and called "still correct against concurrent writes". A live test of 12 concurrent orders for 3 units oversold.</p><p class="who">A real session, anonymised · Claude Code</p></div>
   <div class="harness"><h4>The 1-3-1 instead</h4><pre>PROBLEM    InMemory cannot translate ExecuteUpdateAsync, so 3 order tests fail. The atomic UPDATE ... WHERE qty &gt;= n is what prevents overselling.
 OPTIONS    1. Test orders against a real database (Testcontainers, or real SQLite)
            2. Keep the atomic update; unit-test other logic on InMemory
@@ -67,7 +68,7 @@ OPTIONS    1. Test orders against a real database (Testcontainers, or real SQLit
 RECOMMEND  1: keep the correctness; fix the tests, not the service.
 Waiting for your call.</pre><p>The human picks real SQLite and discards the InMemory work (<code>docs/ai/testing.md</code>: "never use the EF Core InMemory provider").</p></div>
 </div><div class="incident">
-  <div class="happened"><h4>What the agent did</h4><p>16:37 <code>docker info</code> failed. The agent ran <code>Start-Process "Docker Desktop.exe"</code> unasked, polled <code>docker info</code> 12 then 10 times, read logs, and asked the user at 17:13: 35 minutes after the first failure.</p><p class="who">Trainee A · Claude Code, Opus 5</p></div>
+  <div class="happened"><h4>What the agent did</h4><p><code>docker info</code> failed. The agent ran <code>Start-Process "Docker Desktop.exe"</code> unasked, polled <code>docker info</code> again and again, read logs, and asked the human 35 minutes after the first failure.</p><p class="who">A real session, anonymised · Claude Code</p></div>
   <div class="harness"><h4>The 1-3-1 instead</h4><pre>PROBLEM    The Docker daemon is not running; Docker verification is P0.
 OPTIONS    1. You start Docker Desktop; I continue with docs meanwhile
            2. I launch Docker Desktop myself and poll
@@ -75,7 +76,7 @@ OPTIONS    1. You start Docker Desktop; I continue with docs meanwhile
 RECOMMEND  1.
 Waiting for your call.</pre><p>Rule: "Never install, launch, downgrade or delete to get unstuck." Hook: starting software is denied. The hand-over arrives at the first failure, not after polling.</p></div>
 </div><div class="incident">
-  <div class="happened"><h4>What the agent did</h4><p>SQLite cannot <code>ORDER BY</code> a <code>DateTimeOffset</code>. The agent diagnosed it in under 3 minutes, then removed and regenerated the migrations as one <code>InitialCreate</code>, silently. Right here, because nothing had shipped.</p><p class="who">Trainee A · Claude Code, Opus 5</p></div>
+  <div class="happened"><h4>What the agent did</h4><p>SQLite cannot <code>ORDER BY</code> a <code>DateTimeOffset</code>. The agent diagnosed it in under 3 minutes, then removed and regenerated the migrations as one <code>InitialCreate</code>, silently. Right here, because nothing had shipped.</p><p class="who">A real session, anonymised · Claude Code</p></div>
   <div class="harness"><h4>The 1-3-1 instead</h4><pre>PROBLEM    The converter makes EF emit a lossy TEXT to INTEGER AlterColumn.
 OPTIONS    1. Nothing has shipped: drop and regenerate InitialCreate
            2. Hand-write a data-preserving migration
@@ -94,7 +95,7 @@ Waiting for your call.</pre><p>The diagnosis needs no hand-over. The decision to
 <li><strong>Decide, then say why in one line.</strong> Reply with the number and the reason; the agent does the rest.</li>
 <li><strong>Record it</strong> in <code>ai-session/PLAN.md</code>, then reference it in the commit body.</li>
 </ol>
-<p class="small">Choosing well is graded too: the swap test reads whether the agent stopped, and your <code>PLAN.md</code> shows you decided.</p>
+<p class="small">The swap test in <a href="../lessons/0011-capstone.html">lesson 11</a> checks whether the agent stopped and asked; your <code>PLAN.md</code> shows that you decided.</p>
 </div>
 <div>
 <h2>Record the decision</h2>
@@ -107,8 +108,8 @@ Waiting for your call.</pre><p>The diagnosis needs no hand-over. The decision to
 
 <h2>Anti-patterns</h2>
 <div class="table-wrap"><table><tr><th>Anti-pattern</th><th>What it looks like</th><th>Instead</th></tr>
-<tr><td><strong>Polling</strong></td><td><code>docker info</code> x12, "timed out, moved to background", x10, read the logs (Trainee A, 35 min)</td><td>One check, one retry, then hand over</td></tr>
-<tr><td><strong>Silently downgrading</strong></td><td>"I'll build against net7.0 so it runs here" (Trainee E); rewrite to read-then-write so InMemory passes (Trainee D)</td><td>Name the blocked requirement as the problem; put the downgrade in the options, never as the action</td></tr>
+<tr><td><strong>Polling</strong></td><td><code>docker info</code> again, "timed out, moved to background", again, read the logs: 35 minutes in one real session</td><td>One check, one retry, then hand over</td></tr>
+<tr><td><strong>Silently downgrading</strong></td><td>"I'm going to build the service against net7.0"; rewrite to read-then-write so InMemory passes</td><td>Name the blocked requirement as the problem; put the downgrade in the options, never as the action</td></tr>
 <tr><td><strong>"I'll just..."</strong></td><td>"I'll just install the SDK / start Docker / delete the migration and regenerate"</td><td>Install, launch, downgrade and delete are the human's verbs</td></tr>
 <tr><td><strong>Options that are one option</strong></td><td>3 options where 2 are strawmen, or all 3 are the same fix with different flags</td><td>Real trade-offs; include the option you would not pick and say why</td></tr>
 <tr><td><strong>Asking for approval and continuing</strong></td><td>Presenting the 1-3-1, then starting the recommendation</td><td>Stop. Wait for the reply. Nothing runs until the human chooses</td></tr>
@@ -117,7 +118,7 @@ Waiting for your call.</pre><p>The diagnosis needs no hand-over. The decision to
 
 
 <hr>
-<p class="small"><strong>Taught in:</strong> <a href="../lessons/0003-one-three-one.html">Lesson 3: 1-3-1</a> · <a href="../lessons/0004-plan-gated-workflow.html">Lesson 4: Plan-gated workflow</a><br><strong>Other sheets:</strong> <a href="agents-md.html">AGENTS.md structure</a> · <a href="four-guards.html">The four guards</a> · <a href="commit-skill.html">Commit skill</a> · <a href="glossary.html">Glossary</a> · <a href="tool-equivalents.html">Tool equivalents</a></p>
+<p class="small"><strong>Taught in:</strong> <a href="../lessons/0003-one-three-one.html">Lesson 3: 1-3-1</a> · <a href="../lessons/0004-plan-gated-workflow.html">Lesson 4: Plan-gated workflow</a> · <a href="../lessons/0011-capstone.html">Lesson 11: Capstone</a><br><strong>Other sheets:</strong> <a href="agents-md.html">AGENTS.md structure</a> · <a href="four-guards.html">The four guards</a> · <a href="commit-skill.html">Commit skill</a> · <a href="glossary.html">Glossary</a> · <a href="tool-equivalents.html">Tool equivalents</a></p>
 
 </main>
 </body>
