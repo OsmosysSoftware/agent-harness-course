@@ -199,6 +199,31 @@ paths:
   <p class="small">Sources: <a href="https://learn.chatgpt.com/docs/agent-configuration/agents-md">Codex AGENTS.md</a> · <a href="https://antigravity.google/docs/rules">Antigravity rules</a></p>
 </details>
 
+<h2>Where instructions live: the layers</h2>
+
+<p>The repo's rules file is one layer of several. Claude Code reads them in order, broadest first, and <strong>adds them all together</strong>: nothing overrides anything. If two layers disagree, Claude "may pick one arbitrarily", so the job is to keep each fact in exactly one layer (<a href="https://code.claude.com/docs/en/memory#choose-where-to-put-claude-md-files">Memory: where to put CLAUDE.md files</a> <span class="ver">verified 2026-10-01</span>).</p>
+
+<ol class="layers">
+  <li><b>Organisation</b><span class="where"><code>/etc/claude-code/CLAUDE.md</code> (Linux/WSL; macOS and Windows have their own path)</span><span class="desc">Set by IT for every repo on the machine. You can't exclude it.</span></li>
+  <li><b>You, everywhere</b><span class="where"><code>~/.claude/CLAUDE.md</code> and <code>~/.claude/rules/</code></span><span class="desc">Your personal style and habits, in every project. Never project facts: your teammates don't have this file.</span></li>
+  <li><b>The project</b><span class="where"><code>AGENTS.md</code> at the repo root (or <code>CLAUDE.md</code>, <code>.claude/CLAUDE.md</code>)</span><span class="desc">The team's rules, committed. Files in folders <em>above</em> where you start also load.</span></li>
+  <li><b>You, this project</b><span class="where"><code>CLAUDE.local.md</code>, git-ignored</span><span class="desc">Your sandbox URL, your test data. Careful: it switches AGENTS.md off (step 3 of the diagram above).</span></li>
+  <li><b>A folder or module</b><span class="where"><code>src/Orders/AGENTS.md</code>, <code>tests/AGENTS.md</code></span><span class="desc">Loads only when Claude reads a file in that folder, so other tasks don't pay for it.</span></li>
+  <li><b>A file type</b><span class="where"><code>.claude/rules/efcore.md</code> with <code>paths:</code></span><span class="desc">Loads only when Claude reads a matching file.</span></li>
+</ol>
+
+<div class="table-wrap"><table>
+  <tr><th>The fact</th><th>Layer</th></tr>
+  <tr><td>"I prefer early returns", in every repo you touch</td><td>You, everywhere</td></tr>
+  <tr><td>Build and test commands; the stock invariant</td><td>The project</td></tr>
+  <tr><td>"Order tests use real SQLite, never InMemory"</td><td>A folder (<code>tests/AGENTS.md</code>)</td></tr>
+  <tr><td>"DateTimeOffset needs a converter on SQLite"</td><td>A file type (<code>.claude/rules/</code>)</td></tr>
+  <tr><td>Your local connection string</td><td>Nowhere in a rules file: <code>.env</code>, read by the app</td></tr>
+  <tr><td>A multi-step procedure, like committing</td><td>Not a layer at all: a skill (lesson 5), loaded when used</td></tr>
+</table></div>
+
+<p>Three habits keep the layers useful. <strong>Check what loaded</strong> with <code>/context</code>, under <em>Memory files</em>; on Claude Code v2.1.283 or later, <code>/doctor prompt-audit</code> looks for contradictions across them. <strong>In a monorepo</strong>, start Claude in your module's folder: the folders above still load, the neighbours' don't, and a <code>claudeMdExcludes</code> list in your <code>.claude/settings.local.json</code> skips another team's file. <strong>Keep each file short</strong>: the docs suggest under 200 lines, because "longer files consume more context and reduce adherence".</p>
+
 <h2>Commit it first</h2>
 
 <p>Lesson 1's developer wrote <code>CLAUDE.md</code> at the end of a 356-turn session, so it steered nothing. Order matters twice. <strong>Steering:</strong> a rule that exists at the first prompt shapes the first slice; one written at the end only describes it. <strong>Proof:</strong> git records when the file first appeared:</p>
@@ -294,6 +319,17 @@ paths:
     <button class="opt">Rename it to AGENTS.local.md now</button>
   </div>
   <p class="why">Any CLAUDE.md, .claude/CLAUDE.md or CLAUDE.local.md in the folder or above switches AGENTS.md off, with no error. Claude Code never reads AGENTS.local.md.</p>
+</div>
+
+<div class="quiz">
+  <p class="q">You want every agent session, in every repo you work on, to explain its plan in plain English before it edits anything. Your teammates don't need this. Where does it go?</p>
+  <div class="opts">
+    <button class="opt" data-correct>Your own ~/.claude/CLAUDE.md</button>
+    <button class="opt">Each repo's AGENTS.md</button>
+    <button class="opt">Each repo's CLAUDE.local.md</button>
+    <button class="opt">Each repo's .claude/rules/</button>
+  </div>
+  <p class="why">It's yours and it applies everywhere: the user layer. In AGENTS.md it would bind the whole team, CLAUDE.local.md would switch AGENTS.md off, and copying it into every repo means it drifts.</p>
 </div>
 
 <h2>Exercise: write the index and commit it first</h2>
