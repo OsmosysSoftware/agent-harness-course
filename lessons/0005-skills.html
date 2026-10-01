@@ -114,8 +114,20 @@
   <tr><td><code>name</code></td><td>The command you type, <code>/commit</code>. Defaults to the folder name.</td></tr>
   <tr><td><code>description</code></td><td>What it does and when to use it. The agent reads this to decide <em>on its own</em> when the skill applies, so the key use case goes first.</td></tr>
   <tr><td>Body</td><td>The steps, in order. It enters the conversation when the skill runs.</td></tr>
-  <tr><td>Other files</td><td>Anything else in the folder, such as a script the steps tell the agent to run.</td></tr>
+  <tr><td>Other files</td><td>Anything else in the folder: reference notes the body links to, or a script the steps run. They load only when needed (the docs call this <em>progressive disclosure</em>).</td></tr>
 </table></div>
+
+<p><strong>Two ways a skill starts.</strong> <em>You</em> type <code>/name</code>, or the <em>agent</em> picks it because your request matches its description. Two header lines change that: <code>disable-model-invocation: true</code> means only you can start it (the docs suggest it for side effects such as deploy or commit), and <code>user-invocable: false</code> means only the agent can, for background knowledge that isn't a command (<a href="https://code.claude.com/docs/en/skills">Skills</a>).</p>
+
+<details class="deeper">
+  <summary>Going deeper: arguments, bundled scripts and live context</summary>
+  <ul>
+    <li><strong>Arguments.</strong> <code>/fix-issue 123</code> puts <code>123</code> into <code>$ARGUMENTS</code>. <code>$0</code>, <code>$1</code>… pick arguments by position, and an <code>arguments: [issue, branch]</code> header lets the body say <code>$issue</code> and <code>$branch</code>.</li>
+    <li><strong>Bundled scripts.</strong> A script in the skill's folder is reached as <code>${CLAUDE_SKILL_DIR}/scripts/render.sh</code>, so it works wherever the skill is installed. A script gives the same result every run, which is why <code>quality-gate</code> below carries one.</li>
+    <li><strong>Live context.</strong> A line such as <code>- Changed files: !`git diff --name-only`</code> runs <em>before</em> the agent sees the skill, and the output replaces it. If that command fails or is denied, the skill doesn't run at all.</li>
+  </ul>
+  <p class="small">Source: <a href="https://code.claude.com/docs/en/skills">Skills</a> <span class="ver">verified 2026-10-01</span></p>
+</details>
 
 <details class="deeper">
   <summary>Going deeper: who may start a skill, and what it may pre-approve</summary>
@@ -268,6 +280,16 @@ echo; echo "quality gate: green"</pre>
   <p class="small">Antigravity is retiring its older Workflows in favour of skills by 1 November 2026; <code>/migrate-workflows</code> converts them. Sources: <a href="https://code.claude.com/docs/en/skills">Claude Code skills</a> · <a href="https://learn.chatgpt.com/docs/build-skills">Codex skills</a> · <a href="https://antigravity.google/docs/skills">Antigravity skills</a> <span class="ver">verified 2026-10-01</span></p>
 </details>
 
+<h2>Let the agent write the next skill</h2>
+
+<p>You don't have to write every skill by hand. Anthropic's <dfn>skill-creator</dfn> plugin helps you draft a skill and then test it: it stores test prompts with the behaviour you expect, runs each in a clean subagent, grades the results, compares the skill against no skill, and tunes the description so the skill triggers when it should (<a href="https://code.claude.com/docs/en/skills">Skills: creating skills with Claude's help</a>).</p>
+
+<figure class="code"><figcaption>in Claude Code</figcaption><pre>/plugin install skill-creator@claude-plugins-official
+# then, for example:
+evaluate my commit skill with skill-creator</pre></figure>
+
+<p>A good habit: any multi-step instruction you type a second time is a skill waiting to be written. Ask skill-creator to draft it from what you just did, read the draft like any other diff, and commit it. The skills folder of the open <a href="https://github.com/anthropics/skills">anthropics/skills</a> repo has more examples to learn from. <span class="ver">plugin name verified 2026-10-01</span></p>
+
 <h2>A skill is still a request</h2>
 
 <p>A skill is text the model reads. Specific steps, loaded at the right moment, make the right thing far more likely, but nothing <em>blocks</em> the agent from skipping step 3, or from committing without the skill. Lesson 7 adds what the tool enforces:</p>
@@ -357,6 +379,11 @@ git add -f src/StockApi/obj/project.assets.json</pre>
     <li><input type="checkbox" aria-label="Commit refused build output"> <span><code>/commit</code> refused the <code>obj/</code> file and named its path</span></li>
     <li><input type="checkbox" aria-label="Committed through the skill"> <span>The skills and <code>docs(ai)</code> commits went through <code>/commit</code>: work email, no AI trailer</span></li>
   </ul>
+</div>
+
+<div class="tip">
+  <span class="label">Harness it</span>
+  <p>Any multi-step instruction you give twice should become a skill. skill-creator can draft it and test it.</p>
 </div>
 
 <div class="split">
