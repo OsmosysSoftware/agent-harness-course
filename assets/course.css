@@ -858,6 +858,33 @@ pre .copy:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px;
 .layers li:nth-child(3) { background: var(--accent-soft); border-color: var(--accent); }
 @media (max-width: 640px) { .layers li { grid-template-columns: 2em 1fr; } .layers li::before { grid-row: 1 / span 3; } .layers .where, .layers .desc { grid-column: 2; } }
 
+
+/* ---------- Completion card (home page) ---------- */
+.completion { max-width: var(--wide); margin-bottom: 2em; }
+.cfields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.cfields label { display: grid; gap: 4px; font-weight: 600; font-size: .9rem; }
+.cfields small { font-weight: 400; color: var(--ink-3); }
+.cfields input { font: inherit; font-weight: 400; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); color: var(--ink); }
+.cfields input:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.clocked { padding: 14px 18px; border: 1px dashed var(--line-strong); border-radius: var(--radius); background: var(--surface); font-size: .95rem; }
+.cert { padding: 34px 38px; border-radius: 16px; color: #e9d8b4; background: linear-gradient(160deg, #3a2a1a, #241910); border: 3px solid var(--brass-1); box-shadow: var(--shadow); text-align: center; }
+.cert .kick { font: 700 .75rem/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--brass-1); }
+.cert h3 { margin: .4em 0 .1em; font: 700 2.4rem/1.15 var(--serif); color: #fff3d6; }
+.cert .cdate { margin: 0 0 1.2em; }
+.cplaques { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px 6px; margin: 0 0 1.2em; }
+.cplaques span { display: grid; justify-items: center; gap: 4px; color: #f3d27a; }
+.cplaques svg { width: 30px; height: 30px; }
+.cplaques i { font: 600 .74rem/1.2 var(--sans); font-style: normal; color: #e9d8b4; }
+.cert .ccan { font-size: .9rem; max-width: 52rem; margin: 0 auto 1em; }
+.cert .ccan b, .cert .clinks { color: #fff3d6; }
+.cert .clinks a { color: #f3d27a; word-break: break-all; }
+.cert .chonest { font-size: .8rem; color: #bfae8c; margin: 1em auto 0; max-width: 46rem; }
+.cbtns { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+@media print {
+  body.print-cert main > *:not(.completion), body.print-cert .cfields, body.print-cert .cbtns, body.print-cert .cabinet { display: none !important; }
+  body.print-cert .cert { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 /* ---------- Print ---------- */
 @media print {
   :root, :root[data-theme="dark"] {
