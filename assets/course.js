@@ -52,6 +52,7 @@
     initDiagrams();
     initTrays();
     initToc();
+    initStart();
     initCopy();
   });
 
@@ -378,5 +379,15 @@
       });
       pre.appendChild(btn);
     });
+  }
+
+  // ---- Home page: the start button becomes "continue" once you've made progress ----
+  function initStart() {
+    var btn = document.getElementById("start-btn"), flag = flagId();
+    if (!btn || !count()) return;
+    if (!flag) { btn.textContent = "All 11 plaques earned · revisit the capstone →"; btn.href = "lessons/" + LESSONS[10][0]; return; }
+    var i = LESSONS.findIndex(function (l, k) { return lessonId(k) === flag; });
+    btn.textContent = "Continue: lesson " + (i + 1) + ", " + LESSONS[i][1] + " →";
+    btn.href = "lessons/" + LESSONS[i][0];
   }
 })();
