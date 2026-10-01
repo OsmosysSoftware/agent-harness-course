@@ -17,7 +17,7 @@
   <div class="chips">
     <span class="chip">15 min read</span>
     <span class="chip">30 min exercise</span>
-    <span class="chip badge-chip">Badge: Loop Reader</span>
+    <span class="chip badge-chip">Plaque: Loop Reader</span>
   </div>
 </header>
 
@@ -25,7 +25,7 @@
   <span class="label">In 30 seconds</span>
   <ul>
     <li>An agent is a <strong>loop</strong>: read the context, pick a tool call, get the result, repeat.</li>
-    <li>Rules in <strong>files</strong> survive long sessions. Rules typed in <strong>chat</strong> get summarised away.</li>
+    <li>Rules in <strong>files</strong> survive long sessions. Rules typed in <strong>chat</strong> can be summarised away.</li>
     <li>The <strong>harness</strong> sits between the model and your machine, so that's where actions can be blocked.</li>
   </ul>
 </div>
@@ -36,13 +36,13 @@
   <div class="happened">
     <h4>Failed run</h4>
     <p>A developer kept every rule in a 17,000-character chat prompt across a 356-turn session. The rules file (<code>CLAUDE.md</code>) was written at the very end, so it steered nothing.</p>
-    <p>Mid-session the agent committed without being asked. The developer: <em>"i did not want u to commit anything until I say so"</em>.</p>
+    <p>Near the end, the agent committed without being asked. The developer: <em>"i did not want u to commit anything until I say so"</em>.</p>
     <p class="who">A real session, anonymised · Claude Code</p>
   </div>
   <div class="harness">
     <h4>With the harness</h4>
     <p>The rules live in a file the tool loads at the start of <em>every</em> session and re-reads after compaction.</p>
-    <p>"Don't commit without asking" becomes something that <strong>blocks</strong>, not something the agent must remember.</p>
+    <p>"Don't commit without asking" becomes a rule the <strong>tool enforces</strong>: it has to ask you first, whatever the agent remembers.</p>
     <p class="who">That's the whole course: move each rule out of the chat and into a layer that can't forget it.</p>
   </div>
 </div>
@@ -55,8 +55,8 @@
   {"cls":"s1","text":"You send a message. It is added to the <b>context window</b>, the model&apos;s only working memory."},
   {"cls":"s2","text":"The model reads the <b>whole</b> window: system instructions, your rules files, the chat so far and every tool result."},
   {"cls":"s3","text":"It picks one action, for example <code>dotnet test</code>, and asks for that tool call."},
-  {"cls":"s4","text":"The <b>harness</b> checks the call first. Permission rules and hooks can allow it (✓) or <b>deny</b> it (✕). This is the only place a rule is enforced."},
-  {"cls":"s5","text":"The tool runs and its output is appended to the window. Then the loop starts again from step 2."}
+  {"cls":"s4","text":"The <b>harness</b> checks the call first. Permission rules and hooks can allow it (✓) or <b>deny</b> it (✕). This is where a rule can be <b>enforced</b> instead of just requested."},
+  {"cls":"s5","text":"The tool runs and its output is appended to the window. Back to step 2, until the model answers you in words instead of calling another tool."}
 ]'>
 <div class="canvas">
 <!-- d2:agent-loop -->
@@ -79,7 +79,7 @@
 </div>
 </figure>
 
-<p>Two things follow. The model knows nothing outside that window. And because every tool call passes through the harness, the harness is where you can <strong>block</strong>, not just ask.</p>
+<p>Two things follow. Apart from its training, the model knows only what is in that window. And because every tool call passes through the harness, the harness is where you can <strong>block</strong>, not just ask.</p>
 
 <h2>Managing the context window</h2>
 
@@ -215,18 +215,18 @@ git config user.email you@yourcompany.com
 git add . && git commit -m "chore: import StockApi starter"</pre>
       Commit messages in this course use <a href="https://www.conventionalcommits.org/en/v1.0.0/">Conventional Commits</a>: <code>type(scope): summary</code>, where type is <code>feat</code>, <code>fix</code>, <code>docs</code>, <code>test</code>, <code>refactor</code> or <code>chore</code>.</li>
     <li>Check it builds: <code>dotnet build</code>, then <code>dotnet test</code> (4 tests, green).</li>
-    <li>Start Claude Code in the repo. Press <kbd>Shift</kbd>+<kbd>Tab</kbd> until it says <strong>plan mode on</strong> (or try <kbd>Alt</kbd>+<kbd>M</kbd>). Then type <code>/output-style learning</code>: it makes Claude explain its choices and leave small design decisions for you to code.</li>
+    <li>Start Claude Code in the repo. Press <kbd>Shift</kbd>+<kbd>Tab</kbd> until it says <strong>plan mode on</strong> (). Then type <code>/output-style learning</code>: it makes Claude explain its choices and leave small design decisions for you to code.</li>
     <li>Ask: <em>"Explain how an order reduces stock in this repo, citing file:line."</em> Then run <code>/context</code> to see what fills the window.</li>
     <li><strong>The drift test.</strong> Say <em>"From now on, end every answer with STOCK-OK."</em> Ask anything and check it complies. Run <code>/clear</code> and ask again: the rule is gone. (Still there? Run <code>/memory</code>: auto memory saved it to a file, which proves the point.)</li>
     <li>Write one sentence: where would that rule have to live to survive? Lesson 2 puts it there.</li>
   </ol>
-  <p class="tools-note"><strong>Codex:</strong> run <code>codex</code> with default approvals. <strong>Antigravity:</strong> open the folder with the Default preset. For steps 5 to 7, start a new conversation instead of <code>/clear</code>.</p>
+  <p class="tools-note"><strong>Codex:</strong> run <code>codex</code> with default approvals. <strong>Antigravity:</strong> open the folder with the Default preset. In step 6, start a new conversation instead of running <code>/clear</code>.</p>
 </div>
 
 <div class="done" data-built="a practice repo under your work identity, and proof that a chat-only rule disappears.">
   <span class="label">Done when: tick all three to earn the Loop Reader plaque</span>
   <ul class="check" data-key="0001">
-    <li><input type="checkbox" aria-label="Company email in git log"> <span><code>git log --format='%an &lt;%ae&gt;'</code> shows your work email and no AI co-author line</span></li>
+    <li><input type="checkbox" aria-label="Company email in git log"> <span><code>git log --format='%an &lt;%ae&gt;'</code> shows your work email</span></li>
     <li><input type="checkbox" aria-label="Tests green"> <span><code>dotnet test</code> is green</span></li>
     <li><input type="checkbox" aria-label="Saw the rule vanish"> <span>You saw STOCK-OK disappear after <code>/clear</code></span></li>
   </ul>
@@ -235,11 +235,11 @@ git add . && git commit -m "chore: import StockApi starter"</pre>
 <div class="split">
   <div class="source">
     <span class="label">Read next</span>
-    <p><a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code works</a> (the loop and the context window). New to Claude Code? Module 1 of <a href="https://academy.claude.com/courses/claude-code-101">Claude Code 101</a>.</p>
+    <p><a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code works</a> (the loop), and Anthropic's interactive <a href="https://code.claude.com/docs/en/context-window">context window explorer</a>. New to Claude Code? Module 1 of <a href="https://academy.claude.com/courses/claude-code-101">Claude Code 101</a>.</p>
   </div>
   <div class="ask">
     <span class="label">Ask your agent</span>
-    <p>"Show me what's in my context right now, and which of it survives /compact."</p>
+    <p>"My STOCK-OK rule disappeared after /clear. Explain why, and tell me which file I should put a rule like that in so it survives."</p>
   </div>
 </div>
 

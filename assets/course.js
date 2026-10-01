@@ -320,9 +320,9 @@
         render(added);
       });
       bCompact.addEventListener("click", function () {
-        var summary = ["sum", "Summary of earlier work", "details are lost, including STOCK-OK"];
+        var summary = ["sum", "Summary of earlier work", "short; STOCK-OK may or may not be in it"];
         cards = START.concat([summary]);
-        say.innerHTML = "<b>Compacted.</b> The conversation became one summary card, and your chat rule is gone. <b>AGENTS.md was re-read from disk</b>, so the rules in it are back in full.";
+        say.innerHTML = "<b>Compacted.</b> The conversation became one short summary. Your chat rule <b>might</b> survive in it, or might not: you can't rely on it. <b>AGENTS.md was re-read from disk</b>, so every rule in it is back, word for word.";
         bWork.disabled = false; w = Math.min(w, WORK.length);
         render(cards.slice(0, 1).concat([summary]));
       });
