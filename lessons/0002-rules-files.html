@@ -224,6 +224,36 @@ paths:
 
 <p>Three habits keep the layers useful. <strong>Check what loaded</strong> with <code>/context</code>, under <em>Memory files</em>; on Claude Code v2.1.283 or later, <code>/doctor prompt-audit</code> looks for contradictions across them. <strong>In a monorepo</strong>, start Claude in your module's folder: the folders above still load, the neighbours' don't, and a <code>claudeMdExcludes</code> list in your <code>.claude/settings.local.json</code> skips another team's file. <strong>Keep each file short</strong>: the docs suggest under 200 lines, because "longer files consume more context and reduce adherence".</p>
 
+<h2>How it talks to you: output styles</h2>
+
+<p>Rules files set what the agent <em>knows</em>. An <strong>output style</strong> sets how it <em>answers</em>: its length, tone and shape, for every reply in the session. It is a separate setting, not a layer of CLAUDE.md, and it stays on whichever rules load (<a href="https://code.claude.com/docs/en/output-styles">Output styles</a> <span class="ver">verified 2026-10-13</span>). Claude Code has four built in besides Default, and two of them are made for learning.</p>
+
+<div class="table-wrap"><table>
+  <tr><th>Style</th><th>What changes</th><th>Good for</th></tr>
+  <tr><td><strong>Explanatory</strong></td><td>Same work as Default, plus short <code>★ Insight</code> blocks in the chat explaining why it chose what it did</td><td>This course, or any codebase you are getting to know</td></tr>
+  <tr><td><strong>Learning</strong></td><td>The Insight blocks, and at a real design decision it leaves a <code>TODO(human)</code> in the file, tells you what to write, and waits for you</td><td>Hands-on practice: you write the interesting part, it does the routine part</td></tr>
+  <tr><td>Concise</td><td>Leads with the result; no preamble, narration or recap</td><td>Once you know the ground and want short answers</td></tr>
+  <tr><td>Proactive</td><td>Starts work at once and assumes routine choices instead of asking</td><td>Well-understood work you will correct as it goes</td></tr>
+</table></div>
+
+<p>Switch with <code>/output-style explanatory</code> (v2.1.269 or later; no argument lists the styles), or <code>/config</code> → <strong>Output style</strong>. Either one saves <code>"outputStyle"</code> to <code>.claude/settings.local.json</code>, so it is yours and not the team's; put it in <code>~/.claude/settings.json</code> to make it your default everywhere. In a settings file the name is case-sensitive: <code>explanatory</code> silently gives you Default. The new style starts with your next message.</p>
+
+<p>Two limits. A style is an instruction, not a guarantee: anything that must happen every time is a hook (lesson 7). And it shapes the main conversation only; reviewer subagents (lesson 6) keep their own prompts. Explanatory and Learning also write longer replies, so they use more tokens.</p>
+
+<details class="deeper">
+  <summary>Going deeper: your own style</summary>
+  <p>A custom style is one Markdown file in <code>~/.claude/output-styles/</code> (yours) or <code>.claude/output-styles/</code> (the project's). Keep <code>keep-coding-instructions: true</code> when you only want to change how it talks; without it, Claude Code drops its built-in software engineering instructions.</p>
+<pre>---
+name: Explain like a .NET dev
+description: Relate new ideas to C# I already know
+keep-coding-instructions: true
+---
+
+When you explain a concept, compare it to the closest C# or .NET
+equivalent first, then say where the analogy breaks.</pre>
+  <p class="small">Claude Code reads style files when it starts, so restart it after you create or edit one.</p>
+</details>
+
 <h2>Commit it first</h2>
 
 <p>Lesson 1's developer wrote <code>CLAUDE.md</code> at the end of a 356-turn session, so it steered nothing. Order matters twice. <strong>Steering:</strong> a rule that exists at the first prompt shapes the first slice; one written at the end only describes it. <strong>Proof:</strong> git records when the file first appeared:</p>
@@ -332,6 +362,17 @@ paths:
   <p class="why">It's yours and it applies everywhere: the user layer. In AGENTS.md it would bind the whole team, CLAUDE.local.md would switch AGENTS.md off, and copying it into every repo means it drifts.</p>
 </div>
 
+<div class="quiz">
+  <p class="q">You are new to a codebase. You want the agent to explain its choices as it works, and to leave the real design decisions for you to write. What do you switch on?</p>
+  <div class="opts">
+    <button class="opt" data-correct>The Learning output style, via /config</button>
+    <button class="opt">A teach-me rule in shared AGENTS.md</button>
+    <button class="opt">Plan mode, then ask for explanations</button>
+    <button class="opt">A reviewer subagent that explains changes</button>
+  </div>
+  <p class="why">Learning adds Insight blocks and leaves a <code>TODO(human)</code> at each real decision, then waits. In AGENTS.md it would bind the whole team, plan mode only holds back edits, and a subagent's prompt never shapes the main chat.</p>
+</div>
+
 <h2>Exercise: write the index and commit it first</h2>
 <div class="exercise">
   <span class="label">Exercise · about 30 min · you add: AGENTS.md, docs/ai/ (3 files), tests/AGENTS.md</span>
@@ -376,6 +417,7 @@ git show --stat HEAD</pre>
     <li><a href="https://code.claude.com/docs/en/memory">/init</a>: Built in: drafts a rules file from your repo. It writes <strong>CLAUDE.md</strong>, which switches AGENTS.md off, so make its first line <code>@AGENTS.md</code> or fold the draft into AGENTS.md.</li>
     <li><a href="https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management">claude-md-management</a>: Anthropic's plugin for auditing and keeping a rules file tidy.</li>
     <li><a href="https://github.com/anthropics/claude-plugins-official/tree/main/plugins/csharp-lsp">csharp-lsp</a>: C# code intelligence for the agent (go to definition, references).</li>
+    <li><a href="https://code.claude.com/docs/en/output-styles">Output styles</a>: Built in: try <code>/output-style explanatory</code> while you do this course, or <code>learning</code> when you want to write the key parts yourself.</li>
   </ul>
   <p class="small">Each link has its own install steps. Install only what you will use, check how recent it is, and read what a plugin adds before you enable it. Links checked 2026-10-01.</p>
 </div>
