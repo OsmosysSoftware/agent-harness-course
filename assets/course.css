@@ -417,6 +417,13 @@ body.ref { font-size: 16px; }
 .tray .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--surface); }
 .tray .say { flex-basis: 100%; margin: 0 0 4px; font-size: .95rem; color: var(--ink-2); min-height: 3em; }
 .tray .say b { color: var(--ink); }
+.tray.styles .prompt { margin: 0; padding: 14px 18px 0; font-family: var(--mono); font-size: .88rem; color: var(--ink-2); }
+.tray.styles .prompt span { color: var(--accent); font-weight: 700; margin-right: 6px; }
+.tray.styles .reply { padding: 12px 18px 16px; min-height: 190px; font-size: .93rem; }
+.tray.styles .reply > p { margin: 0 0 .6em; }
+.tray.styles .insight { border-top: 1px dashed var(--line-strong); border-bottom: 1px dashed var(--line-strong); padding: 8px 0; margin: 0 0 .6em; font-size: .9rem; }
+.tray.styles .insight b:first-child { color: var(--accent); }
+.tray.styles .insight p { margin: .3em 0 0; }
 .tray .legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 0 18px 14px; font-size: .78rem; color: var(--ink-3); }
 .tray .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; border: 1px solid var(--line-strong); }
 @media (prefers-reduced-motion: reduce) { .tray .card.pop { animation: none; } .tray .fill i { transition: none; } }

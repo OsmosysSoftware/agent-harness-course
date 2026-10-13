@@ -236,9 +236,73 @@ paths:
   <tr><td>Proactive</td><td>Starts work at once and assumes routine choices instead of asking</td><td>Well-understood work you will correct as it goes</td></tr>
 </table></div>
 
+<p>See the difference on one task. Same repo, same rules, same work done; only the style changes. Click through them.</p>
+
+<div class="tray styles" data-styles>
+  <div class="head"><strong>Same task, five styles</strong></div>
+  <p class="prompt"><span>&gt;</span> Make sure an order can never take stock below zero.</p>
+  <div class="reply" data-style="default">
+    <p>I changed <code>OrderService.PlaceOrderAsync</code> to use a guarded UPDATE: <code>ExecuteUpdateAsync</code> with <code>Where(p =&gt; p.Stock &gt;= qty)</code>. When no row is updated, the endpoint returns <code>409 Conflict</code>. I added <code>PlaceOrder_InsufficientStock_Returns409</code> to <code>OrderTests.cs</code>. All tests pass.</p>
+  </div>
+  <div class="reply" data-style="explanatory" hidden>
+    <p>I changed <code>OrderService.PlaceOrderAsync</code> to use a guarded UPDATE: <code>ExecuteUpdateAsync</code> with <code>Where(p =&gt; p.Stock &gt;= qty)</code>. When no row is updated, the endpoint returns <code>409 Conflict</code>. I added <code>PlaceOrder_InsufficientStock_Returns409</code>. All tests pass.</p>
+    <div class="insight"><b>★ Insight</b>
+      <p>- Reading the stock and then writing it can race: two orders both read 3 and both succeed. Putting the check inside the UPDATE lets the database decide in one statement.</p>
+      <p>- 409, not 400: the request itself was valid. What conflicts is the current stock.</p>
+    </div>
+  </div>
+  <div class="reply" data-style="learning" hidden>
+    <p>I wired the endpoint and wrote the failing test. One decision is yours.</p>
+    <div class="insight"><b>● Learn by Doing</b>
+      <p><b>Context:</b> <code>PlaceOrderAsync</code> now runs the guarded UPDATE and gets back how many rows changed.</p>
+      <p><b>Your task:</b> in <code>OrderService.cs</code>, at <code>TODO(human)</code>, decide what happens when no row changed.</p>
+      <p><b>Guidance:</b> an exception, a result type or a status code? The test expects the caller to see <code>409</code>.</p>
+    </div>
+    <p>I'll wait. Tell me when you're done.</p>
+  </div>
+  <div class="reply" data-style="concise" hidden>
+    <p>Done: guarded UPDATE in <code>OrderService.cs</code>, <code>409</code> on short stock, test <code>PlaceOrder_InsufficientStock_Returns409</code> added. All tests pass.</p>
+  </div>
+  <div class="reply" data-style="eli5" hidden>
+    <p>I fixed it. Now an order can't take more than is on the shelf.</p>
+    <p><b>What I did:</b> the database checks the stock and takes it away in one step. So two orders can't both grab the last one.</p>
+    <p><b>Did it work?</b> Yes. All tests pass.</p>
+    <p><b>What you do now:</b> nothing. Run <code>dotnet test</code> if you want to see it.</p>
+  </div>
+  <div class="controls">
+    <p class="say" aria-live="polite"></p>
+    <button class="btn" type="button" data-pick="default" data-say="<b>Default</b> (no style). Correct and complete, but it doesn't tell you why.">Default</button>
+    <button class="btn" type="button" data-pick="explanatory" data-say="<b>Explanatory.</b> The same work, plus the reasons. The Insight block is the part you would otherwise have to ask for.">Explanatory</button>
+    <button class="btn" type="button" data-pick="learning" data-say="<b>Learning.</b> It did the routine part and stopped at the real decision, leaving <code>TODO(human)</code> in the file for you.">Learning</button>
+    <button class="btn" type="button" data-pick="concise" data-say="<b>Concise.</b> Result first, nothing else. Best once you know the ground.">Concise</button>
+    <button class="btn" type="button" data-pick="eli5" data-say="<b>ELI5</b>, a custom style (the tip below shows the file). Small words, then: what I did, did it work, what you do now.">ELI5 (custom)</button>
+  </div>
+</div>
+
 <p>Switch with <code>/output-style explanatory</code> (v2.1.269 or later; no argument lists the styles), or <code>/config</code> → <strong>Output style</strong>. Either one saves <code>"outputStyle"</code> to <code>.claude/settings.local.json</code>, so it is yours and not the team's; put it in <code>~/.claude/settings.json</code> to make it your default everywhere. In a settings file the name is case-sensitive: <code>explanatory</code> silently gives you Default. The new style starts with your next message.</p>
 
 <p>Two limits. A style is an instruction, not a guarantee: anything that must happen every time is a hook (lesson 7). And it shapes the main conversation only; reviewer subagents (lesson 6) keep their own prompts. Explanatory and Learning also write longer replies, so they use more tokens.</p>
+
+<div class="tip">
+  <span class="label">Tip: pick a style for the job</span>
+  <ul>
+    <li><strong>Doing this course?</strong> Turn on <code>/output-style explanatory</code>. Every change comes with a few lines on <em>why</em>: why this test, why this file, why this order. That is most of what you are here to learn.</li>
+    <li><strong>Want it to stick?</strong> Switch to <code>/output-style learning</code> for an exercise. The agent builds the routine parts and leaves the real decisions (the stock check, the error handling) to you, then comments on what you wrote.</li>
+    <li><strong>Tired, or just want the answer?</strong> Write your own. A five-line "ELI5" style (explain like I'm five) is a common one:
+<pre>---
+name: ELI5
+description: keep it simple
+keep-coding-instructions: true
+---
+
+Small words, short sentences. Explain any big word right after you use it.
+Tell me what you did, whether it worked, and what I do now.
+If I must decide: two options at most, and which one you'd pick.
+Keep paths and commands exact.</pre>
+      Save it as <code>~/.claude/output-styles/ELI5.md</code>, restart Claude Code, then <code>/output-style ELI5</code>.</li>
+    <li><strong>Know the ground already?</strong> <code>/output-style concise</code> for short answers. Switch back to Explanatory when you hit something new; it takes effect on your next message.</li>
+  </ul>
+</div>
 
 <details class="deeper">
   <summary>Going deeper: your own style</summary>

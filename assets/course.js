@@ -51,6 +51,7 @@
     initChecklists();
     initDiagrams();
     initTrays();
+    initStyles();
     initToc();
     initStart();
     initCopy();
@@ -353,6 +354,20 @@
         stack.classList.remove("forked"); void stack.offsetWidth; stack.classList.add("forked");
       });
       reset(tray.getAttribute("data-intro") || "This is a fresh session. Press <b>Keep working</b>.");
+    });
+  }
+
+  // ---- Output-style demo: one prompt, one reply per style ----
+  function initStyles() {
+    document.querySelectorAll("[data-styles]").forEach(function (box) {
+      var say = box.querySelector(".say"), btns = box.querySelectorAll("[data-pick]");
+      function pick(b) {
+        btns.forEach(function (x) { x.classList.toggle("primary", x === b); x.setAttribute("aria-pressed", x === b); });
+        box.querySelectorAll(".reply").forEach(function (r) { r.hidden = r.getAttribute("data-style") !== b.getAttribute("data-pick"); });
+        say.innerHTML = b.getAttribute("data-say");
+      }
+      btns.forEach(function (b) { b.addEventListener("click", function () { pick(b); }); });
+      pick(btns[0]);
     });
   }
 
