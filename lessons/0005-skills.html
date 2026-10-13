@@ -374,6 +374,24 @@ evaluate my commit skill with skill-creator</pre></figure>
   <p class="why">Nothing here needs to move, and nothing in it helps the next task. Start a new chat; <code>/resume</code> keeps the old one if you need it.</p>
 </div>
 
+<div class="tip">
+  <span class="label">Tip: pair /handoff with your own /pickup</span>
+  <p>"Read &lt;path&gt; and continue" works, but the new chat trusts the file blindly, and the file may be stale: someone committed since, or you switched branch. A small <code>/pickup</code> skill makes the new chat check the handoff against the repo first, and wait for your go. It is the same kind of skill you write in this lesson, about ten lines:</p>
+<pre>---
+name: pickup
+description: Continue earlier work from a handoff file. Use right after /handoff and a new chat, or when given a handoff path.
+argument-hint: "[path to the handoff file]"
+disable-model-invocation: true
+---
+
+1. Read the handoff at $ARGUMENTS. No path? Ask for it; don't guess from git history.
+2. Check it against the repo: `git branch --show-current`, `git status --short`, `git log --oneline -3`.
+   Name every mismatch (other branch, new commits, files no longer changed).
+3. List the next steps from the handoff, one line each, and end with "Confirm, or reorder."
+4. Start only after the human confirms.</pre>
+  <p>Save it as <code>~/.claude/skills/pickup/SKILL.md</code> so it works in every repo. Then the loop is <code>/handoff</code>, a new chat, <code>/pickup &lt;path&gt;</code>. Step 4 is the point: you see what it believes before it acts.</p>
+</div>
+
 <h2>A skill is still a request</h2>
 
 <p>A skill is text the model reads. Specific steps, loaded at the right moment, make the right thing far more likely, but nothing <em>blocks</em> the agent from skipping step 3, or from committing without the skill. Lesson 7 adds what the tool enforces:</p>
