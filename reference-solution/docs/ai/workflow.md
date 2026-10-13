@@ -8,7 +8,9 @@
 4. **Quality gate**: run the `quality-gate` skill. Fix failures; if a fix would touch an invariant, use 1-3-1.
 5. **Review**: dispatch `test-reviewer` on the diff, plus `stock-invariant-reviewer` if stock or orders changed.
    Report its findings to the human. The author never grades its own work.
-6. **Commit**: tick the slice in `PLAN.md`, then run the `commit` skill. It drafts the message and waits for approval. Never push.
+6. **Docs, then commit**: if the slice added or changed an endpoint or documented behaviour, run the `update-docs`
+   skill and apply only the fixes the human approves. Then tick the slice in `PLAN.md` and run the `commit` skill.
+   It drafts the message and waits for approval. Never push.
 7. Go back to step 3 for the next slice.
 
 ## When requirements change mid-task

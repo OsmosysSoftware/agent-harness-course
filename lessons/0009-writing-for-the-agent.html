@@ -80,7 +80,7 @@
   <tr><th>Habit</th><th>Failure it prevents</th><th>In your repo after today</th></tr>
   <tr><td>Record each deliberate oddity, with its reason</td><td>The agent "fixes" a choice that looks wrong</td><td><code>docs/decisions/0001-atomic-guarded-update.md</code></td></tr>
   <tr><td>Short comments that point at the why</td><td>Long comments that go stale, or none at all</td><td><code>// … see docs/decisions/0001.</code></td></tr>
-  <tr><td>One reference shape to copy</td><td>Five endpoints in five styles</td><td><code>ProductsController</code> and <code>ApiTests.cs</code>, via <code>new-endpoint</code></td></tr>
+  <tr><td>One reference shape to copy</td><td>Five endpoints in five styles</td><td><code>ProductsController</code> and its test file, via <code>new-endpoint</code></td></tr>
   <tr><td>Claims checked against the code</td><td>Docs that describe last month's repo</td><td>The <code>update-docs</code> skill</td></tr>
 </table></div>
 
@@ -195,16 +195,16 @@ description: Add a new endpoint or resource by copying the reference shape (Prod
 The reference shape is `src/StockApi/Controllers/ProductsController.cs` plus
 `tests/StockApi.Tests/ProductsTests.cs`. Read both first, then copy their shape. Do not invent a new one.
 
-1. **Controller**: validate the input and map results to 200/201/404/409 `ProblemDetails`. Simple reads and
-   creates may use `StockDbContext` directly, as `ProductsController` does; anything that changes stock calls a service.
-2. **Service**: rules and transactions. Any stock change follows docs/ai/invariants.md (one guarded UPDATE).
-3. **DTOs**: `record` request types next to the controller. Responses may return the entity, as `ProductsController`
-   does; add a response record only when the entity would leak something.
-4. **Tests first**: add the failing integration tests in `tests/StockApi.Tests/&lt;Resource&gt;Tests.cs` using
+1. **Tests first**: add the failing integration tests to the reference test file, in its shape, using
    `StockApiFactory`: the happy path, 404, 409 and 400. If the endpoint changes stock, also add a case to
-   `ConcurrencyTests`.
-5. Run the `quality-gate` skill. Then ask for a review by `test-reviewer`, plus `stock-invariant-reviewer`
-   if stock changed.</pre>
+   `ConcurrencyTests`. Run them and show they fail for the right reason.
+2. **Controller**: validate the input and map results to 200/201/404/409 `ProblemDetails`. Simple reads and
+   creates may use `StockDbContext` directly, as `ProductsController` does; anything that changes stock calls a service.
+3. **Service**: rules and transactions. Any stock change follows docs/ai/invariants.md (one guarded UPDATE).
+4. **DTOs**: `record` request types next to the controller. Responses may return the entity, as `ProductsController`
+   does; add a response record only when the entity would leak something.
+5. **Check**: unless the `ship-slice` skill called this one (it runs these steps itself), run the `quality-gate`
+   skill, then ask for a review by `test-reviewer`, plus `stock-invariant-reviewer` if stock changed.</pre>
   </figure>
   <figure class="code">
   <figcaption>.agents/skills/update-docs/SKILL.md</figcaption>
@@ -225,7 +225,7 @@ Docs written from memory drift. This skill compares every claim with the code.
 4. Propose edits for STALE claims only, as a diff. Do not apply them until the human approves.
 5. Never add narrative ("we carefully considered…"). Docs here are instructions for the next agent.</pre>
   </figure>
-  <p>Neither skill restates the conventions; each points at them, so there is one place to edit. The course's reference solution keeps the first draft of <code>new-endpoint</code> (the one that names <code>ProductsTests.cs</code> and forbids returning entities), so write yours from this listing rather than copying it.</p>
+  <p>Neither skill restates the conventions; each points at them, so there is one place to edit.</p>
 </details>
 
 <h2>One skill for the whole loop</h2>
@@ -240,21 +240,21 @@ disable-model-invocation: true
 
 # Ship one slice
 
-This is `docs/ai/workflow.md` steps 3 to 7 as one command. Steps marked **STOP** wait for the human.
+This is `docs/ai/workflow.md` steps 3 to 6 (slice, gate, review, docs and commit) as one command. Steps marked **STOP** wait for the human.
 
 0. **Check the start.** `ai-session/PLAN.md` must be committed on its own (`git log --oneline -- ai-session/PLAN.md`
    shows a `docs(plan): …` commit) and `git status` must be clean. If not, say which and stop.
 1. **Pick the slice.** The first unchecked one in `PLAN.md`. Name it in one line. If the user asked for something
    the plan doesn't have, **STOP**: that is a requirement change (workflow.md, "When requirements change").
-2. **Test first.** For an endpoint, follow the `new-endpoint` skill. Otherwise write the failing test, run it,
-   and show it fail for the right reason.
+2. **Test first.** For an endpoint, use the `new-endpoint` skill for its shape and its steps 1 to 4; this skill
+   runs the gate and reviews. Otherwise write the failing test, run it, and show it fail for the right reason.
 3. **Code.** The smallest change that makes that test pass. Nothing outside the slice.
 4. **Gate.** Run the `quality-gate` skill. Fix the cause, never the test. Same failure twice: hand over a 1-3-1.
    **STOP** if a fix would touch an invariant.
 5. **Review.** Dispatch `test-reviewer`, plus `stock-invariant-reviewer` if stock or orders changed. Report each
    finding with its file:line. **STOP** on any BLOCK: the human decides.
-6. **Docs.** If the slice added or changed an endpoint or a documented behaviour, run the `update-docs` skill
-   and fix any STALE row in this slice.
+6. **Docs.** If the slice added or changed an endpoint or a documented behaviour, run the `update-docs` skill.
+   **STOP**: show its STALE rows and apply only the fixes the human approves.
 7. **Commit.** Tick the slice in `PLAN.md`, then run the `commit` skill. It asks before staging and before
    committing. **STOP** there.
 8. **Report and stop.** The commit hash, what the reviewers said, and the next unchecked slice. Never start the
@@ -435,7 +435,7 @@ grep -rn "added in lesson 9" src</pre>
 <pre>cp ../agent-harness-course/reference-solution/Directory.Build.props .
 cat Directory.Build.props        # Nullable, ImplicitUsings, TreatWarningsAsErrors</pre>
       Run <code>/quality-gate</code>: expect <em>quality gate: green</em>.</li>
-    <li><strong>Add the three skills.</strong> Write both <code>SKILL.md</code> files from "Going deeper: the two skills in full"; <code>new-endpoint</code> names <code>ProductsTests.cs</code>; change that mention to <code>ApiTests.cs</code>, the test file your repo has. Then link them as in lesson 5:
+    <li><strong>Add the three skills.</strong> Write both <code>SKILL.md</code> files from "Going deeper: the two skills in full"; <code>new-endpoint</code> names <code>ProductsTests.cs</code>; change that mention to the test file that holds your lesson 4 low-stock tests (<code>ApiTests.cs</code> if you kept them in the starter's file). Then link them as in lesson 5:
 <pre>mkdir -p .agents/skills/new-endpoint .agents/skills/update-docs
 # write .agents/skills/new-endpoint/SKILL.md and .agents/skills/update-docs/SKILL.md, then:
 ln -s ../../.agents/skills/new-endpoint .claude/skills/new-endpoint
@@ -444,7 +444,7 @@ cp -r ../agent-harness-course/reference-solution/.agents/skills/ship-slice .agen
 ln -s ../../.agents/skills/ship-slice .claude/skills/ship-slice
 ls -l .claude/skills</pre>
       Five lines with <code>-&gt;</code>. Read <code>ship-slice</code> before you keep it: it is the loop you will run in lesson 11. (Git Bash without Developer Mode: copy the folders instead, as in lesson 5.)</li>
-    <li><strong>Commit, twice, through <code>/commit</code>.</strong> First the docs and the code comment: <code>docs: add ADR 0001, conventions and pointers</code> (the ADR, <code>conventions.md</code>, <code>invariants.md</code>, <code>AGENTS.md</code>, the reviewer, <code>OrderService.cs</code>, <code>Directory.Build.props</code>). Then <code>feat(harness): add new-endpoint, update-docs and ship-slice skills</code>.</li>
+    <li><strong>Commit three times, through <code>/commit</code>.</strong> First the docs and the pointer comment: <code>docs: add ADR 0001, conventions and pointers</code> (the ADR, <code>conventions.md</code>, <code>invariants.md</code>, <code>AGENTS.md</code>, the reviewer, and <code>OrderService.cs</code>, whose only change is a comment). Then the build settings on their own: <code>build: add Directory.Build.props</code>. Then <code>chore(harness): add new-endpoint, update-docs and ship-slice skills</code>.</li>
     <li><strong>Run the audit.</strong> Start a fresh session (<code>claude --permission-mode default</code>) and type <code>/update-docs</code>. Expect a table, and at least one STALE row: <code>README.md</code> is missing <code>GET /api/products/low-stock</code> and <code>GET /api/orders</code>. It may flag more, such as the <code>.env.example</code> line in <code>invariants.md</code>. For each STALE row, open the evidence it cites and decide yourself.</li>
     <li><strong>Fix what is stale.</strong> Approve the README change and any other row you checked and agree with; say no to the rest, with a reason. Run <code>/update-docs</code> again: the README rows should now be TRUE. Commit through <code>/commit</code>: <code>docs: fix stale README endpoints</code>.</li>
     <li><strong>Test the ADR.</strong> Start a <em>new</em> session in Manual mode (<code>claude --permission-mode default</code>) and ask: <em>"Simplify OrderService.PlaceAsync: load the product, check Stock, decrement and SaveChanges. It is shorter."</em> Pass: it cites <code>docs/decisions/0001</code> (or <code>invariants.md</code>), declines or hands you options, and edits nothing; <code>git status</code> stays clean. If it proposes an edit, answer No: the ADR didn't hold this time. Sharpen its Consequences and the <code>Why:</code> line, then try again in another new session. Any edit that does land still meets the stock reviewer and <code>ConcurrencyTests</code>.</li>

@@ -183,7 +183,7 @@ Ask the human; they push, not the agent.</pre>
 <details class="deeper">
   <summary>Going deeper: the hooks block and the three scripts (you copy these in step 2)</summary>
   <figure class="code">
-  <figcaption>.claude/settings.json: add this after "attribution"</figcaption>
+  <figcaption>.claude/settings.json: add this after the "attribution" block. JSON needs a comma between entries, so put one after the closing <code>}</code> of "attribution" first.</figcaption>
 <pre>  "hooks": {
     "SessionStart": [
       { "hooks": [ { "type": "command",
@@ -576,17 +576,17 @@ public class FileStockApiFactory : WebApplicationFactory&lt;Program&gt;
     <li><strong>Permission rules.</strong> Ask the agent to write <code>.claude/settings.json</code> with the permissions and <code>attribution</code> above, and <em>no hooks block yet</em> (so it never points at missing scripts). Compare with the listing. Keep your own approvals out of git:
 <pre>printf '.claude/settings.local.json\n' &gt;&gt; .gitignore
 git check-ignore -v .claude/settings.local.json   # prints the matching rule</pre>
-      Start a new session (accept the trust dialog), then commit both files: <code>feat(harness): add permission rules</code>. <code>/commit</code> now asks before <code>git commit</code>: the ask rule at work.</li>
+      Start a new session (accept the trust dialog), then commit both files: <code>chore(harness): add permission rules</code>. <code>/commit</code> now asks before <code>git commit</code>: the ask rule at work.</li>
     <li><strong>Claude Code hooks.</strong> Copy the three scripts and the hooks block from the box exactly. Then test the guard without any agent:
 <pre>chmod +x .claude/hooks/*.sh
 echo '{"tool_name":"Bash","tool_input":{"command":"git push --force origin main"}}' \
   | bash .claude/hooks/destructive-guard.sh</pre>
-      Expect deny JSON ending in <code>"permissionDecisionReason":"Force-push rewrites shared history. Ask the human; they push, not the agent."}}</code>. In a new session, ask "What did the session preflight report?" and check no "non-blocking status code" notice appears. Commit: <code>feat(harness): add claude code hooks</code>.</li>
+      Expect deny JSON ending in <code>"permissionDecisionReason":"Force-push rewrites shared history. Ask the human; they push, not the agent."}}</code>. In a new session, ask "What did the session preflight report?" and check no "non-blocking status code" notice appears. Commit: <code>chore(harness): add claude code hooks</code>.</li>
     <li><strong>Git hooks.</strong> Write <code>.githooks/pre-commit</code> and <code>commit-msg</code> from the box, with your email domain. Then, yourself:
 <pre>chmod +x .githooks/pre-commit .githooks/commit-msg
 git config core.hooksPath .githooks
 git config core.hooksPath          # prints .githooks</pre>
-      gitleaks is optional: install it yourself if you want it, checking the release date against the 14-day rule; without it the hook warns and runs the pattern check only. <strong>Git Bash:</strong> <code>chmod</code> records nothing in git, so after <code>git add</code> run <code>git update-index --chmod=+x .githooks/* .claude/hooks/*.sh</code>. Commit: <code>feat(harness): add git hooks</code>. This commit already runs through them.</li>
+      gitleaks is optional: install it yourself if you want it, checking the release date against the 14-day rule; without it the hook warns and runs the pattern check only. <strong>Git Bash:</strong> <code>chmod</code> records nothing in git, so after <code>git add</code> run <code>git update-index --chmod=+x .githooks/* .claude/hooks/*.sh</code>. Commit: <code>chore(harness): add git hooks</code>. This commit already runs through them.</li>
     <li><strong>The guard test.</strong> Ask: <em>"Add tests/StockApi.Tests/ConcurrencyTests.cs: 12 concurrent POST /api/orders of quantity 1 for a product with stock 3, released together through a TaskCompletionSource; assert 3 Created, 9 Conflict, stock 0. Use a new FileStockApiFactory on a real SQLite temp file. Move CreateProductAsync out of ApiTests into a shared TestHelpers extension; don't copy it."</em> Compare with the listings, run <code>/quality-gate</code> (green, one more test), and commit: <code>test(orders): add 12-for-3 concurrency guard</code>.</li>
     <li><strong>Probe 1, force-push.</strong> New session: <em>"Run exactly this command with your Bash tool and show me the output: git push --force origin main"</em>. Expect the call refused before git runs, with the hook's reason or a permission denial. If the agent only declines in words, that was the rule; ask again.</li>
     <li><strong>Probe 2, message and trailer.</strong> In your terminal:

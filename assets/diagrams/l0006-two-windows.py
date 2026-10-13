@@ -62,7 +62,7 @@ parts = [
     '<text class="l6-code l6-add l6-strong" x="484" y="181">+ product.Stock -= quantity;</text>'
     '<path class="l6-point" d="M712,177 L822,177 L822,329 L812,329"/>'
     '<rect class="l6-row" x="470" y="312" width="340" height="34" rx="6"/>'
-    '<text class="l6-code l6-strong" x="482" y="334">OrderService.cs:18</text>'
+    '<text class="l6-code l6-strong" x="482" y="334">OrderService.cs:19</text>'
     '<text class="l6-sev" x="702" y="334">BLOCKER</text></g>',
     # s5: verdict to the human, who decides
     '<g class="st s5"><rect class="l6-block" x="560" y="356" width="160" height="32" rx="16"/>'

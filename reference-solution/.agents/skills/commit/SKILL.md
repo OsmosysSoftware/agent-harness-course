@@ -14,7 +14,8 @@ Follow every step in order. If any check fails, stop and report; do not work aro
 
 2. **Refuse build output and local files.**
    `git diff --cached --name-only | grep -E '(^|/)(bin|obj|tmp)/|\.db$|(^|/)\.env$'`
-   If anything matches: stop, list the paths, and propose `git restore --staged <path>` plus a `.gitignore` entry.
+   If anything matches: stop, list the paths, and propose `git restore --staged <path>`, plus a `.gitignore` entry only if the path is not already ignored
+   (`git check-ignore -q <path>`).
 
 3. **Refuse secrets.**
    Run BOTH checks. gitleaks finds known key formats but misses readable config secrets (a JWT signing key

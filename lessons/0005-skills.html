@@ -426,7 +426,7 @@ evaluate my commit skill with skill-creator</pre></figure>
 <p>Quick drills with instant feedback, before you touch the repo: apply what a skill is to files and situations you haven't seen yet.</p>
 
 <div class="spot">
-  <p class="q">Someone shares this commit skill. Click the lines that would let a bad commit through or keep the skill from being picked.</p>
+  <p class="q">Someone shares this commit skill. Click the lines that make it unsafe or unclear.</p>
   <ol class="lines">
     <li>---</li>
     <li>name: commit</li>
@@ -502,10 +502,13 @@ ls -l .claude/skills</pre>
 <pre>dotnet build
 git add -f src/StockApi/obj/project.assets.json</pre>
       Run <code>/commit</code>. It should stop at step 2, name <code>src/StockApi/obj/project.assets.json</code>, and propose <code>git restore --staged</code>. Accept the restore; <code>obj/</code> is already in <code>.gitignore</code>, so no new entry is needed. <code>git status</code> should no longer list the file as staged.</li>
-    <li><strong>Commit the skills through the skill.</strong> With nothing staged, run <code>/commit</code>. It should propose the new files under <code>.agents/skills/</code> and <code>.claude/skills/</code> and ask before staging; say yes. Read the drafted message (such as <code>feat(harness): add commit and quality-gate skills</code>) and approve it. Then:
+    <li><strong>Commit the skills through the skill.</strong> With nothing staged, run <code>/commit</code>. It should propose the new files under <code>.agents/skills/</code> and <code>.claude/skills/</code> and ask before staging; say yes. Read the drafted message (such as <code>chore(harness): add commit and quality-gate skills</code>) and approve it. Then:
 <pre>git log -1 --format='%h %ae%n%B'</pre>
       Your work email, a conventional subject, and no <code>Co-Authored-By</code> or "Generated with" line.</li>
-    <li><strong>The handoff.</strong> Install the <code>handoff</code> skill (the <a href="https://github.com/mattpocock/skills#installation-30-second-setup">repo's install steps</a>; take only the skills you want). Right after that commit, run <code>/handoff next: point docs/ai/workflow.md at the two skills</code> (the next step) and ask for the file's path. Read the file: does it state anything as done that wasn't? Start a new chat with <code>/clear</code> and say <em>"Read &lt;path&gt; and continue."</em> Pass: it starts on the workflow edit without asking you to re-explain the repo. Then do that next step in this new chat. (No plugin installs allowed where you are? Ask the agent to write the same kind of handoff file, and skip the install.)</li>
+    <li><strong>The handoff.</strong> Install only Matt Pocock's <a href="https://github.com/mattpocock/skills/blob/main/skills/productivity/handoff/SKILL.md"><code>handoff</code> skill</a>. A skill is just a folder, so its one file is the whole install, and putting it in your user folder makes it work in every repo:
+<pre>mkdir -p ~/.claude/skills/handoff
+curl -fsSL https://raw.githubusercontent.com/mattpocock/skills/main/skills/productivity/handoff/SKILL.md -o ~/.claude/skills/handoff/SKILL.md</pre>
+      Read the file before you use it. (Skip the repo's plugin and its <code>/setup-matt-pocock-skills</code> step for now: they add about 27 skills and write a section into your AGENTS.md.) Start a new chat so it loads, then right after that commit, run <code>/handoff next: step 9 of lesson 5, point docs/ai/workflow.md and the Definition of done in AGENTS.md at the two skills</code> and ask for the file's path. Read the file: does it state anything as done that wasn't? Start a new chat with <code>/clear</code> and say <em>"Read &lt;path&gt; and continue."</em> Pass: it starts on step 9 (both files) without asking you to re-explain the repo. Then finish step 9 in this new chat. (No plugin installs allowed where you are? Ask the agent to write the same kind of handoff file, and skip the install.)</li>
     <li><strong>Point your rules at the skills.</strong> In <code>docs/ai/workflow.md</code>, step 4 becomes "run the <code>quality-gate</code> skill" and step 6 "run the <code>commit</code> skill; it drafts the message and waits for approval. Never push." Step 5 (review) stays manual until lesson 6. In the Definition of done in <code>AGENTS.md</code>, the format/build/test item becomes "the <code>quality-gate</code> skill passes" and the commit item names the <code>commit</code> skill. Commit both through <code>/commit</code>: <code>docs(ai): point workflow at the skills</code>.</li>
   </ol>
   <p class="tools-note"><strong>Codex:</strong> it reads <code>.agents/skills/</code> as they are, so skip the symlinks; type <code>$quality-gate</code> or <code>$commit</code>, and check the first commit message for any attribution line your Codex setup adds. <strong>Antigravity:</strong> the same folder works; type <code>/quality-gate</code> or <code>/commit</code>.</p>
@@ -517,7 +520,7 @@ git add -f src/StockApi/obj/project.assets.json</pre>
     <li><input type="checkbox" aria-label="Skills visible"> <span>Both skills appear when you type <code>/</code></span></li>
     <li><input type="checkbox" aria-label="Gate failed then passed"> <span><code>/quality-gate</code> stopped at <code>GATE FAILED at format</code>, then went green</span></li>
     <li><input type="checkbox" aria-label="Commit refused build output"> <span><code>/commit</code> refused the <code>obj/</code> file and named its path</span></li>
-<li><input type="checkbox" aria-label="Handed off"> <span>A new chat picked up your work from a handoff file you had read first, without you re-explaining it</span></li>
+    <li><input type="checkbox" aria-label="Handed off"> <span>A new chat picked up your work from a handoff file you had read first, without you re-explaining it</span></li>
     <li><input type="checkbox" aria-label="Committed through the skill"> <span>The skills and <code>docs(ai)</code> commits went through <code>/commit</code>: work email, no AI trailer</span></li>
   </ul>
 </div>

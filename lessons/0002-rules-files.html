@@ -207,7 +207,7 @@ paths:
   <li><b>Organisation</b><span class="where"><code>/etc/claude-code/CLAUDE.md</code> (Linux/WSL; macOS and Windows have their own path)</span><span class="desc">Set by IT for every repo on the machine. You can't exclude it.</span></li>
   <li><b>You, everywhere</b><span class="where"><code>~/.claude/CLAUDE.md</code> and <code>~/.claude/rules/</code></span><span class="desc">Your personal style and habits, in every project. Never project facts: your teammates don't have this file.</span></li>
   <li><b>The project</b><span class="where"><code>AGENTS.md</code> at the repo root (or <code>CLAUDE.md</code>, <code>.claude/CLAUDE.md</code>)</span><span class="desc">The team's rules, committed. Files in folders <em>above</em> where you start also load.</span></li>
-  <li><b>You, this project</b><span class="where"><code>CLAUDE.local.md</code>, git-ignored</span><span class="desc">Your sandbox URL, your test data. Careful: it switches AGENTS.md off (step 3 of the diagram above).</span></li>
+  <li><b>You, this project</b><span class="where"><code>CLAUDE.local.md</code>, kept out of git</span><span class="desc">Your sandbox URL, your test data; add it to <code>.gitignore</code>. Careful: it switches AGENTS.md off (step 3 of the diagram above).</span></li>
   <li><b>A folder or module</b><span class="where"><code>src/Orders/AGENTS.md</code>, <code>tests/AGENTS.md</code></span><span class="desc">Loads only when Claude reads a file in that folder, so other tasks don't pay for it.</span></li>
   <li><b>A file type</b><span class="where"><code>.claude/rules/efcore.md</code> with <code>paths:</code></span><span class="desc">Loads only when Claude reads a matching file.</span></li>
 </ol>
@@ -242,10 +242,10 @@ paths:
   <div class="head"><strong>Same task, five styles</strong></div>
   <p class="prompt"><span>&gt;</span> Make sure an order can never take stock below zero.</p>
   <div class="reply" data-style="default">
-    <p>I changed <code>OrderService.PlaceOrderAsync</code> to use a guarded UPDATE: <code>ExecuteUpdateAsync</code> with <code>Where(p =&gt; p.Stock &gt;= qty)</code>. When no row is updated, the endpoint returns <code>409 Conflict</code>. I added <code>PlaceOrder_InsufficientStock_Returns409</code> to <code>OrderTests.cs</code>. All tests pass.</p>
+    <p>I changed <code>OrderService.PlaceAsync</code> to use a guarded UPDATE: <code>ExecuteUpdateAsync</code> with <code>Where(p =&gt; p.Stock &gt;= qty)</code>. When no row is updated, the endpoint returns <code>409 Conflict</code>. I added <code>PlaceOrder_InsufficientStock_Returns409</code> to <code>ApiTests.cs</code>. All tests pass.</p>
   </div>
   <div class="reply" data-style="explanatory" hidden>
-    <p>I changed <code>OrderService.PlaceOrderAsync</code> to use a guarded UPDATE: <code>ExecuteUpdateAsync</code> with <code>Where(p =&gt; p.Stock &gt;= qty)</code>. When no row is updated, the endpoint returns <code>409 Conflict</code>. I added <code>PlaceOrder_InsufficientStock_Returns409</code>. All tests pass.</p>
+    <p>I changed <code>OrderService.PlaceAsync</code> to use a guarded UPDATE: <code>ExecuteUpdateAsync</code> with <code>Where(p =&gt; p.Stock &gt;= qty)</code>. When no row is updated, the endpoint returns <code>409 Conflict</code>. I added <code>PlaceOrder_InsufficientStock_Returns409</code>. All tests pass.</p>
     <div class="insight"><b>★ Insight</b>
       <p>- Reading the stock and then writing it can race: two orders both read 3 and both succeed. Putting the check inside the UPDATE lets the database decide in one statement.</p>
       <p>- 409, not 400: the request itself was valid. What conflicts is the current stock.</p>
@@ -254,7 +254,7 @@ paths:
   <div class="reply" data-style="learning" hidden>
     <p>I wired the endpoint and wrote the failing test. One decision is yours.</p>
     <div class="insight"><b>● Learn by Doing</b>
-      <p><b>Context:</b> <code>PlaceOrderAsync</code> now runs the guarded UPDATE and gets back how many rows changed.</p>
+      <p><b>Context:</b> <code>PlaceAsync</code> now runs the guarded UPDATE and gets back how many rows changed.</p>
       <p><b>Your task:</b> in <code>OrderService.cs</code>, at <code>TODO(human)</code>, decide what happens when no row changed.</p>
       <p><b>Guidance:</b> an exception, a result type or a status code? The test expects the caller to see <code>409</code>.</p>
     </div>
@@ -279,7 +279,7 @@ paths:
   </div>
 </div>
 
-<p>Switch with <code>/output-style explanatory</code> (v2.1.269 or later; no argument lists the styles), or <code>/config</code> → <strong>Output style</strong>. Either one saves <code>"outputStyle"</code> to <code>.claude/settings.local.json</code>, so it is yours and not the team's; put it in <code>~/.claude/settings.json</code> to make it your default everywhere. In a settings file the name is case-sensitive: <code>explanatory</code> silently gives you Default. The new style starts with your next message.</p>
+<p>Switch with <code>/output-style explanatory</code> (with no argument it lists the styles), or <code>/config</code> → <strong>Output style</strong>. Either one saves <code>"outputStyle"</code> to <code>.claude/settings.local.json</code>, so it is yours and not the team's; put it in <code>~/.claude/settings.json</code> to make it your default everywhere. In a settings file the name is case-sensitive: <code>explanatory</code> silently gives you Default. The new style starts with your next message.</p>
 
 <p>Two limits. A style is an instruction, not a guarantee: anything that must happen every time is a hook (lesson 7). And it shapes the main conversation only; reviewer subagents (lesson 6) keep their own prompts. Explanatory and Learning also write longer replies, so they use more tokens.</p>
 
@@ -443,7 +443,7 @@ equivalent first, then say where the analogy breaks.</pre>
   <p>Work in your practice repo from lesson 1 (<code>~/projects/stockapi</code>), before any feature code. <strong>Windows:</strong> use WSL2 or Git Bash (<a href="../index.html#before-you-start">setup</a>).</p>
   <ol>
     <li>Run <code>claude --version</code>. You need 2.1.277 or later; on anything older, update Claude Code or use the <code>@AGENTS.md</code> fallback above.</li>
-    <li>Write <code>AGENTS.md</code> in the repo root <strong>by hand</strong>, 30 to 40 lines, following the shape above. Nothing enforces "the human approves the commit" yet; you do.</li>
+    <li>Write <code>AGENTS.md</code> in the repo root <strong>by hand</strong>, about 30 lines, following the shape above. Nothing enforces "the human approves the commit" yet; you do.</li>
     <li>Create the detail files, starting from the course's reference solution:
 <pre>mkdir -p docs/ai
 cp ../agent-harness-course/reference-solution/docs/ai/invariants.md docs/ai/
@@ -452,7 +452,7 @@ printf '# Workflow\n\nPlan first, then one slice at a time.\n' &gt; docs/ai/work
 grep -nE 'ConcurrencyTests|decisions/|1-3-1' docs/ai/*.md</pre>
       The <code>grep</code> finds lines about things your repo doesn't have yet (a concurrency test, decision records, lesson 3's 1-3-1). Delete or reword them, then read both files end to end.</li>
     <li>Write <code>tests/AGENTS.md</code>: three or four test-only rules, such as "real SQLite, never EF InMemory", "never weaken a test to make it pass", and a last line pointing to <code>../docs/ai/testing.md</code>.</li>
-    <li>Keep scratch files and secrets out of git: <code>printf 'tmp/\n.env\n' &gt;&gt; .gitignore</code>, then <code>tail -3 .gitignore</code> to check.</li>
+    <li>Keep scratch files, secrets and your private notes out of git: <code>printf 'tmp/\n.env\nCLAUDE.local.md\n' &gt;&gt; .gitignore</code>, then <code>tail -3 .gitignore</code> to check.</li>
     <li>Commit, naming the paths so nothing else sneaks in:
 <pre>git add AGENTS.md docs tests/AGENTS.md .gitignore
 git commit -m "chore(harness): add agent rules"
@@ -465,7 +465,7 @@ git show --stat HEAD</pre>
   <p class="tools-note"><strong>Codex:</strong> <code>tests/AGENTS.md</code> applies only if you start <code>codex</code> inside <code>tests/</code>, so skip steps 8 and 9. <strong>Antigravity:</strong> <code>AGENTS.md</code> is always on; for test-only rules use <code>.agents/rules/tests.md</code> with <code>trigger: glob</code> (<a href="https://antigravity.google/docs/rules">Antigravity rules</a>); skip step 9.</p>
 </div>
 
-<div class="done" data-built="a 30–40 line AGENTS.md index with three linked docs and a nested tests/AGENTS.md, committed before any feature.">
+<div class="done" data-built="an AGENTS.md index of about 30 lines index with three linked docs and a nested tests/AGENTS.md, committed before any feature.">
   <span class="label">Done when: tick all four to earn the Rule Writer plaque</span>
   <ul class="check" data-key="0002">
     <li><input type="checkbox" aria-label="Rules committed first"> <span><code>git log --oneline</code> shows <code>chore(harness): add agent rules</code> directly after the starter commit</span></li>

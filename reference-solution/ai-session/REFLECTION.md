@@ -1,6 +1,6 @@
 # Reflection (one page)
 
-Every entry points to evidence: a commit hash or a line in the raw transcript (`ai-session/transcript-*.jsonl` or `.txt`).
+Every entry points to evidence: a commit hash or a line in the raw transcript (`ai-session/transcript.jsonl` or `transcript.txt`, wherever you keep it).
 
 ## Where I rejected or changed AI output
 | When | The agent proposed | I decided | Why | Evidence |
@@ -14,6 +14,9 @@ Every entry points to evidence: a commit hash or a line in the raw transcript (`
 ## What the harness caught
 | Guard / reviewer | What it stopped | Evidence |
 |---|---|---|
+
+## What I could not verify
+-
 
 ## What I would add to the harness next time
 - 

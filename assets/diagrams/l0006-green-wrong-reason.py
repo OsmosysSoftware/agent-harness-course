@@ -53,7 +53,7 @@ parts = [
     '<g class="st s5"><rect class="l6-hit" x="70" y="153" width="220" height="22" rx="4"/>'
     '<path class="l6-point" d="M290,164 L449,164 L449,356"/>'
     '<rect class="l6-row" x="300" y="356" width="530" height="40" rx="8"/>'
-    '<text class="l6-code l6-strong" x="316" y="381">OrderService.cs:18 · read-then-write</text>'
+    '<text class="l6-code l6-strong" x="316" y="381">OrderService.cs:19 · read-then-write</text>'
     '<rect class="l6-block" x="652" y="362" width="164" height="28" rx="14"/><text class="l6-blocktxt" x="734" y="381">Verdict: BLOCK</text>'
     '<text class="l6-caption" x="430" y="432" style="text-anchor:middle">The tests check results they can see. The reviewer checks the shape of the code.</text></g>',
     "</svg>",

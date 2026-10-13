@@ -8,7 +8,7 @@ description: Run the format, build and test gate for this .NET solution and repo
 Run `bash .agents/skills/quality-gate/gate.sh` from the repository root.
 It runs three steps and stops at the first failure:
 
-1. `dotnet format --verify-no-changes`: formatting matches `.editorconfig`
+1. `dotnet format --verify-no-changes`: formatting matches the .NET defaults (and `.editorconfig`, once the repo has one)
 2. `dotnet build -warnaserror`: no warnings, no errors
 3. `dotnet test --no-build`: every test passes
 

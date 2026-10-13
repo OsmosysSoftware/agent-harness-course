@@ -16,7 +16,7 @@ Review the diff (default: `git diff --cached`, or `git diff HEAD`). For every co
 2. Does it check the affected row count and map 0 rows to 404 or 409?
 3. Is the stock change in the same transaction as the related write (order insert, cancel state)?
 4. Does `tests/StockApi.Tests/ConcurrencyTests.cs` cover this path (N parallel requests, successes ≤ stock)?
-5. Did the diff change a test provider, a test helper or `Directory.Build.props` in a way that hides a
+5. Did the diff change a test provider, a test helper or the build settings (such as `Directory.Build.props`) in a way that hides a
    concurrency failure?
 
 Output, and nothing else:
